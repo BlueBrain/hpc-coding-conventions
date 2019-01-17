@@ -58,6 +58,7 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 Language: Cpp
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: None
+PenaltyBreakAssignment: 40
 PenaltyBreakBeforeFirstCallParameter: 100
 PenaltyBreakComment: 60
 PenaltyBreakFirstLessLess: 120
@@ -77,7 +78,7 @@ SpaceBeforeInheritanceColon: false
 SpaceBeforeParens: ControlStatements
 SpaceBeforeRangeBasedForLoopColon: false
 SpaceInEmptyParentheses: false
-SpacesBeforeTrailingComments: 1
+SpacesBeforeTrailingComments: 2
 SpacesInAngles: false # '< ' style
 SpacesInContainerLiterals: false
 SpacesInCStyleCastParentheses: false
