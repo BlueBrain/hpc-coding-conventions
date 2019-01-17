@@ -1,0 +1,32 @@
+# C++ Code Formatting Documentation Generation Utility
+
+This directory provides both documentation chunks and scripts to build 
+BBP HPC team guidelines regarding C++ code formatting.
+
+## Requirements
+
+* A Python environment with *pyyaml* and *jinja* packages installed.
+A `Pipfile` is provided at repository root path a courtesy to setup
+such environment with *pipenv*.
+* ClangFormat 7
+* Pandoc
+
+## How to build the documentation
+
+Simple type `make`
+
+## How to edit the documentation?
+
+Edit `formatting.md.jinja` template or C++ code snippets in `snippets/` directory.
+A C++ snippet has the following structure:
+
+```cpp
+// TITLE
+
+// optional description
+// that can be in *markdown*.
+// Multiline description is supported
+
+your cpp(code);
+```
+A C++ snippet should be named after the clang-format configuration key it highlights.

@@ -41,7 +41,8 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
             i += 1
         # retrieve code snippet
         while i < len(content):
-            attrs['snippet'] += content[i] + '\n'
+            if not content[i].lstrip().startswith('// clang-format'):
+                attrs['snippet'] += content[i] + '\n'
             i += 1
         basename = osp.splitext(osp.basename(file))[0]
         attrs['clang_format_key'] = basename

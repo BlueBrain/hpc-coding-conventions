@@ -1,3 +1,6 @@
 // Horizontally align operands of binary and ternary expressions.
 
-int aaa = bbbbbbbbbbbbbbb + ccccccccccccccc;
+// clang-format off
+int aaa = bbbbbbbbbbbbbbb +
+          ccccccccccccccc;
+// clang-format on

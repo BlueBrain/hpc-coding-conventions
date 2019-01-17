@@ -12,10 +12,12 @@ formatting.html: github-pandoc.css
 
 # formatting.md
 formatting.md: formatting.md.jinja formatting.py $(SNIPPETS)
+	# format snippets that triggered rebuild of target
 	$(foreach snippet,$(filter snippets/%,$?),$(CLANG_FORMAT) -i $(snippet);)
+
 	./formatting.py $< $@
 
-# update snippets when .clang-format is changed
+# update all snippets when .clang-format is changed
 $(SNIPPETS): .clang-format
 	$(CLANG_FORMAT) -i $@
 	touch $@
