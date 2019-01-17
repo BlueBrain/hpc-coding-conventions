@@ -22,7 +22,7 @@ such environment with *pipenv*.
 Use GitHub pull-request. Make sure the HTML documentation (or at least the Markdown one)
 builds properly.
 
-Edit `formatting.md.jinja` template or C++ code snippets in [`snippets/`](./snippets) directory.
+Edit `formatting.md.jinja` template or C++ code snippets in the [`snippets`](./snippets) directory.
 A C++ snippet has the following structure:
 
 ```cpp
@@ -34,4 +34,4 @@ A C++ snippet has the following structure:
 template <typename T>
 your cpp(code);
 ```
-A C++ snippet should be named after the clang-format configuration key it highlights, if any.
+If a C++ snippet highlights a particular clang-format configuration key, then it should be named after it.
