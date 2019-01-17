@@ -1,4 +1,4 @@
-// loop statements
+// Loop statements
 
 // Break even for simple `for` and `while` statements and always put bodies
 // inside braces.
