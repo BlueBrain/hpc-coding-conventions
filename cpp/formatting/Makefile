@@ -12,7 +12,7 @@ formatting.html: github-pandoc.css
 
 # formatting.md
 formatting.md: formatting.md.jinja formatting.py $(SNIPPETS)
-	# format snippets that triggered rebuild of target
+	@# format snippets that triggered rebuild of target
 	$(foreach snippet,$(filter snippets/%,$?),$(CLANG_FORMAT) -i $(snippet);)
 
 	./formatting.py $< $@

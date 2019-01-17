@@ -48,8 +48,12 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
                 attrs['snippet'] += content[i] + '\n'
             i += 1
         basename = osp.splitext(osp.basename(file))[0]
-        attrs['clang_format_key'] = basename
-        attrs['clang_format_value'] = clang_format[attrs['clang_format_key']]
+        if basename in clang_format:
+            attrs['clang_format_key'] = basename
+            attrs['clang_format_value'] = clang_format[attrs['clang_format_key']]
+        else:
+            attrs['clang_format_key'] = None
+            attrs['clang_format_value'] = None
         return Convention(**attrs)
 
 
