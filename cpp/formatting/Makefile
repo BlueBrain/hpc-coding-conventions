@@ -3,15 +3,15 @@ PANDOC ?= pandoc
 
 SNIPPETS = $(wildcard snippets/*.cpp)
 
-all: code-formatting.html
+all: formatting.html
 
-code-formatting.md: code-formatting.md.jinja  code-formatting.py $(SNIPPETS)
-	./code-formatting.py $< $@
+formatting.md: formatting.md.jinja formatting.py $(SNIPPETS)
+	./formatting.py $< $@
 
 $(SNIPPETS): .clang-format
 	$(CLANG_FORMAT) -i $<
 
 .md.html: $<
-	$(PANDOC) $< -o $@
+	$(PANDOC) -s -S -c github-pandoc.css $< -o $@
 
 .SUFFIXES: .md .html

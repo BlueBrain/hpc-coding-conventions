@@ -14,6 +14,7 @@ CONVENTION_ATTRS = [
     'description',
     'clang_format_key',
     'clang_format_value',
+    'snippet'
 ]
 
 
@@ -28,7 +29,7 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
         with open(file) as istr:
             content = [line.rstrip() for line in istr.readlines()]
         # retrieve title
-        assert is_comment[content[0]]
+        assert is_comment(content[0])
         attrs['title'] = content[0].lstrip('// ')
         # retrieve description
         i = 1
@@ -36,11 +37,12 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
             attrs['description'] += content[i].lstrip('// ') + '\n'
             i += 1
         # eat empty lines
-        while i < len(content) and not content:
+        while i < len(content) and not content[i]:
             i += 1
         # retrieve code snippet
         while i < len(content):
             attrs['snippet'] += content[i] + '\n'
+            i += 1
         basename = osp.splitext(osp.basename(file))[0]
         attrs['clang_format_key'] = basename
         attrs['clang_format_value'] = clang_format[attrs['clang_format_key']]
@@ -61,13 +63,13 @@ def build_documentation(template_str, ostr, **kwargs):
 
 
 def main():
-    with open('code-formatting.md.jinja') as istr:
+    with open('formatting.md.jinja') as istr:
         template_str = istr.read()
-    with open('code-formatting.md', 'w') as ostr:
+    with open('formatting.md', 'w') as ostr:
         build_documentation(
             template_str,
             ostr,
-            conventions=list(load_conventions('code-formatting'))
+            conventions=list(load_conventions('snippets'))
         )
 
 

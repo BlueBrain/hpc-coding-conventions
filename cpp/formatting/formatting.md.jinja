@@ -11,8 +11,9 @@ code formatting rules adopted by BBP HPC team.
 
 {% for conv in conventions %}
 ### {{ conv.title}}
-
-conv.description
+{%- if conv.description %}
+{{ conv.description }}
+{%- endif %}
 
 clang-format: `{{ conv.clang_format_key }}: {{ conv.clang_format_value }}`
 
