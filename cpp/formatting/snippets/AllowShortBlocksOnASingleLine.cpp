@@ -1,3 +1,5 @@
 // Never contract short blocks
 
-if (a) { return; }
+if (a) {
+    return;
+}

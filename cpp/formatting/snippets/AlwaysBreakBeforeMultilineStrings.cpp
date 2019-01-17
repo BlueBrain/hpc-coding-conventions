@@ -1,4 +1,5 @@
 // Break before multiline strings
 
-AAAA = "bbbb"
-  "cccc";
+AAAA =
+    "bbbb"
+    "cccc";

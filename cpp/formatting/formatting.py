@@ -53,7 +53,7 @@ def load_conventions(path):
     with open('.clang-format') as istr:
         clang_format = yaml.load(istr)
     assert osp.isdir(path)
-    for file in glob.glob(path + os.sep + '*.cpp'):
+    for file in sorted(glob.glob(path + os.sep + '*.cpp')):
         yield Convention.from_file(clang_format, file)
 
 
