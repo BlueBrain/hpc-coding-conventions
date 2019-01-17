@@ -1,0 +1,22 @@
+# HPC Team C++ Code Formatting Conventions
+
+This document provides a set of examples that highlights C++
+code formatting rules adopted by BBP HPC team.
+
+## Similar work
+
+* NSE Team also provides [such document](https://bbpteam.epfl.ch/project/spaces/pages/viewpage.action?spaceKey=BBPNSE&title=Code+style)
+
+## Conventions
+
+{% for conv in conventions %}
+### {{ conv.title}}
+
+conv.description
+
+clang-format: `{{ conv.clang_format_key }}: {{ conv.clang_format_value }}`
+
+```cpp
+{{ conv.snippet }}
+```
+{% endfor %}
