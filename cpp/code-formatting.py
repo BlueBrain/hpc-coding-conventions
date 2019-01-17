@@ -16,33 +16,31 @@ CONVENTION_ATTRS = [
     'clang_format_value',
 ]
 
+
 class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
     @staticmethod
     def from_file(clang_format, file):
-        print(file)
+        attrs = dict(description='', snippet='')
+
+        def is_comment(line):
+            return line.startswith('// ')
 
         with open(file) as istr:
-            step = 'title'
-            attrs = {'description': ''}
-            for line in istr:
-                if step == 'title':
-                    assert line.startswith('// ')
-                    attrs['title'] = line[3:].rstrip()
-                    step = 'desc'
-                elif step == 'desc':
-                    if line.startswith('// '):
-                        attrs['description'] += line[3:].rstrip()
-                    elif line.strip():
-                        raise Exception('Expected empty line after description')
-                    else:
-                        step = 'before_snippet'
-                        print(step, line)
-                elif step == 'before_snippet':
-                    if line.strip():
-                        step = 'snippet'
-                if step == 'snippet':
-                    attrs.setdefault('snippet', '')
-                    attrs['snippet'] += line
+            content = [line.rstrip() for line in istr.readlines()]
+        # retrieve title
+        assert is_comment[content[0]]
+        attrs['title'] = content[0].lstrip('// ')
+        # retrieve description
+        i = 1
+        while i < len(content) and is_comment(content[i]):
+            attrs['description'] += content[i].lstrip('// ') + '\n'
+            i += 1
+        # eat empty lines
+        while i < len(content) and not content:
+            i += 1
+        # retrieve code snippet
+        while i < len(content):
+            attrs['snippet'] += content[i] + '\n'
         basename = osp.splitext(osp.basename(file))[0]
         attrs['clang_format_key'] = basename
         attrs['clang_format_value'] = clang_format[attrs['clang_format_key']]
