@@ -1,4 +1,7 @@
 // Put parameters on next line if it does not fit
 
+// current .clang-format does not format like what is described in clang-format
+// documentation. So exclude this snippet for now from documentation
+
 thisIsALongType andAVeryLongFunctionName(the_long_parameter1, the_long_parameter2,
                                          the_long_parameter3, the_long_parameter4)

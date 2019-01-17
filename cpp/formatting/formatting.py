@@ -24,17 +24,20 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
         attrs = dict(description='', snippet='')
 
         def is_comment(line):
-            return line.startswith('// ')
+            return line.startswith('//')
 
         with open(file) as istr:
             content = [line.rstrip() for line in istr.readlines()]
         # retrieve title
         assert is_comment(content[0])
-        attrs['title'] = content[0].lstrip('// ')
-        # retrieve description
+        attrs['title'] = content[0].lstrip('//').lstrip()
         i = 1
+        # eat empty lines
+        while i < len(content) and not content[i]:
+            i += 1
+        # retrieve description
         while i < len(content) and is_comment(content[i]):
-            attrs['description'] += content[i].lstrip('// ') + '\n'
+            attrs['description'] += content[i].lstrip('//').lstrip() + '\n'
             i += 1
         # eat empty lines
         while i < len(content) and not content[i]:
