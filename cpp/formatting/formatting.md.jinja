@@ -1,7 +1,7 @@
-# HPC Team C++ Code Formatting Conventions
+# BlueBrain HPC Team C++ Code Formatting
 
-This document provides a set of examples that highlights C++
-code formatting rules adopted by BBP HPC team.
+This document provides a set of examples to highlight C++
+code formatting conventions adopted by BlueBrain HPC team.
 
 ## Similar work
 
@@ -15,9 +15,10 @@ code formatting rules adopted by BBP HPC team.
 {{ conv.description }}
 {%- endif %}
 
-clang-format: `{{ conv.clang_format_key }}: {{ conv.clang_format_value }}`
-
 ```cpp
 {{ conv.snippet }}
 ```
+{%- if conv.clang_format_key %}
+clang-format: `{{ conv.clang_format_key }}: {{ conv.clang_format_value }}`
+{%- endif %}
 {% endfor %}
