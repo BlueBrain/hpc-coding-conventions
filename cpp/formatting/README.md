@@ -30,8 +30,13 @@ A C++ snippet has the following structure:
 
 // optional *markown* description
 // Multiline description is supported
+// clang-format: KEY: VALUE
+// clang-format: KEY: VALUE
+
 
 template <typename T>
 your cpp(code);
 ```
-If a C++ snippet highlights a particular clang-format configuration key, then it should be named after it.
+
+If a C++ snippet highlights a particular clang-format configuration key, then it should be named after it. Additional Clang-Format key/value
+can be referenced in the C++ snippet directly.

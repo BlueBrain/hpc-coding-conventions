@@ -3,22 +3,26 @@
 This document provides a set of examples to highlight C++
 code formatting conventions adopted by BlueBrain HPC team.
 
-## Similar work
+# Similar work
 
 * NSE Team also provides [such document](https://bbpteam.epfl.ch/project/spaces/pages/viewpage.action?spaceKey=BBPNSE&title=Code+style)
 
-## Conventions
+# Conventions
 
 {% for conv in conventions %}
-### {{ conv.title}}
+## {{ conv.title}}
 {%- if conv.description %}
 {{ conv.description }}
 {%- endif %}
 
+### Example
 ```cpp
 {{ conv.snippet }}
 ```
-{%- if conv.clang_format_key %}
-clang-format: `{{ conv.clang_format_key }}: {{ conv.clang_format_value }}`
+{%- if conv.clang_format %}
+### Clang-Format configuration
 {%- endif %}
+{%- for key, value in conv.clang_format.items() %}
+* `{{ key }}: {{ value }}`
+{%- endfor %}
 {% endfor %}

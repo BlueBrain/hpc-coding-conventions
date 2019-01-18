@@ -12,8 +12,7 @@ import yaml
 CONVENTION_ATTRS = [
     'title',
     'description',
-    'clang_format_key',
-    'clang_format_value',
+    'clang_format',
     'snippet'
 ]
 
@@ -21,10 +20,19 @@ CONVENTION_ATTRS = [
 class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
     @staticmethod
     def from_file(clang_format, file):
-        attrs = dict(description='', snippet='')
+        attrs = dict(description='', snippet='', clang_format={})
 
         def is_comment(line):
             return line.startswith('//')
+
+        def is_cf_data(line):
+            return line.startswith('// clang-format:')
+
+        def get_cf_data(line):
+            line = line[16:].lstrip()
+            fields = [t.strip() for t in line.split(':', 1)]
+            fields[1] = yaml.load(fields[1])
+            return dict([fields])
 
         with open(file) as istr:
             content = [line.rstrip() for line in istr.readlines()]
@@ -37,7 +45,10 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
             i += 1
         # retrieve description
         while i < len(content) and is_comment(content[i]):
-            attrs['description'] += content[i].lstrip('//').lstrip() + '\n'
+            if is_cf_data(content[i]):
+                attrs['clang_format'].update(get_cf_data(content[i]))
+            else:
+                attrs['description'] += content[i].lstrip('//').lstrip() + '\n'
             i += 1
         # eat empty lines
         while i < len(content) and not content[i]:
@@ -49,11 +60,7 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
             i += 1
         basename = osp.splitext(osp.basename(file))[0]
         if basename in clang_format:
-            attrs['clang_format_key'] = basename
-            attrs['clang_format_value'] = clang_format[attrs['clang_format_key']]
-        else:
-            attrs['clang_format_key'] = None
-            attrs['clang_format_value'] = None
+            attrs['clang_format'][basename] =clang_format[basename]
         return Convention(**attrs)
 
 
