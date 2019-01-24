@@ -3,15 +3,21 @@ PANDOC ?= pandoc
 
 SNIPPETS = $(wildcard snippets/*.cpp)
 
-all: formatting.html
+all: README.html
 
-# formatting.html
+clean:
+	$(RM) README.md
+
+distclean: clean
+	$(RM) README.html
+
+# README.html
 .md.html: $<
 	$(PANDOC) -s -S -c github-pandoc.css $< -o $@
-formatting.html: github-pandoc.css
+README.html: github-pandoc.css
 
-# formatting.md
-formatting.md: formatting.md.jinja formatting.py $(SNIPPETS)
+# README.md
+README.md: README.md.jinja formatting.py $(SNIPPETS)
 	@# format snippets that triggered rebuild of target
 	$(foreach snippet,$(filter snippets/%,$?),$(CLANG_FORMAT) -i $(snippet);)
 

@@ -22,6 +22,17 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
     def from_file(clang_format, file):
         attrs = dict(description='', snippet='', clang_format={})
 
+        def jinja_expand(content):
+            template = jinja2.Template(content)
+            return template.render(cf=clang_format)
+
+        def cf_value(key):
+            data = clang_format
+            for key in key.split('.'):
+                if key in data:
+                    data = data[key]
+            return data
+
         def is_comment(line):
             return line.startswith('//')
 
@@ -31,7 +42,10 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
         def get_cf_data(line):
             line = line[16:].lstrip()
             fields = [t.strip() for t in line.split(':', 1)]
-            fields[1] = yaml.load(fields[1])
+            if len(fields) == 1:
+                fields = [fields[0], cf_value(fields[0])]
+            else:
+                fields[1] = yaml.load(fields[1])
             return dict([fields])
 
         with open(file) as istr:
@@ -50,6 +64,8 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
             else:
                 attrs['description'] += content[i].lstrip('//').lstrip() + '\n'
             i += 1
+        attrs['description'] = jinja_expand(attrs['description'])
+
         # eat empty lines
         while i < len(content) and not content[i]:
             i += 1
@@ -59,8 +75,14 @@ class Convention(namedtuple('Convention', CONVENTION_ATTRS)):
                 attrs['snippet'] += content[i] + '\n'
             i += 1
         basename = osp.splitext(osp.basename(file))[0]
-        if basename in clang_format:
-            attrs['clang_format'][basename] =clang_format[basename]
+        data = clang_format
+        for key in basename.split('.'):
+            if key in data:
+                data = data[key]
+            else:
+                break
+        else:
+            attrs['clang_format'][basename] = data
         return Convention(**attrs)
 
 
@@ -78,9 +100,9 @@ def build_documentation(template_str, ostr, **kwargs):
 
 
 def main():
-    with open('formatting.md.jinja') as istr:
+    with open('README.md.jinja') as istr:
         template_str = istr.read()
-    with open('formatting.md', 'w') as ostr:
+    with open('README.md', 'w') as ostr:
         build_documentation(
             template_str,
             ostr,

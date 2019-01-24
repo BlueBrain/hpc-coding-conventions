@@ -1,4 +1,4 @@
-// Horizontally aligns arguments after an open bracket
+// Horizontally align arguments after an open bracket
 
 thisIsAVeryLongMethodName(thisIsTheFirstArgument,
                           andHereIsTheSecondArgument,
