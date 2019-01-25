@@ -24,7 +24,7 @@ README.md: README.md.jinja formatting.py $(SNIPPETS)
 	./formatting.py $< $@
 
 # update all snippets when .clang-format is changed
-$(SNIPPETS): .clang-format
+$(SNIPPETS): ../.clang-format
 	$(CLANG_FORMAT) -i $@
 	touch $@
 
