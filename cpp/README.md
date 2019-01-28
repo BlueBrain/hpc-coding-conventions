@@ -13,6 +13,19 @@ Development Guidelines are split in the following sections:
 * Best Practices
 * Python bindings
 
+## Status
+
+This project in currently under development, and shall not provide the features
+its documentation pretends. Here is a raw summary of the status:
+
+| Feature            | Definition         | Documentation      | Integration | Adoption |
+| ------------------ | ------------------ | ------------------ | ----------- | -------- |
+| ClangFormat        | :heavy_check_mark: | :heavy_check_mark: | WIP         |          |
+| ClangTidy          | WIP                |                    |             |          |
+| Naming Conventions |                    |                    |             |          |
+| Memory Check       |                    |                    |             |          |
+| UT Code Coverage   |                    |                    |             |          |
+
 ## CMake Project
 
 This repository provides a CMake project that allows you to use the tools and the processes described in this document.
