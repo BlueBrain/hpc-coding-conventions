@@ -50,7 +50,7 @@ git submodule update --init --recursive
 
 And in the top `CMakeLists.txt`, simply add:
 ```
-add_subdirectory(hpc-coding-convention/cpp)
+add_subdirectory(hpc-coding-conventions/cpp)
 ```
 
 ### Setup
