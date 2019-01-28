@@ -44,3 +44,5 @@ changes.
 * [pybind11](https://github.com/pybind/pybind11)
   Lightweight header-only library to create Python bindings of existing C++ code.
 * [nlohmann/json](https://github.com/nlohmann/json) JSON for Modern C++
+* [gsl-lite](https://github.com/martinmoene/gsl-lite) A single-file header-only version
+  of ISO C++ Guideline Support Library (GSL)
