@@ -23,6 +23,7 @@ its documentation pretends. Here is a raw summary of the status:
 | ClangFormat        | :heavy_check_mark: | :heavy_check_mark: | WIP         |          |
 | ClangTidy          | WIP                |                    |             |          |
 | Naming Conventions |                    |                    |             |          |
+| Good Practices?    |                    |                    |             |          |
 | Memory Check       |                    |                    |             |          |
 | UT Code Coverage   |                    |                    |             |          |
 
