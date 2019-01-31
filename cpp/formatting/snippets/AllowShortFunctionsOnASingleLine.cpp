@@ -1,8 +1,4 @@
-// Only short methods inside a struct or class can be put in a single line
-
-class Foo {
-    void f() { foo(); }
-};
+// Only empty methods can be put in a single line
 
 void f() {
     foo();
