@@ -128,14 +128,10 @@ case 3: return;  // NOT THIS
 ### Clang-Format configuration
 * `AllowShortCaseLabelsOnASingleLine: False`
 
-## Only short methods inside a struct or class can be put in a single line
+## Only empty methods can be put in a single line
 
 ### Example
 ```cpp
-class Foo {
-    void f() { foo(); }
-};
-
 void f() {
     foo();
 }
@@ -144,7 +140,7 @@ void f() {}
 
 ```
 ### Clang-Format configuration
-* `AllowShortFunctionsOnASingleLine: Inline`
+* `AllowShortFunctionsOnASingleLine: Empty`
 
 ## Conditions
 Break even for simple `if` statement and always put body inside braces.
