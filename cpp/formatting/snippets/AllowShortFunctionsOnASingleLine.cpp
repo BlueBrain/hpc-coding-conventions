@@ -1,7 +1,9 @@
 // Only empty methods can be put in a single line
 
-void f() {
-    foo();
-}
+class Foo {
+  void f() {
+      foo();
+  }
 
-void f() {}
+  void f() {}
+};
