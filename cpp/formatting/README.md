@@ -132,11 +132,13 @@ case 3: return;  // NOT THIS
 
 ### Example
 ```cpp
-void f() {
-    foo();
-}
+class Foo {
+  void f() {
+      foo();
+  }
 
-void f() {}
+  void f() {}
+};
 
 ```
 ### Clang-Format configuration
