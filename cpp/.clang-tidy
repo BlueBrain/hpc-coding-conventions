@@ -2,7 +2,7 @@ Checks: >
   boost-*,
   bugprone-*,
   cert-*,
-  cppcoreguidelines-*,
+  clang-analyzer-core*,
   cppcoreguidelines-*,
   google-*,
   hicpp-*,
@@ -13,9 +13,9 @@ Checks: >
   performance-*,
   portability-*,
   readability-*,
-  -modernize-make-unique,
-  -google-runtime-references,
   -clang-diagnostic-ignored-optimization-argument
+  -google-runtime-references,
+  -modernize-make-unique,
 
 WarningsAsErrors: ''
 AnalyzeTemporaryDtors: false

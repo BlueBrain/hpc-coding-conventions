@@ -21,7 +21,7 @@ its documentation pretends. Here is a raw summary of the status:
 | Feature            | Definition         | Documentation      | Integration | Adoption |
 | ------------------ | ------------------ | ------------------ | ----------- | -------- |
 | ClangFormat        | :heavy_check_mark: | :heavy_check_mark: | WIP         |          |
-| ClangTidy          | WIP                |                    |             |          |
+| ClangTidy          | :heavy_check_mark: |                    |             |          |
 | Naming Conventions |                    |                    |             |          |
 | Documentation      |                    |                    |             |          |
 | Good Practices?    |                    |                    |             |          |
