@@ -15,8 +15,12 @@ find_program(CMakeFormat_EXECUTABLE cmake-format
 mark_as_advanced(CMakeFormat_EXECUTABLE)
 
 if(CMakeFormat_EXECUTABLE)
+  set(prev_pp "$ENV{PYTHONPATH}")
+  set(ENV{PYTHONPATH} "")
   execute_process(COMMAND ${CMakeFormat_EXECUTABLE} --version
                   OUTPUT_VARIABLE CMakeFormat_VERSION)
+  set(ENV{PYTHONPATH} "${prev_pp}")
+  unset(prev_pp)
 
   # Extract version components
   string(REPLACE "."

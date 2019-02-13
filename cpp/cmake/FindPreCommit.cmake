@@ -15,9 +15,14 @@ find_program(PreCommit_EXECUTABLE pre-commit
 mark_as_advanced(PreCommit_EXECUTABLE)
 
 if(PreCommit_EXECUTABLE)
+  set(prev_pp "$ENV{PYTHONPATH}")
+  set(ENV{PYTHONPATH} "")
   execute_process(COMMAND ${PreCommit_EXECUTABLE} --version
                   OUTPUT_VARIABLE full_version_text
                   ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
+  set(ENV{PYTHONPATH} "${prev_pp}")
+  unset(prev_pp)
+
   # full_version_text sample: "pre-commit 1.14.2"
   if(full_version_text MATCHES "^pre-commit .*")
     string(REGEX
