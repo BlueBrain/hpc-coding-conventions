@@ -47,7 +47,7 @@ Optionally, it will also looks for:
 
 You can import this CMake project into your Git repository using a git submodule:
 ```
-git submodule add git@github.com:BlueBrain/hpc-coding-conventions.git
+git submodule add https://github.com/BlueBrain/hpc-coding-conventions.git
 git submodule update --init --recursive
 ```
 
