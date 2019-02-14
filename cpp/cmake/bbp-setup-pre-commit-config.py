@@ -8,8 +8,8 @@ HPC_PRE_COMMITS_REPO_URL = "https://github.com/BlueBrain/hpc-pre-commits"
 DEFAULT_HPC_PRE_COMMIT_REPO = dict(
     repo=HPC_PRE_COMMITS_REPO_URL, rev="master", hooks=[]
 )
-CHECK_CPP_HOOK_ID = "bbp-check-cpp-format"
-CHECK_CMAKE_HOOK_ID = "bbp-check-cmake-format"
+CHECK_CPP_HOOK_ID = "check-clang-format"
+CHECK_CMAKE_HOOK_ID = "check-cmake-format"
 
 
 def str2bool(v):

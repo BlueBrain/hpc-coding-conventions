@@ -66,63 +66,57 @@ This will setup or update git [pre-commit](https://pre-commit.com) hooks of this
 
 #### Code Formatting
 
-Enable CMake variable `BBP_USE_FORMATTING` to activate code formatting of both C++ and CMake files.
-On an existing CMake build directory:
+To activate code formatting of both C++ and CMake files,
+enable CMake variable `${PROJECT}_FORMATTING` where `${PROJECT}` is the name given
+to the CMake `project` function.
 
-`cmake -DBBP_USE_FORMATTING:BOOL=ON .`
+For instance, given a project `foo`:
+
+`cmake -Dfoo_FORMATTING:BOOL=ON <path>`
 
 ##### Usage
 
 This will add the following *make* targets:
 
-* `bbp-cpp-format`: to format C/C++ code
-* `bbp-check-cpp-format`: task fails it at least one C/C++ file has improper format.
+* `clang-format`: to format C/C++ code
+* `check-clang-format`: task fails it at least one C/C++ file has improper format.
 
 ##### Advanced configuration
 
 A list of CMake cache variables can be used to customize code formatting:
 
-* `BBP_ClangFormat_OPTIONS`: additional options given to `clang-format` command.
+* `${PROJECT}_ClangFormat_OPTIONS`: additional options given to `clang-format` command.
   Default value is `""`.
-* `BBP_ClangFormat_FILES_RE`: list of regular expressions matching C/C++ filenames
+* `${PROJECT}_ClangFormat_FILES_RE`: list of regular expressions matching C/C++ filenames
   to format. Default is:<br/>
   `"^.*\\\\.c$$" "^.*\\\\.h$$" "^.*\\\\.cpp$$" "^.*\\\\.hpp$$"`
-* `BBP_ClangFormat_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files from formatting
-  Default value is:<br/>
+* `${PROJECT}_ClangFormat_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
+  from formatting. Default value is:<br/>
   `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
-* `BBP_ClangFormat_DEPENDENCIES`: list of CMake targets to build before
+* `${PROJECT}_ClangFormat_DEPENDENCIES`: list of CMake targets to build before
   formatting C/C++ code. Default value is `""`
 
-Where `BBP_USE_FORMATTING` CMake variable is supposed to be defined by the user,
-these variables are meant to be overridden inside CMake project directly.
-
-Those are CMake CACHE variables whose value must be forced.
+Where `${PROJECT}_FORMATTING` CMake variable is supposed to be defined by the user,
+the variables above are meant to be overridden inside CMake project directly.
+They are CMake CACHE variables whose value must be forced.
 For instance, to ignore code of third-parties located in `ext/` subdirectory,
 add this to your CMake project:
 
 ```cmake
 set(
-  BBP_ClangFormat_EXCLUDES_RE "${PROJECT_SOURCE_DIR}/ext/.*$$"
+  foo_ClangFormat_EXCLUDES_RE "${PROJECT_SOURCE_DIR}/ext/.*$$"
   CACHE STRING "list of regular expressions to exclude C/C++ files from formatting"
   FORCE)
 ```
 
 #### Pre-Commit
 
-Enable CMake variable `BBP_USE_PRECOMMIT` to enable automatic checks before git commits
+Enable CMake variable `${PROJECT}_PRECOMMIT` to enable automatic checks before git commits.
 
-`cmake -DBBP_USE_PRECOMMIT:BOOL=ON .`
+For instance, given a project `foo`:
 
-if `BBP_USE_FORMATTING` CMake variable is enabled, when performing a git commit,
-a serie of checks will be automatically executed to ensure that your change
-complies with the C++ guideline. It will be discarded otherwise.
+`cmake -Dfoo_PRECOMMIT:BOOL=ON <path>`
 
-##### Configuration
-
-You can control both behavior and configuration
-of this CMake project through CMake variables, among them:
-
-* `BBP_USE_CLANG_FORMAT`: to enable helpers to keep your code properly formatted.
-* `BBP_USE_CLANG_TIDY`: to enable static analysis at compile time.
-  This feature requires CMake 3.8 or higher.
-* `BBP_USE_CODE_COVERAGE`: to enable tests code coverage.
+if `${PROJECT}_FORMATTING` CMake variable is enabled, when performing a git commit,
+a serie of checks will be executed to ensure that your change
+complies with the coding conventions. It will be discarded otherwise.
