@@ -60,6 +60,20 @@ if(ClangFormat_EXECUTABLE)
                    "\\1"
                    ClangFormat_VERSION
                    "${ClangFormat_version}")
+  elseif(ClangFormat_version MATCHES "  LLVM version .*$")
+    # ClangFormat_version sample:
+    # --- 8< ---
+    # LLVM (http://llvm.org/): LLVM version 3.4.2 Optimized build. Built Dec  7
+    # 2015 (09:37:36). Default target: x86_64-redhat-linux-gnu Host CPU: x86-64
+    # --- >8 ---
+    string(REGEX
+           REPLACE ".* LLVM version ([.0-9]+).*"
+                   "\\1"
+                   ClangFormat_VERSION
+                   "${ClangFormat_version}")
+  endif()
+
+  if(ClangFormat_VERSION)
     # ClangFormat_VERSION sample: "3.9.1"
 
     # Extract version components
@@ -87,8 +101,11 @@ if(ClangFormat_EXECUTABLE)
   unset(ClangFormat_version)
 endif()
 
-if(ClangFormat_EXECUTABLE)
-  set(ClangFormat_FOUND TRUE)
-else()
-  set(ClangFormat_FOUND FALSE)
-endif()
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(ClangFormat
+                                  FOUND_VAR
+                                  ClangFormat_FOUND
+                                  REQUIRED_VARS
+                                  ClangFormat_EXECUTABLE
+                                  VERSION_VAR
+                                  ClangFormat_VERSION)
