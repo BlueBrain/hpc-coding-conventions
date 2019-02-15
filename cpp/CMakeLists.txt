@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.12)
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} PARENT_SCOPE)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON PARENT_SCOPE)
@@ -135,9 +133,11 @@ bob_option(${PROJECT_NAME}_PRECOMMIT
            "Enable automatic checks before git commits" OFF)
 
 if(${PROJECT_NAME}_FORMATTING)
+  cmake_minimum_required(VERSION 3.12)
   bbp_enable_formatting()
 endif(${PROJECT_NAME}_FORMATTING)
 
 if(${PROJECT_NAME}_PRECOMMIT)
+  cmake_minimum_required(VERSION 3.12)
   bbp_enable_precommit()
 endif(${PROJECT_NAME}_PRECOMMIT)
