@@ -29,10 +29,9 @@
 # endif()
 # ~~~
 
-if (ClangFormat_FIND_VERSION AND ClangFormat_FIND_VERSION_EXACT)
+if(ClangFormat_FIND_VERSION AND ClangFormat_FIND_VERSION_EXACT)
   find_program(ClangFormat_EXECUTABLE
-               NAMES clang-format-${ClangFormat_FIND_VERSION}
-                     clang-format
+               NAMES clang-format-${ClangFormat_FIND_VERSION} clang-format
                DOC "clang-format executable")
 else()
   find_program(ClangFormat_EXECUTABLE

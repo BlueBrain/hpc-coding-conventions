@@ -20,8 +20,8 @@ its documentation pretends. Here is a raw summary of the status:
 
 | Feature               | Definition         | Documentation      | Integration        | Adoption |
 | --------------------- | ------------------ | ------------------ | ------------------ | -------- |
-| ClangFormat           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |          |
-| ClangTidy             | :heavy_check_mark: |                    |                    |          |
+| ClangFormat           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | WIP         |
+| ClangTidy             | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |          |
 | Naming Conventions    |                    |                    |                    |          |
 | Writing Documentation |                    |                    |                    |          |
 | Good Practices        |                    |                    |                    |          |
@@ -109,14 +109,47 @@ set(
   FORCE)
 ```
 
+#### Static Analysis
+
+To activate static analysis of C++ files with clang-tidy, enable
+the CMake variable `${PROJECT}_STATIC_ANALYSIS` where `${PROJECT}` is the name
+given to the CMake `project` function.
+
+For instance, given a project `foo`:
+
+`cmake -DFoo_STATIC_ANALYSIS:BOOL=ON <path>`
+
+##### Usage
+
+This will provide a `clang-tidy` *make* target that will perform static analysis
+of all C++ files. Target fails as soon as one defect is detected among the files.
+
+It will also activate static analysis report during the compilation phase.
+
+##### Advanced configuration
+
+A list of CMake cache variables can be used to customize static analysis:
+
+* `${PROJECT}_ClangTidy_OPTIONS`: additional options given to `clang-tidy` command.
+  Default value is `""`.
+* `${PROJECT}_ClangTidy_FILES_RE`: list of regular expressions matching C/C++ filenames
+  to check. Default is:<br/>
+  `"^.*\\\\.c$$" "^.*\\\\.h$$" "^.*\\\\.cpp$$" "^.*\\\\.hpp$$"`
+* `${PROJECT}_ClangTidy_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
+  from static analysis. Default value is:<br/>
+  `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
+* `${PROJECT}_ClangTidy_DEPENDENCIES`: list of CMake targets to build before
+  check C/C++ code. Default value is `""`
+
 #### Pre-Commit
 
-Enable CMake variable `${PROJECT}_PRECOMMIT` to enable automatic checks before git commits.
+Enable CMake variable `${PROJECT}_PRECOMMIT` to enable automatic checks
+before git commits.
 
 For instance, given a project `foo`:
 
 `cmake -Dfoo_PRECOMMIT:BOOL=ON <path>`
 
-if `${PROJECT}_FORMATTING` CMake variable is enabled, when performing a git commit,
-a serie of checks will be executed to ensure that your change
+if `${PROJECT}_FORMATTING` CMake variable is enabled, when performing a git
+commit, a succession of checks will be executed to ensure that your change
 complies with the coding conventions. It will be discarded otherwise.

@@ -8,8 +8,9 @@ HPC_PRE_COMMITS_REPO_URL = "https://github.com/BlueBrain/hpc-pre-commits"
 DEFAULT_HPC_PRE_COMMIT_REPO = dict(
     repo=HPC_PRE_COMMITS_REPO_URL, rev="master", hooks=[]
 )
-CHECK_CPP_HOOK_ID = "check-clang-format"
-CHECK_CMAKE_HOOK_ID = "check-cmake-format"
+CHECK_CLANG_FORMAT_HOOK_ID = "check-clang-format"
+CHECK_CMAKE_FORMAT_HOOK_ID = "check-cmake-format"
+CHECK_CLANG_TIDY_HOOK_ID = "clang-tidy"
 
 
 def str2bool(v):
@@ -34,6 +35,11 @@ def _parse_cli(args=None):
     parser.add_argument(
         "--cmake-format", type=str2bool, help="Enable CMake files code formatting check"
     )
+    parser.add_argument(
+        "--clang-tidy",
+        type=str2bool,
+        help="Enable static-analysis check with Clang Tidy",
+    )
     parser.add_argument("source_dir", help="CMake source directory")
     parser.add_argument("build_dir", help="CMake binary directory")
     return parser.parse_args(args=args)
@@ -51,7 +57,7 @@ def get_or_set_bbp_pre_commit_repo(config):
     return bbp_repo
 
 
-def add_hook(repo, new_hook):
+def enable_hook(repo, new_hook):
     for hook in repo["hooks"]:
         if (hook["id"], hook.get("name")) == (new_hook["id"], new_hook.get("name")):
             hook.update(**new_hook)
@@ -60,8 +66,8 @@ def add_hook(repo, new_hook):
         repo["hooks"].append(new_hook)
 
 
-def add_cmake_hook(repo, build_dir, target):
-    add_hook(
+def enable_cmake_hook(repo, build_dir, target):
+    enable_hook(
         repo,
         dict(
             id="hpc-pc-cmake-build",
@@ -78,26 +84,6 @@ def disable_cmake_hook(repo, hook_id):
             break
 
 
-def enable_clang_format_check(config, build_dir):
-    repo = get_or_set_bbp_pre_commit_repo(config)
-    add_cmake_hook(repo, build_dir, CHECK_CPP_HOOK_ID)
-
-
-def enable_cmake_format_check(config, build_dir):
-    repo = get_or_set_bbp_pre_commit_repo(config)
-    add_cmake_hook(repo, build_dir, CHECK_CMAKE_HOOK_ID)
-
-
-def disable_clang_format_check(config):
-    repo = get_or_set_bbp_pre_commit_repo(config)
-    disable_cmake_hook(repo, CHECK_CPP_HOOK_ID)
-
-
-def disable_cmake_format_check(config):
-    repo = get_or_set_bbp_pre_commit_repo(config)
-    disable_cmake_hook(repo, CHECK_CMAKE_HOOK_ID)
-
-
 def main(**kwargs):
     args = _parse_cli(**kwargs)
     PRE_COMMIT_CONFIG = osp.join(args.source_dir, ".pre-commit-config.yaml")
@@ -105,15 +91,21 @@ def main(**kwargs):
         config = {}
     else:
         with open(PRE_COMMIT_CONFIG) as istr:
-            config = yaml.load(istr)
+            config = yaml.load(istr) or {}
+
+    repo = get_or_set_bbp_pre_commit_repo(config)
     if args.clang_format:
-        enable_clang_format_check(config, args.build_dir)
+        enable_cmake_hook(repo, args.build_dir, CHECK_CLANG_FORMAT_HOOK_ID)
     else:
-        disable_clang_format_check(config)
+        disable_cmake_hook(repo, CHECK_CLANG_FORMAT_HOOK_ID)
     if args.cmake_format:
-        enable_cmake_format_check(config, args.build_dir)
+        enable_cmake_hook(repo, args.build_dir, CHECK_CMAKE_FORMAT_HOOK_ID)
     else:
-        disable_cmake_format_check(config)
+        disable_cmake_hook(repo, CHECK_CMAKE_FORMAT_HOOK_ID)
+    if args.clang_tidy:
+        enable_cmake_hook(repo, args.build_dir, CHECK_CLANG_TIDY_HOOK_ID)
+    else:
+        disable_cmake_hook(repo, CHECK_CLANG_TIDY_HOOK_ID)
     with open(PRE_COMMIT_CONFIG, "w") as ostr:
         yaml.dump(config, ostr, default_flow_style=False)
 

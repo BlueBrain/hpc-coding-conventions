@@ -13,11 +13,11 @@ Checks: >
   performance-*,
   portability-*,
   readability-*,
-  -clang-diagnostic-ignored-optimization-argument
+  -clang-diagnostic-ignored-optimization-argument,
   -google-runtime-references,
   -modernize-make-unique,
 
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none
 

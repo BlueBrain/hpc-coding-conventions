@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-import argparse
 import contextlib
 import filecmp
 import functools
@@ -8,10 +7,11 @@ import logging
 import os
 import os.path as osp
 import re
-import shlex
 import subprocess
 import sys
 import tempfile
+
+from cpplib import log_command, parse_cli
 
 
 def _build_excluded_dirs():
@@ -82,34 +82,6 @@ def collect_files(cmake_source_dir, cmake_binary_dir, excludes_re, cmake_files_r
                                 yield p
 
 
-def _parse_cli(args=None):
-    parser = argparse.ArgumentParser(description="Ensure CMake files formatting")
-    parser.add_argument(
-        "-S", dest="source_dir", metavar="PATH", help="Path to CMake source directory"
-    )
-    parser.add_argument(
-        "-B", dest="build_dir", metavar="PATH", help="Path to CMake build directory"
-    )
-    parser.add_argument("--cmake-format", help="Path to cmake-format executable")
-    parser.add_argument("--options", nargs="*", help="Options given to cmake-format")
-    parser.add_argument(
-        "--excludes-re",
-        nargs="*",
-        help="list of regular expressions of CMake files to exclude",
-    )
-    parser.add_argument(
-        "--files-re",
-        nargs="*",
-        help="List of regular expressions of CMake files to include",
-    )
-    parser.add_argument("action", choices=["check", "format"])
-    return parser.parse_args(args=args)
-
-
-def log_command(cmd):
-    logging.info(" ".join([shlex.quote(e) for e in cmd]))
-
-
 def do_format(cmake_file, cmake_format, options):
     cmd = [cmake_format] + options
     if "-i" not in options and "--in-place" not in options:
@@ -153,18 +125,18 @@ def build_action_func(args):
 
 
 def main(**kwargs):
-    args = _parse_cli(**kwargs)
+    args = parse_cli(compile_commands=False, **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
         succeeded = True
         for cmake_file in collect_files(
-            args.source_dir, args.build_dir, excludes_re, files_re
+            args.source_dir, args.binary_dir, excludes_re, files_re
         ):
-            succeeded &= action(cmake_file, args.cmake_format, args.options)
+            succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logging.basicConfig(level=logging.WARN, format="%(message)s")
     sys.exit(0 if main() else 1)
