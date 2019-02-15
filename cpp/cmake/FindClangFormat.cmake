@@ -29,21 +29,28 @@
 # endif()
 # ~~~
 
-find_program(ClangFormat_EXECUTABLE
-             NAMES clang-format
-                   clang-format-8
-                   clang-format-7
-                   clang-format-6.0
-                   clang-format-5.0
-                   clang-format-4.0
-                   clang-format-3.9
-                   clang-format-3.8
-                   clang-format-3.7
-                   clang-format-3.6
-                   clang-format-3.5
-                   clang-format-3.4
-                   clang-format-3.3
-             DOC "clang-format executable")
+if (ClangFormat_FIND_VERSION AND ClangFormat_FIND_VERSION_EXACT)
+  find_program(ClangFormat_EXECUTABLE
+               NAMES clang-format-${ClangFormat_FIND_VERSION}
+                     clang-format
+               DOC "clang-format executable")
+else()
+  find_program(ClangFormat_EXECUTABLE
+               NAMES clang-format
+                     clang-format-8
+                     clang-format-7
+                     clang-format-6.0
+                     clang-format-5.0
+                     clang-format-4.0
+                     clang-format-3.9
+                     clang-format-3.8
+                     clang-format-3.7
+                     clang-format-3.6
+                     clang-format-3.5
+                     clang-format-3.4
+                     clang-format-3.3
+               DOC "clang-format executable")
+endif()
 mark_as_advanced(ClangFormat_EXECUTABLE)
 
 # Extract version from command "clang-format -version"
