@@ -20,7 +20,8 @@ if(CMakeFormat_EXECUTABLE)
   set(ENV{PYTHONHOME} "")
   set(ENV{PYTHONPATH} "")
   execute_process(COMMAND ${CMakeFormat_EXECUTABLE} --version
-                  OUTPUT_VARIABLE CMakeFormat_VERSION)
+                  OUTPUT_VARIABLE CMakeFormat_VERSION
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
   set(ENV{PYTHONHOME} "${prev_ph}")
   set(ENV{PYTHONPATH} "${prev_pp}")
   unset(prev_pp)
