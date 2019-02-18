@@ -1,20 +1,17 @@
 function(bob_always_full_rpath)
   # CMake RPATH "always full" configuration, see:
-  # https://cmake.org/Wiki/CMake_RPATH_handling#Always_full_RPATH use, i.e.
-  # don't skip the full RPATH for the build tree
+  # https://cmake.org/Wiki/CMake_RPATH_handling#Always_full_RPATH use, i.e. don't skip the full
+  # RPATH for the build tree
   set(CMAKE_SKIP_BUILD_RPATH False PARENT_SCOPE)
-  # when building, don't use the install RPATH already (but later on when
-  # installing)
+  # when building, don't use the install RPATH already (but later on when installing)
   set(CMAKE_BUILD_WITH_INSTALL_RPATH False PARENT_SCOPE)
-  # the RPATH to be used when installing, but only if it's not a system
-  # directory
-  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES
-            "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+  # the RPATH to be used when installing, but only if it's not a system directory
+  list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
   if("${isSystemDir}" STREQUAL "-1")
     set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" PARENT_SCOPE)
   endif()
-  # add the automatically determined parts of the RPATH which point to
-  # directories outside the build tree to the install RPATH
+  # add the automatically determined parts of the RPATH which point to directories outside the build
+  # tree to the install RPATH
   set(CMAKE_INSTALL_RPATH_USE_LINK_PATH True PARENT_SCOPE)
 endfunction(bob_always_full_rpath)
 
@@ -58,8 +55,7 @@ macro(bob_begin_package)
   option(USE_XSDK_DEFAULTS "enable the XDSK v0.3.0 default configuration" OFF)
   bob_cmake_arg(USE_XSDK_DEFAULTS BOOL OFF)
   if(NOT MEMORYCHECK_COMMAND)
-    # try to force BUILD_TESTING to be OFF by default if memory check is not
-    # activated
+    # try to force BUILD_TESTING to be OFF by default if memory check is not activated
     set(BUILD_TESTING OFF CACHE BOOL "Build and run tests")
   endif()
   include(CTest)
@@ -80,8 +76,7 @@ macro(bob_begin_package)
   bob_cmake_arg(BUILD_SHARED_LIBS BOOL ON)
   bob_cmake_arg(CMAKE_INSTALL_PREFIX PATH "")
   option(${PROJECT_NAME}_NORMAL_CXX_FLAGS
-         "Allow CMAKE_CXX_FLAGS to follow \"normal\" CMake behavior"
-         ${USE_XSDK_DEFAULTS})
+         "Allow CMAKE_CXX_FLAGS to follow \"normal\" CMake behavior" ${USE_XSDK_DEFAULTS})
 endmacro(bob_begin_package)
 
 function(bob_get_commit)
@@ -120,10 +115,8 @@ function(bob_get_semver)
         set(SEMVER "${SEMVER}-sha.${SHORT_SHA1}")
       endif()
     else()
-      message(
-        FATAL_ERROR
-          "bob_get_semver needs either ${PROJECT_NAME}_VERSION or a Git tag\n"
-          ${TAG_ERROR})
+      message(FATAL_ERROR "bob_get_semver needs either ${PROJECT_NAME}_VERSION or a Git tag\n"
+                          ${TAG_ERROR})
     endif()
   else()
     if(TAG_NAME MATCHES "^v([0-9]+[.])?([0-9]+[.])?([0-9]+)$")
@@ -131,8 +124,7 @@ function(bob_get_semver)
                        1
                        -1
                        SEMVER)
-      if(${PROJECT_NAME}_VERSION
-         AND (NOT (SEMVER VERSION_EQUAL ${PROJECT_NAME}_VERSION)))
+      if(${PROJECT_NAME}_VERSION AND (NOT (SEMVER VERSION_EQUAL ${PROJECT_NAME}_VERSION)))
         message(
           FATAL_ERROR
             "bob_get_semver: tag is ${TAG_NAME} but ${PROJECT_NAME}_VERSION=${${PROJECT_NAME}_VERSION} !"
@@ -144,8 +136,7 @@ function(bob_get_semver)
       else()
         message(
           FATAL_ERROR
-            "bob_get_semver needs either ${PROJECT_NAME}_VERSION or a Git tag of the form v1.2.3"
-          )
+            "bob_get_semver needs either ${PROJECT_NAME}_VERSION or a Git tag of the form v1.2.3")
       endif()
     endif()
   endif()
@@ -178,10 +169,8 @@ function(bob_begin_cxx_flags)
     bob_cmake_arg(${PROJECT_NAME}_CXX_SYMBOLS BOOL ON)
     set(${PROJECT_NAME}_ARCH "" CACHE STRING "Argument to -march or -arch")
     bob_cmake_arg(${PROJECT_NAME}_ARCH STRING "native")
-    # CDash's simple output parser interprets the variable name WARNINGS as a
-    # warning...
-    message(
-      STATUS "${PROJECT_NAME}_CXX_W**NINGS: ${${PROJECT_NAME}_CXX_WARNINGS}")
+    # CDash's simple output parser interprets the variable name WARNINGS as a warning...
+    message(STATUS "${PROJECT_NAME}_CXX_W**NINGS: ${${PROJECT_NAME}_CXX_WARNINGS}")
     bob_cmake_arg2(${PROJECT_NAME}_CXX_WARNINGS BOOL ON)
     set(FLAGS "")
     if(${PROJECT_NAME}_CXX_OPTIMIZE)
@@ -281,11 +270,9 @@ function(bob_end_cxx_flags)
     message(STATUS "CMAKE_CXX_FLAGS: ${BOB_CMAKE_CXX_FLAGS}")
     set(CMAKE_CXX_FLAGS "${BOB_CMAKE_CXX_FLAGS}" PARENT_SCOPE)
   else()
-    set(${PROJECT_NAME}_CXX_FLAGS ""
-        CACHE STRING "Override all C++ compiler flags")
+    set(${PROJECT_NAME}_CXX_FLAGS "" CACHE STRING "Override all C++ compiler flags")
     bob_cmake_arg(${PROJECT_NAME}_CXX_FLAGS STRING "")
-    set(${PROJECT_NAME}_EXTRA_CXX_FLAGS ""
-        CACHE STRING "Extra C++ compiler flags")
+    set(${PROJECT_NAME}_EXTRA_CXX_FLAGS "" CACHE STRING "Extra C++ compiler flags")
     bob_cmake_arg(${PROJECT_NAME}_EXTRA_CXX_FLAGS STRING "")
     set(FLAGS "${CMAKE_CXX_FLAGS}")
     if(${PROJECT_NAME}_CXX_FLAGS)
@@ -302,17 +289,12 @@ macro(bob_add_dependency)
   set(options PUBLIC PRIVATE)
   set(oneValueArgs NAME)
   set(multiValueArgs COMPONENTS TARGETS INCLUDE_DIR_VARS LIBRARY_VARS)
-  cmake_parse_arguments(ARG
-                        "${options}"
-                        "${oneValueArgs}"
-                        "${multiValueArgs}"
-                        ${ARGN})
+  cmake_parse_arguments(ARG "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARG_NAME)
     message(FATAL_ERROR "bob_add_dependency: no NAME argument given")
   endif()
   if(ARG_PUBLIC AND ARG_PRIVATE)
-    message(
-      FATAL_ERROR "bob_add_dependency: can't specify both PUBLIC and PRIVATE")
+    message(FATAL_ERROR "bob_add_dependency: can't specify both PUBLIC and PRIVATE")
   endif()
   if(ARG_COMPONENTS)
     set(ARG_COMPONENTS COMPONENTS ${ARG_COMPONENTS})
@@ -320,26 +302,22 @@ macro(bob_add_dependency)
   if(USE_XSDK_DEFAULTS)
     option(TPL_ENABLE_${ARG_NAME} "Whether to use ${ARG_NAME}"
            "${${PROJECT_NAME}_USE_${ARG_NAME}_DEFAULT}")
-    bob_cmake_arg(TPL_ENABLE_${ARG_NAME} BOOL
-                  "${${PROJECT_NAME}_USE_${ARG_NAME}_DEFAULT}")
+    bob_cmake_arg(TPL_ENABLE_${ARG_NAME} BOOL "${${PROJECT_NAME}_USE_${ARG_NAME}_DEFAULT}")
     set(${PROJECT_NAME}_USE_${ARG_NAME} "${TPL_ENABLE_${ARG_NAME}}")
     if(TPL_ENABLE_${ARG_NAME})
       set(TPL_${ARG_NAME}_LIBRARIES "" CACHE STRING "${ARG_NAME} libraries")
       bob_cmake_arg(TPL_${ARG_NAME}_LIBRARIES STRING "")
-      set(TPL_${ARG_NAME}_INCLUDE_DIRS ""
-          CACHE STRING "${ARG_NAME} include directories")
+      set(TPL_${ARG_NAME}_INCLUDE_DIRS "" CACHE STRING "${ARG_NAME} include directories")
       bob_cmake_arg(TPL_${ARG_NAME}_INCLUDE_DIRS STRING "")
       set(tgt "${PROJECT_NAME}-${ARG_NAME}")
       add_library(${tgt} INTERFACE)
-      target_include_directories(${tgt}
-                                 INTERFACE "${TPL_${ARG_NAME}_INCLUDE_DIRS}")
+      target_include_directories(${tgt} INTERFACE "${TPL_${ARG_NAME}_INCLUDE_DIRS}")
       target_link_libraries(${tgt} INTERFACE "${TPL_${ARG_NAME}_LIBRARIES}")
     endif()
   else()
     option(${PROJECT_NAME}_USE_${ARG_NAME} "Whether to use ${ARG_NAME}"
            ${${PROJECT_NAME}_USE_${ARG_NAME}_DEFAULT})
-    bob_cmake_arg(${PROJECT_NAME}_USE_${ARG_NAME} BOOL
-                  "${${PROJECT_NAME}_USE_${ARG_NAME}_DEFAULT}")
+    bob_cmake_arg(${PROJECT_NAME}_USE_${ARG_NAME} BOOL "${${PROJECT_NAME}_USE_${ARG_NAME}_DEFAULT}")
     if(${PROJECT_NAME}_USE_${ARG_NAME})
       set(${ARG_NAME}_PREFIX "${${ARG_NAME}_PREFIX_DEFAULT}"
           CACHE PATH "${ARG_NAME} install directory")
@@ -386,8 +364,7 @@ macro(bob_add_dependency)
               ARCHIVE DESTINATION lib
               RUNTIME DESTINATION lib)
       install(EXPORT ${tgt}-target DESTINATION lib/cmake/${PROJECT_NAME})
-      set(${PROJECT_NAME}_EXPORTED_TARGETS ${${PROJECT_NAME}_EXPORTED_TARGETS}
-          ${tgt})
+      set(${PROJECT_NAME}_EXPORTED_TARGETS ${${PROJECT_NAME}_EXPORTED_TARGETS} ${tgt})
       if(ARG_PUBLIC)
         set(${PROJECT_NAME}_DEPS ${${PROJECT_NAME}_DEPS} ${ARG_NAME})
       endif()
@@ -411,13 +388,9 @@ endmacro(bob_public_dep)
 
 function(bob_target_includes lib_name)
   # find local headers even with #include <>
-  target_include_directories(
-    ${lib_name}
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+  target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
   # find generated configuration headers
-  target_include_directories(
-    ${lib_name}
-    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
+  target_include_directories(${lib_name} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>)
 endfunction(bob_target_includes)
 
 function(bob_library_includes lib_name)
@@ -447,8 +420,7 @@ function(bob_export_target tgt_name)
 endfunction(bob_export_target)
 
 macro(bob_end_subdir)
-  set(${PROJECT_NAME}_EXPORTED_TARGETS ${${PROJECT_NAME}_EXPORTED_TARGETS}
-      PARENT_SCOPE)
+  set(${PROJECT_NAME}_EXPORTED_TARGETS ${${PROJECT_NAME}_EXPORTED_TARGETS} PARENT_SCOPE)
   set(${PROJECT_NAME}_DEPS ${${PROJECT_NAME}_DEPS} PARENT_SCOPE)
   set(${PROJECT_NAME}_DEP_PREFIXES ${${PROJECT_NAME}_DEP_PREFIXES} PARENT_SCOPE)
 endmacro(bob_end_subdir)
@@ -528,12 +500,7 @@ function(bob_get_link_libs tgt var)
         endif()
       endif()
       if(subtgt_type MATCHES "UNKNOWN_LIBRARY")
-        foreach(prop
-                in
-                ITEMS
-                IMPORTED_LOCATION
-                IMPORTED_LOCATION_RELEASE
-                IMPORTED_LOCATION_DEBUG)
+        foreach(prop in ITEMS IMPORTED_LOCATION IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION_DEBUG)
           get_target_property(sublibtgt_import_loc "${lib}" ${prop})
           if(sublibtgt_import_loc)
             set(link_libs ${link_libs} ${sublibtgt_import_loc})
@@ -567,16 +534,14 @@ function(bob_install_provenance)
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_${lang}_compile_line.txt
         "${CMAKE_${lang}_COMPILER} ${CMAKE_${lang}_FLAGS} ${CMAKE_${lang}_FLAGS_${build_type_upper}}"
       )
-    install(
-      FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_${lang}_compile_line.txt
-      DESTINATION lib/cmake/${PROJECT_NAME})
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_${lang}_compile_line.txt
+            DESTINATION lib/cmake/${PROJECT_NAME})
   endforeach()
   foreach(tgt IN LISTS ${PROJECT_NAME}_EXPORTED_TARGETS)
     get_target_property(tgt_type "${tgt}" TYPE)
     if(tgt_type MATCHES "STATIC_LIBRARY|SHARED_LIBRARY")
       bob_get_link_libs(${tgt} link_libs)
-      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_${tgt}_libs.txt
-                 "${link_libs}")
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_${tgt}_libs.txt "${link_libs}")
       install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}_${tgt}_libs.txt
               DESTINATION lib/cmake/${PROJECT_NAME})
     endif()
@@ -666,12 +631,10 @@ set(${KEY_${TYPE}} \"${val}\")")
   install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
           DESTINATION lib/cmake/${PROJECT_NAME})
   if(PROJECT_VERSION)
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-               "${CONFIG_CONTENT}")
-    write_basic_package_version_file(
-      ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-      VERSION ${PROJECT_VERSION}
-      COMPATIBILITY SameMajorVersion)
+    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake "${CONFIG_CONTENT}")
+    write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+                                     VERSION ${PROJECT_VERSION}
+                                     COMPATIBILITY SameMajorVersion)
     install(FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
             DESTINATION lib/cmake/${PROJECT_NAME})
   endif()

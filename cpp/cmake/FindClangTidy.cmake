@@ -1,5 +1,4 @@
-# (based on https://github.com/BlueBrain/git-cmake-
-# format/blob/master/FindClangFormat.cmake)
+# (based on https://github.com/BlueBrain/git-cmake- format/blob/master/FindClangFormat.cmake)
 # ---------------
 # .rst: FindClangTidy
 # ---------------

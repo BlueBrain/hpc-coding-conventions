@@ -7,14 +7,10 @@
 # * ``ClangFormat_EXECUTABLE`` Path to clang-format executable.
 # * ``ClangFormat_FOUND`` True if clang-format executable was found.
 # * ``ClangFormat_VERSION`` The version of clang-format found.
-# * ``ClangFormat_VERSION_MAJOR`` The clang-format major version if specified, 0
-#   otherwise
-# * ``ClangFormat_VERSION_MINOR`` The clang-format minor version if specified, 0
-#   otherwise
-# * ``ClangFormat_VERSION_PATCH`` The clang-format patch version if specified, 0
-#   otherwise
-# * ``ClangFormat_VERSION_COUNT`` Number of version components reported by
-#   clang-format
+# * ``ClangFormat_VERSION_MAJOR`` The clang-format major version if specified, 0 otherwise
+# * ``ClangFormat_VERSION_MINOR`` The clang-format minor version if specified, 0 otherwise
+# * ``ClangFormat_VERSION_PATCH`` The clang-format patch version if specified, 0 otherwise
+# * ``ClangFormat_VERSION_COUNT`` Number of version components reported by clang-format
 #
 # Example usage:
 #
@@ -69,8 +65,8 @@ if(ClangFormat_EXECUTABLE)
   elseif(ClangFormat_version MATCHES "  LLVM version .*$")
     # ClangFormat_version sample:
     # --- 8< ---
-    # LLVM (http://llvm.org/): LLVM version 3.4.2 Optimized build. Built Dec  7
-    # 2015 (09:37:36). Default target: x86_64-redhat-linux-gnu Host CPU: x86-64
+    # LLVM (http://llvm.org/): LLVM version 3.4.2 Optimized build. Built Dec  7 2015 (09:37:36).
+    # Default target: x86_64-redhat-linux-gnu Host CPU: x86-64
     # --- >8 ---
     string(REGEX
            REPLACE ".* LLVM version ([.0-9]+).*"

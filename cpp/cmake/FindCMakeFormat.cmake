@@ -10,8 +10,7 @@
 # * ``CMakeFormat_VERSION_MINOR`` The cmake-format minor version
 # * ``CMakeFormat_VERSION_PATCH`` The cmake-format patch version
 #
-find_program(CMakeFormat_EXECUTABLE cmake-format
-             DOC "Path to cmake formatter executable")
+find_program(CMakeFormat_EXECUTABLE cmake-format DOC "Path to cmake formatter executable")
 mark_as_advanced(CMakeFormat_EXECUTABLE)
 
 if(CMakeFormat_EXECUTABLE)

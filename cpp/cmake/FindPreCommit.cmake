@@ -10,8 +10,7 @@
 # * ``PreCommit_VERSION_MINOR`` The pre-commit minor version
 # * ``PreCommit_VERSION_PATCH`` The pre-commit patch version
 #
-find_program(PreCommit_EXECUTABLE pre-commit
-             DOC "Path to pre-commit Python utility")
+find_program(PreCommit_EXECUTABLE pre-commit DOC "Path to pre-commit Python utility")
 mark_as_advanced(PreCommit_EXECUTABLE)
 
 if(PreCommit_EXECUTABLE)
