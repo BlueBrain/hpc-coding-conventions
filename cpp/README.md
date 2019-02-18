@@ -51,6 +51,9 @@ git submodule add https://github.com/BlueBrain/hpc-coding-conventions.git
 git submodule update --init --recursive
 ```
 
+Note: if your project already has a `cmake` sub-directory, it is recommended to create the
+submodule in this directory instead of top-level.
+
 Then simply add the following line in the top `CMakeLists.txt`, after your project
 declaration:
 ```
@@ -59,7 +62,7 @@ project(mylib CXX)
 add_subdirectory(hpc-coding-conventions/cpp)
 ```
 
-After cloning of updating this git submodule, run CMake to take benefits of the latest changes.
+After cloning or updating this git submodule, run CMake to take benefits of the latest changes.
 This will setup or update git [pre-commit](https://pre-commit.com) hooks of this repository.
 
 ### Usage
