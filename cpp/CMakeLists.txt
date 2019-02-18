@@ -17,6 +17,17 @@ function(bbp_enable_precommit)
   add_custom_target(git-pre-commits ${PreCommit_EXECUTABLE} run --all-files)
 endfunction(bbp_enable_precommit)
 
+function(bbp_disable_precommit)
+  find_package(Python COMPONENTS Interpreter REQUIRED)
+  if(EXISTS ${CMAKE_SOURCE_DIR}/.pre-commit-config.yaml)
+    execute_process(
+      COMMAND ${Python_EXECUTABLE}
+              "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
+              --clang-format off --cmake-format off --clang-tidy off
+              ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+  endif()
+endfunction(bbp_disable_precommit)
+
 function(bbp_enable_formatting)
   find_package(Python COMPONENTS Interpreter REQUIRED)
   find_package(ClangFormat 7 EXACT REQUIRED)
@@ -193,6 +204,8 @@ endif(${PROJECT_NAME}_FORMATTING)
 if(${PROJECT_NAME}_PRECOMMIT)
   cmake_minimum_required(VERSION 3.12)
   bbp_enable_precommit()
+else(${PROJECT_NAME}_PRECOMMIT)
+  bbp_disable_precommit()
 endif(${PROJECT_NAME}_PRECOMMIT)
 
 if(${PROJECT_NAME}_STATIC_ANALYSIS)
