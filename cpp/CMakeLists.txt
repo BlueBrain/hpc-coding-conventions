@@ -107,6 +107,7 @@ function(bbp_enable_formatting)
   mark_as_advanced(${PROJECT_NAME}_CMakeFormat_OPTIONS
                    ${PROJECT_NAME}_CMakeFormat_FILES_RE
                    ${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE)
+  configure_file(.cmake-format.yaml ${PROJECT_SOURCE_DIR})
   add_custom_target(cmake-format
                     ${Python_EXECUTABLE}
                     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"
