@@ -16,8 +16,9 @@ function(bbp_enable_precommit)
 endfunction(bbp_enable_precommit)
 
 function(bbp_disable_precommit)
-  find_package(Python COMPONENTS Interpreter REQUIRED)
   if(EXISTS ${CMAKE_SOURCE_DIR}/.pre-commit-config.yaml)
+    cmake_minimum_required(VERSION 3.12)
+    find_package(Python COMPONENTS Interpreter REQUIRED)
     execute_process(COMMAND ${Python_EXECUTABLE}
                             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
                             --clang-format off --cmake-format off --clang-tidy off
