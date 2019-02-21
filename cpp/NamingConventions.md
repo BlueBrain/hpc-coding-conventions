@@ -18,7 +18,7 @@ Generally use `snake_case` style as it is compliant with spell checkers.
 
 #### Exception
 
-Function parametres and local variables used only within 3 lines can break the rule, for instance:
+Function parametres and local variables used only within less than 3 lines can break this rule, for instance:
 
 ```cpp
 struct Dimension {
