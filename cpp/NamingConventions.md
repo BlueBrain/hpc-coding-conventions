@@ -57,17 +57,25 @@ For instance:
 
 ```cpp
 struct Size {
-  int width;
-  int height;
+    int width;
+    int height;
 
-  Size(int t_width, int t_height) : width(t_width), height(t_height) {}
+    Size(int t_width, int t_height)
+        : width(t_width)
+        , height(t_height) {}
 };
 
 class PrivateSize {
   public:
-    int width() const { return m_width; }
-    int height() const { return m_height; }
-    PrivateSize(int t_width, int t_height) : m_width(t_width), m_height(t_height) {}
+    int width() const {
+        return m_width;
+    }
+    int height() const {
+        return m_height;
+    }
+    PrivateSize(int t_width, int t_height)
+        : m_width(t_width)
+        , m_height(t_height) {}
 
   private:
     int m_width;
@@ -79,19 +87,16 @@ class PrivateSize {
 
 ```cpp
 class MyClass {
-public:
-  MyClass(int t_data)
-    : m_data(t_data)
-  {
-  }
+  public:
+    MyClass(int t_data)
+        : m_data(t_data) {}
 
-  int data() const
-  {
-    return m_data;
-  }
+    int data() const {
+        return m_data;
+    }
 
-private:
-  int m_data;
+  private:
+    int m_data;
 };
 ```
 
