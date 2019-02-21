@@ -71,7 +71,7 @@ There are several alternatives we can consider:
 * function parameters are prefixed with `t_`
 * do not use prefix for local variables and exposed member variables
 
-For instance:
+#### Examples
 
 ```cpp
 struct Size {
@@ -101,8 +101,6 @@ class PrivateSize {
 };
 ```
 
-## Examples
-
 ```cpp
 class MyClass {
   public:
@@ -124,7 +122,7 @@ class MyClass {
 * function parameters are suffixed with `_`
 * do not use prefix for local variables and exposed member variables
 
-For instance:
+#### Examples
 
 ```cpp
 struct Size {
@@ -153,8 +151,6 @@ class PrivateSize {
     int m_height;
 };
 ```
-
-## Examples
 
 ```cpp
 class MyClass {
