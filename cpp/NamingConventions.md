@@ -16,6 +16,21 @@ int buffer_size;
 
 Generally use `snake_case` style as it is compliant with spell checkers.
 
+#### Exception
+
+Function parametres and local variables used only within 3 lines can break the rule, for instance:
+
+```cpp
+struct Dimension {
+    const int width;
+    const int height;
+
+    Dimension(int w, int h)
+        : width(w)
+	, height(h) {}
+};
+```
+
 ### Functions and variables start with a lower case
 
 ```cpp
@@ -48,6 +63,9 @@ const int LONG_MAX = 9223372036854775807L;
 ## Distinguish symbols
 
 Distinguish private member variables, function parameters, and local variables.
+There are several alternatives we can consider:
+
+### Add a prefix to both private members and function parameters
 
 * unexposed member variables are prefixed with `m_`
 * function parameters are prefixed with `t_`
@@ -99,6 +117,60 @@ class MyClass {
     int m_data;
 };
 ```
+
+### Add prefix to private members and a suffix to function parameters
+
+* unexposed member variables are prefixed with `m_`
+* function parameters are suffixed with `_`
+* do not use prefix for local variables and exposed member variables
+
+For instance:
+
+```cpp
+struct Size {
+    int width;
+    int height;
+
+    Size(int width_, int height_)
+        : width(width_)
+        , height(height_) {}
+};
+
+class PrivateSize {
+  public:
+    int width() const {
+        return m_width;
+    }
+    int height() const {
+        return m_height;
+    }
+    PrivateSize(int width_, int height_)
+        : m_width(width_)
+        , m_height(height_) {}
+
+  private:
+    int m_width;
+    int m_height;
+};
+```
+
+## Examples
+
+```cpp
+class MyClass {
+  public:
+    MyClass(int data_)
+        : m_data(data_) {}
+
+    int data() const {
+        return m_data;
+    }
+
+  private:
+    int m_data;
+};
+```
+
 
 ## Comments
 
