@@ -18,7 +18,7 @@ Generally use `snake_case` style as it is compliant with spell checkers.
 
 #### Exception
 
-Function parametres and local variables used only within less than 3 lines can break this rule, for instance:
+Function parameters and local variables used only within less than 3 lines can break this rule, for instance:
 
 ```cpp
 struct Dimension {
@@ -174,7 +174,8 @@ Comment blocks should use `//`, not `/* */`. Using `//` makes it much easier to 
 out a block of code while debugging.
 
 ```cpp
-// this function does something
+// this function
+// does something
 int myFunc() {
 }
 ```
@@ -182,7 +183,8 @@ int myFunc() {
 To comment out this function during debugging, it is easy to do:
 ```cpp
 /*
-// this function does something
+// this function
+// does something
 int myFunc() {
 }
 */
