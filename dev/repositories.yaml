@@ -17,3 +17,8 @@ repositories:
     precommit: true
   location: cmake/hpc-coding-conventions
   cmake_project_name: NMODL
+- url: ssh://bbpcode.epfl.ch/building/FLATIndex
+  features:
+    formatting: true
+  location: CMake/hpc-coding-conventions
+  cmake_project_name: FLATIndex
