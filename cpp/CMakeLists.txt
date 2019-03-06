@@ -30,10 +30,8 @@ function(bbp_enable_formatting)
   find_package(ClangFormat 7 EXACT REQUIRED)
   set(${PROJECT_NAME}_ClangFormat_OPTIONS "" CACHE STRING "clang-format command options")
   set(${PROJECT_NAME}_ClangFormat_FILES_RE
-      "^.*\\\\.c$$"
-      "^.*\\\\.h$$"
-      "^.*\\\\.cpp$$"
-      "^.*\\\\.hpp$$"
+      "^.*\\\\.[ch]$$"
+      "^.*\\\\.[chi]pp$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
   set(${PROJECT_NAME}_ClangFormat_EXCLUDES_RE ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
@@ -133,10 +131,8 @@ function(bbp_enable_static_analysis)
       CACHE STRING "clang-tidy command options")
   mark_as_advanced(${PROJECT_NAME}_ClangTidy_OPTIONS)
   set(${PROJECT_NAME}_ClangTidy_FILES_RE
-      "^.*\\\\.c$$"
-      "^.*\\\\.h$$"
-      "^.*\\\\.cpp$$"
-      "^.*\\\\.hpp$$"
+      "^.*\\\\.[ch]$$"
+      "^.*\\\\.[chi]pp$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
   set(${PROJECT_NAME}_ClangTidy_EXCLUDES_RE ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
