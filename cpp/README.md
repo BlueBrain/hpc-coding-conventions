@@ -30,7 +30,8 @@ its documentation pretends. Here is a raw summary of the status:
 
 ## CMake Project
 
-This repository provides a CMake project that allows you to use the tools and the processes described in this document.
+This directory provides a CMake project that allows one to use the tools and the processes
+described in this document. This project requires CMake version 3.7 or higher.
 
 ### Requirements
 
