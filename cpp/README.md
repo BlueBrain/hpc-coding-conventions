@@ -35,6 +35,7 @@ This repository provides a CMake project that allows you to use the tools and th
 ### Requirements
 
 This CMake project expects for the following utilities to be available:
+* [CMake 3.6 or higher](https://cmake.org/)
 * [ClangFormat 7](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html)
 * [ClangTidy 7](https://releases.llvm.org/7.0.0/tools/clang/tools/extra/docs/clang-tidy/index.html)
 * [cmake-format](https://github.com/cheshirekow/cmake_format) Python package

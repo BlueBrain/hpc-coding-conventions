@@ -177,7 +177,7 @@ else(${PROJECT_NAME}_PRECOMMIT)
 endif(${PROJECT_NAME}_PRECOMMIT)
 
 if(${PROJECT_NAME}_STATIC_ANALYSIS)
-  cmake_minimum_required(VERSION 3.7)
+  cmake_minimum_required(VERSION 3.6)
   bbp_enable_static_analysis()
   set(CMAKE_CXX_CLANG_TIDY
       "${ClangTidy_EXECUTABLE}"
