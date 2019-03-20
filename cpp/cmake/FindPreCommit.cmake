@@ -14,17 +14,9 @@ find_program(PreCommit_EXECUTABLE pre-commit DOC "Path to pre-commit Python util
 mark_as_advanced(PreCommit_EXECUTABLE)
 
 if(PreCommit_EXECUTABLE)
-  set(prev_ph "$ENV{PYTHONHOME}")
-  set(prev_pp "$ENV{PYTHONPATH}")
-  set(ENV{PYTHONHOME} "")
-  set(ENV{PYTHONPATH} "")
   execute_process(COMMAND ${PreCommit_EXECUTABLE} --version
                   OUTPUT_VARIABLE full_version_text
                   ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(ENV{PYTHONHOME} "${prev_ph}")
-  set(ENV{PYTHONPATH} "${prev_pp}")
-  unset(prev_pp)
-  unset(prev_ph)
 
   # full_version_text sample: "pre-commit 1.14.2"
   if(full_version_text MATCHES "^pre-commit .*")

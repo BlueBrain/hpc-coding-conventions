@@ -14,17 +14,9 @@ find_program(CMakeFormat_EXECUTABLE cmake-format DOC "Path to cmake formatter ex
 mark_as_advanced(CMakeFormat_EXECUTABLE)
 
 if(CMakeFormat_EXECUTABLE)
-  set(prev_ph "$ENV{PYTHONHOME}")
-  set(prev_pp "$ENV{PYTHONPATH}")
-  set(ENV{PYTHONHOME} "")
-  set(ENV{PYTHONPATH} "")
   execute_process(COMMAND ${CMakeFormat_EXECUTABLE} --version
                   OUTPUT_VARIABLE CMakeFormat_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
-  set(ENV{PYTHONHOME} "${prev_ph}")
-  set(ENV{PYTHONPATH} "${prev_pp}")
-  unset(prev_pp)
-  unset(prev_ph)
 
   # Extract version components
   string(REPLACE "."
