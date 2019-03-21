@@ -49,7 +49,7 @@ if(ClangTidy_EXECUTABLE)
 
   if(full_version_text MATCHES "^LLVM .*")
     string(REGEX
-           REPLACE ".*LLVM version ([0-9]\.[0-9]\.[0-9]).*"
+           REPLACE ".*LLVM version ([0-9]\\.[0-9]\\.[0-9]).*"
                    "\\1"
                    ClangTidy_VERSION
                    "${full_version_text}")
