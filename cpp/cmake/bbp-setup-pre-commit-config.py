@@ -2,6 +2,11 @@ import argparse
 import os.path as osp
 
 import yaml
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
+
 
 
 HPC_PRE_COMMITS_REPO_URL = "https://github.com/BlueBrain/hpc-pre-commits"
@@ -91,7 +96,7 @@ def main(**kwargs):
         config = {}
     else:
         with open(PRE_COMMIT_CONFIG) as istr:
-            config = yaml.load(istr) or {}
+            config = yaml.load(istr, Loader=Loader) or {}
 
     repo = get_or_set_bbp_pre_commit_repo(config)
     if args.clang_format:
