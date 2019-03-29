@@ -50,7 +50,7 @@ def collect_files(cmake_source_dir, cmake_binary_dir, excludes_re, cmake_files_r
         d = queue.pop()
         for f in os.listdir(d):
             p = osp.realpath(osp.join(d, f))
-            rp = p[len(cmake_source_dir) :]
+            rp = p[len(cmake_source_dir):]
             if p == cmake_binary_dir:
                 continue
             if osp.isdir(p):
