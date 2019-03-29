@@ -78,17 +78,17 @@ For instance, let us consider the following `hello` Python module, part of a pac
 __version__ = '1.0.0'
 
 def hello_world(recipient="World"):
-	"""Write greeting message to standard output
+    """Write greeting message to standard output
 
-	Args:
-	   recipient(str): person included in the message
+    Args:
+       recipient(str): person included in the message
 
        >>> hello_world()
-	   Hello World!
-	   >>> hello_world("Alice")
-	   Hello Alice!
-	"""
-	print("Hello", recipient)
+       Hello World!
+       >>> hello_world("Alice")
+       Hello Alice!
+    """
+    print("Hello", recipient)
 ```
 
 * If _autodoc_ extension is enabled and properly configured, then Sphinx will load
@@ -221,6 +221,7 @@ index 4b51de3..f1109d9 100644
 +    # TIP: if using the sphinx-bootstrap-theme, you need
 +    # "treeViewIsBootstrap": True,
 +    "exhaleExecutesDoxygen": True,
++    # additional Doxygen config
 +    "exhaleDoxygenStdin":    "INPUT = ../include"
 +}
 +
@@ -240,3 +241,111 @@ index d218dc5..8c1cdd0 100644
 ```
 
 ## Toward a decent `setup.py`
+
+Sphinx provides a `build_sphinx` setuptools target to generate documentation
+with the command: `python setup.py build_sphinx`.
+
+### Setup dependencies
+
+Add all Python packages required to build the documentation to the `setup_requires`
+[*setup* keyword](https://setuptools.readthedocs.io/en/latest/setuptools.html#new-and-changed-setup-keywords)
+
+If `doctest` is activated, then the generation of the documentation executes the Python package. Thus it is
+recommended to also add the content of `install_requires` *setup* keyword to the `setup_requires` keyword.
+
+For instance:
+
+```python
+install_requirements = [
+    "cached-property>=1.5.1",
+    "docopt>=0.6.2",
+    "h5py>=2.7.1",
+    "humanize>=0.5.1",
+    "numpy>=1.13",
+    "progress>=1.4",
+]
+doc_requirements = [
+    "exhale",
+    "m2r",
+    "sphinx-rtd-theme",
+    "sphinx<2"
+]
+setup(
+    # [...]
+    install_requires=install_requirements,
+    setup_requires=install_requirements + doc_requirements
+)
+```
+
+### test command on steroïd
+
+By default, the command `python setup.py test` builds the package and
+run the unit-tests. To also execute the code snippets embedded in the documentation during the `test` command, you can:
+
+1. Define a new `doctest` command that only check the code snippets. In `setup.py`:
+
+    ```python
+    class lazy_dict(dict):
+        """When the value associated to a key is a function, then returns
+        the function call instead of the function.
+        """
+        def __getitem__(self, item):
+            value = dict.__getitem__(self, item)
+            if inspect.isfunction(value):
+                return value()
+            return value
+
+
+    def get_sphinx_command():
+        """Lazy load of Sphinx distutils command class
+        """
+        from sphinx.setup_command import BuildDoc
+
+        return BuildDoc
+
+
+    setup(
+        # [...]
+        cmdclass=lazy_dict(
+            doctest=get_sphinx_command
+        )
+    ```
+
+    In `setup.cfg`:
+
+    ```
+    [doctest]
+    builder = doctest
+    config-dir = docs
+    ```
+
+
+1. Overwrite the `test` command so that it also calls the `doctest` command.
+
+    In `setup.py`:
+
+    ```python
+    from setuptools.command.test import test
+
+
+    class CustomTest(test):
+        """Custom disutils command that acts like as a replacement
+        for the "test" command.
+
+        It first executes the standard "test" command, and then run
+        the "doctest" to also validate code snippets in the sphinx
+        documentation.
+        """
+
+        def run(self):
+            super().run()
+            subprocess.check_call([sys.executable, __file__, "doctest"])
+
+
+    setup(
+        # [...]
+        cmdclass=lazy_dict(
+            test=CustomTest,
+            doctest=get_sphinx_command
+        )
+    ```
