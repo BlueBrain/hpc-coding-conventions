@@ -18,7 +18,7 @@ Python code is documented with docstrings formatted using the
 Today, the standard documentation tool for C++ projects is Doxygen, Sphinx is more used
 in the Python community and widely used within Blue Brain Project.
 
-Breathe and Exhale are 2 Sphinx extensions that allow a seemsless integration
+Breathe and Exhale are two Sphinx extensions that allow a seemsless integration
 of Doxygen in the Sphinx documentation pipeline.
 
 Furthermore, because most of C++ projects within HPC team provide Python bindings.
