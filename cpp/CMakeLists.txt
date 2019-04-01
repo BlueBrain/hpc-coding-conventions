@@ -4,7 +4,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON PARENT_SCOPE)
 include(cmake/bob.cmake)
 
 function(bbp_enable_precommit)
-  find_package(PythonInterp 3.6 REQUIRED)
+  find_package(PythonInterp 3.5 REQUIRED)
   find_package(PreCommit REQUIRED)
   execute_process(COMMAND ${PreCommit_EXECUTABLE} install)
   execute_process(
@@ -17,7 +17,7 @@ endfunction(bbp_enable_precommit)
 
 function(bbp_disable_precommit)
   if(EXISTS ${CMAKE_SOURCE_DIR}/.pre-commit-config.yaml)
-    find_package(PythonInterp 3.6 REQUIRED)
+    find_package(PythonInterp 3.5 REQUIRED)
     execute_process(COMMAND ${PYTHON_EXECUTABLE}
                             "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
                             --clang-format off --cmake-format off --clang-tidy off
@@ -26,7 +26,7 @@ function(bbp_disable_precommit)
 endfunction(bbp_disable_precommit)
 
 function(bbp_enable_formatting)
-  find_package(PythonInterp 3.6 REQUIRED)
+  find_package(PythonInterp 3.5 REQUIRED)
   find_package(ClangFormat 7 EXACT REQUIRED)
   set(${PROJECT_NAME}_ClangFormat_OPTIONS "" CACHE STRING "clang-format command options")
   set(${PROJECT_NAME}_ClangFormat_FILES_RE "^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$"
@@ -123,7 +123,7 @@ function(bbp_enable_formatting)
 endfunction(bbp_enable_formatting)
 
 function(bbp_enable_static_analysis)
-  find_package(PythonInterp 3.6 REQUIRED)
+  find_package(PythonInterp 3.5 REQUIRED)
   find_package(ClangTidy 7 EXACT REQUIRED)
   set(${PROJECT_NAME}_ClangTidy_OPTIONS -extra-arg=-Wno-unknown-warning-option
       CACHE STRING "clang-tidy command options")
