@@ -60,6 +60,11 @@ changes.
 
 ## External C++ Libraries
 
+### As git modules or directly bundled
+
+The libraries below can be used directly in your C++ project, either as git modules or directly bundled as most of them provides single-header releases.
+
+* [CLI11](https://github.com/CLIUtils/CLI11): a header-only command line parser for C++11
 * [cereal](https://github.com/USCiLab/cereal)
   A C++ header-only library for serialization
 * [{fmt}](https://github.com/fmtlib/fmt) a Python like formatting library.
@@ -71,3 +76,7 @@ changes.
 * [nlohmann/json](https://github.com/nlohmann/json) JSON for Modern C++
 * [gsl-lite](https://github.com/martinmoene/gsl-lite) A single-file header-only version
   of ISO C++ Guideline Support Library (GSL)
+
+### As external dependencies
+
+* [pugixml](https://pugixml.org): Light-weight, simple and fast XML parser for C++ with XPath support. A good replacement for libxml2.
