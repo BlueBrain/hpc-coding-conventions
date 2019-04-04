@@ -10,25 +10,22 @@ Public APIs should be documented with Doxygen.
 
 ### Python code
 
-Python code is documented with docstrings formatted using the
+Python code may be documented with docstrings formatted using the
 [Google style](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
 
-## Doxygen and Sphinx
+## Sphinx as unique documentation generator
 
-Today, the standard documentation tool for C++ projects is Doxygen, Sphinx is more used
-in the Python community and widely used within Blue Brain Project.
+The standard documentation tool for C++ projects is Doxygen whereas Sphinx is more widely used
+in the Python community.
 
-Breathe and Exhale are two Sphinx extensions that allow a seemsless integration
+Breathe and Exhale are Sphinx extensions that allow a seemsless integration
 of Doxygen in the Sphinx documentation pipeline.
-
-Furthermore, because most of C++ projects within HPC team provide Python bindings.
-
-This is why Sphinx documentation is the one chosen by HPC team.
+Furthermore, most C++ projects within the HPC team provide Python bindings, which is another reason to use Sphinx as the standard tool to generate documentation of C++ projects.
 
 ## Sphinx documentation pipeline
 
 `sphinx-build` is the main command line utility to generate documentation. This process
-gathers a collection of documents in reStructedText to then generate the documentation
+gathers a collection of documents in reStructedText to generate the documentation
 in the desired format, in HTML for instance.
 
 There are many Sphinx extensions to emit reStructuredText from other sources. Here is a
@@ -37,7 +34,7 @@ non-exhaustive list of recommended extensions:
 ### m2r
 
 This extension provides a reStructuredText command named `mdinclude` to import a Mardown document.
-For instance you can have a `readme.rst` file that looks like:
+For instance you can have a `readme.rst` file that reads the top-level README.md of your project that looks like:
 
 ```rst
 Introduction
@@ -48,18 +45,18 @@ Introduction
 
 ### breathe
 
-Doxygen is known to generated LaTex or HTML, but it can also generate an XML document
+Doxygen is known to generated LaTeX or HTML, but it can also generate an XML document
 containing the same level of information.
 Breathe is a Sphinx extension to generate reStructuredText files from such XML file.
 
 ### exhale
 
-Exhale is a Sphinx extension that does not really emits reStructuredText but allow
+Exhale is a Sphinx extension that does not really emit reStructuredText but allow
 instead to configure and run Doxygen to generate the XML file used by Breathe.
 
 ### autodoc
 
-Autodoc is a Sphinx extension that imports your Python modules, and emits
+Autodoc is a Sphinx extension that imports Python modules, and emits
 reStructuredText from the docstrings of the symbols.
 
 ### napoleon
@@ -115,12 +112,37 @@ called by the code snippets. The report is written a text file named
 
 At the project root directory:
 
-```
-mkdir docs
-cd docs
-sphinx-quickstart
-git add *
-git commit -m 'Create Sphinx documentation skeleton with sphinx-quickstart'
+```bash
+$ mkdir doc
+$ cd doc
+$ sphinx-quickstart --sep --makefile --no-batchfile --dot _ \
+  --suffix .rst --language en --master index \
+  --ext-autodoc --ext-doctest --ext-coverage --ext-mathjax --ext-viewcode
+Welcome to the Sphinx 1.8.5 quickstart utility.
+
+Please enter values for the following settings (just press Enter to
+accept a default value, if one is given in brackets).
+
+Selected root path: .
+
+The project name will occur in several places in the built documentation.
+> Project name: MyProject
+> Author name(s): BlueBrain HPC Team
+> Project release []: 
+
+Creating file ./source/conf.py.
+Creating file ./source/index.rst.
+Creating file ./Makefile.
+
+Finished: An initial directory structure has been created.
+
+You should now populate your master file ./source/index.rst and create other documentation
+source files. Use the Makefile to build the docs, like so:
+   make builder
+where "builder" is one of the supported builders, e.g. html, latex or linkcheck.
+
+$ git add *
+$ git commit -m 'Create Sphinx documentation skeleton with sphinx-quickstart'
 ```
 
 ### Add Python package to the PYTHONPATH used by sphinx
