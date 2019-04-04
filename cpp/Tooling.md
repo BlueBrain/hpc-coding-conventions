@@ -5,9 +5,31 @@
 Recommended flags are:
 
 * Clang: `-Werror -Weverything`. And then disable then one you dislike.
-* GCC: `-Werror -Wall -Wextra -Wcast-align -Wconversion -Wdouble-promotion -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wunused`
-* GCC 6+: `-Wduplicated-conf -Wmisleading-indentation -Wnull-dereference`
-* GCC 7+: `-Wlogical-op -Wrestrict -Wduplicated-branches`
+* GCC:
+  * `-Wall`
+  * `-Wcast-align`
+  * `-Wconversion`
+  * `-Wdouble-promotion`
+  * `-Werror`
+  * `-Wextra`
+  * `-Wformat=2`
+  * `-Wnon-virtual-dtor`
+  * `-Wold-style-cast`
+  * `-Woverloaded-virtual`
+  * `-Wshadow`
+  * `-Wsign-conversion`
+  * `-Wunused`
+  * `-Wuseless-cast`
+* GCC 6 and greater:
+  * `-Wduplicated-cond`
+  * `-Wmisleading-indentation`
+  * `-Wnull-dereference`
+* GCC 7 and greater:
+  * `-Wlogical-op`
+  * `-Wduplicated-branches`
+  * `-Wrestrict`
+& GCC 8 and greater:
+  * `-Wclass-memaccess`
 
 Continuous integration should compilation your code with as many compilers as possible to get best feedback.
 
