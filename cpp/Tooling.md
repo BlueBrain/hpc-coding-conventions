@@ -31,11 +31,11 @@ Recommended flags are:
 & GCC 8 and greater:
   * `-Wclass-memaccess`
 
-Continuous integration should compilation your code with as many compilers as possible to get best feedback.
+Continuous integration should compile your code with as many compilers as possible to get best feedback.
 
 ## Code formatting
 
-C++ code can be formatted to meet the conventions with
+C++ code can be formatted to meet the formatting conventions with
 [ClangFormat](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html) utility.
 The ClangFormat configuration file to comply to these conventions can be found [here](./.clang-format).
 Only ClangFormat 7 is supported, the LLVM stable version by the time
