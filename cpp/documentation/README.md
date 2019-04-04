@@ -208,10 +208,10 @@ the `:imported-members:` option of the `automodule` command.
 ### Integrates documentation of C++ code
 
 ```diff
-diff --git a/docs/conf.py b/docs/conf.py
+diff --git a/doc/source/conf.py b/doc/source/conf.py
 index 4b51de3..f1109d9 100644
---- a/docs/conf.py
-+++ b/docs/conf.py
+--- a/doc/source/conf.py
++++ b/doc/source/conf.py
 @@ -39,6 +39,8 @@ release = '0.0.1'
  # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
  # ones.
@@ -250,10 +250,10 @@ index 4b51de3..f1109d9 100644
  # Add any paths that contain templates here, relative to this directory.
  templates_path = ['_templates']
 
-diff --git a/docs/index.rst b/docs/index.rst
+diff --git a/doc/source/index.rst b/doc/source/index.rst
 index d218dc5..8c1cdd0 100644
---- a/docs/index.rst
-+++ b/docs/index.rst
+--- a/doc/source/index.rst
++++ b/doc/source/index.rst
 @@ -11,6 +11,7 @@ Welcome to Basalt's documentation!
     :caption: Contents:
 
