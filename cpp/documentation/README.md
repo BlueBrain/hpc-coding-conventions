@@ -6,14 +6,93 @@ This document provides instructions and hints to document C++ projects.
 
 ### C++ code
 
-Public APIs should be documented with Doxygen.
+Public APIs may be documented with Doxygen. Documentation of private code is recommended.
+
+#### Documentation style
+
+Doxygen allows [multiple syntax](http://www.doxygen.nl/manual/docblocks.html)
+to document the code. There is no preferred syntax but Doxygen comments of a particular
+project may use the same syntax.
+
+It is suggested to turn the
+[JAVADOC_AUTOBRIEF](http://www.doxygen.nl/manual/config.html#cfg_javadoc_autobrief)
+option to `YES` to shrink comments size:
+
+```c++
+/// A brief function description
+/// A more elaborated function description
+void a_function();
+```
+
+#### Document files
+
+Document header files, and source files if possible by adding a `\file` paragraph in the
+file prelude.
+
+```c++
+/** \file
+ * A brief file description
+ * A more elaborated file description
+ */
+```
+
+#### Only document the declarations
+
+Only function or class declarations should be documented, not the definition.
+
+```c++
+/// Helper function to create a vertex unique identifier.
+/// \param type vertex type
+/// \param id vertex identifier
+vertex_uid_t make_id(vertex_t type, vertex_id_t id);
+
+// [...]
+
+vertex_uid_t make_id(vertex_t type, vertex_id_t id) {
+    return {type, id};
+}
+```
+
+#### Group member methods together
+
+Doxygen allows
+[grouping of symbols](http://www.doxygen.nl/manual/grouping.html)
+so that they appear in dedicated subsections in the generated documentation.
+
+```c++
+/// \brief Undirected Connectivity Graph
+class Graph {
+  public:
+    /// \name Ctor & dtor.
+    /// \{
+
+    /// load or create a graph from the filesystem
+    /// \a path is created if nonexistent.
+    /// \param path directory on the filesystem.
+    explicit Graph(const std::string& path);
+
+    ~Graph();
+    /// \}
+
+    /// \name data accessors and modifiers
+    /// \{ */
+    /// allow the manipulation of the graph's edges
+    Edges& edges();
+
+    /// allow the manipulation of the graph's vertices
+    Vertices& vertices();
+    /// \}
+};
+```
 
 ### Python code
 
 Python code may be documented with docstrings formatted using the
 [Google style](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings).
 
-## Sphinx as unique documentation generator
+## Tooling
+
+### Sphinx as unique documentation generator
 
 The standard documentation tool for C++ projects is Doxygen whereas Sphinx is more widely used
 in the Python community.
@@ -22,7 +101,7 @@ Breathe and Exhale are Sphinx extensions that allow a seemsless integration
 of Doxygen in the Sphinx documentation pipeline.
 Furthermore, most C++ projects within the HPC team provide Python bindings, which is another reason to use Sphinx as the standard tool to generate documentation of C++ projects.
 
-## Sphinx documentation pipeline
+### Sphinx documentation pipeline
 
 `sphinx-build` is the main command line utility to generate documentation. This process
 gathers a collection of documents in reStructedText to generate the documentation
@@ -31,7 +110,7 @@ in the desired format, in HTML for instance.
 There are many Sphinx extensions to emit reStructuredText from other sources. Here is a
 non-exhaustive list of recommended extensions:
 
-### m2r
+#### m2r
 
 This extension provides a reStructuredText command named `mdinclude` to import a Mardown document.
 For instance you can have a `readme.rst` file that reads the top-level README.md of your project that looks like:
@@ -43,28 +122,28 @@ Introduction
 .. mdinclude:: ../README.md
 ```
 
-### breathe
+#### breathe
 
 Doxygen is known to generated LaTeX or HTML, but it can also generate an XML document
 containing the same level of information.
 Breathe is a Sphinx extension to generate reStructuredText files from such XML file.
 
-### exhale
+#### exhale
 
 Exhale is a Sphinx extension that does not really emit reStructuredText but allow
 instead to configure and run Doxygen to generate the XML file used by Breathe.
 
-### autodoc
+#### autodoc
 
 Autodoc is a Sphinx extension that imports Python modules, and emits
 reStructuredText from the docstrings of the symbols.
 
-### napoleon
+#### napoleon
 
 Napoleon is a Sphinx extension that allows autodoc to parse docstrings formatted
 with the NumPy and Google coding styles.
 
-### doctest
+#### doctest
 
 When enabled, Sphinx will execute the code snippets embedded in the documentation
 and fail if they produce unexpected output.
@@ -100,15 +179,15 @@ def hello_world(recipient="World"):
 This is a very interesting feature that ensure that the documentation remains
 up to date, and continuously tested.
 
-### coverage
+#### coverage
 
 This extension provides the symbols of the Python package that have not been
 called by the code snippets. The report is written a text file named
 `doctest/output.txt`.
 
-## Getting Started
+### Getting Started
 
-### Generate skeleton
+#### Generate documentation skeleton
 
 At the project root directory:
 
@@ -145,7 +224,7 @@ $ git add *
 $ git commit -m 'Create Sphinx documentation skeleton with sphinx-quickstart'
 ```
 
-### Add Python package to the PYTHONPATH used by sphinx
+#### Add Python package to the PYTHONPATH used by sphinx
 
 For package `hello`:
 
@@ -182,7 +261,7 @@ index 41dc1a7..4b51de3 100644
  # -- General configuration ---------------------------------------------------
 ```
 
-### Generate skeleton or reStructuredText files for Python package
+#### Generate skeleton or reStructuredText files for Python package
 
 The `sphinx-apidoc` utility analyzes Python packages and generates one reStructuredText
 file per Python module, containing _automodule_ directives.
@@ -205,7 +284,7 @@ To generate documentation of symbols imported by `hello` module, consider using
 the `:imported-members:` option of the `automodule` command.
 
 
-### Integrates documentation of C++ code
+#### Integrates documentation of C++ code
 
 ```diff
 diff --git a/doc/source/conf.py b/doc/source/conf.py
@@ -262,12 +341,12 @@ index d218dc5..8c1cdd0 100644
 
 ```
 
-## Toward a decent `setup.py`
+### Toward a decent `setup.py`
 
 Sphinx provides a `build_sphinx` setuptools target to generate documentation
 with the command: `python setup.py build_sphinx`.
 
-### Setup dependencies
+#### Setup dependencies
 
 Add all Python packages required to build the documentation to the `setup_requires`
 [*setup* keyword](https://setuptools.readthedocs.io/en/latest/setuptools.html#new-and-changed-setup-keywords)
@@ -299,7 +378,7 @@ setup(
 )
 ```
 
-### test command on steroïd
+#### test command on steroïd
 
 By default, the command `python setup.py test` builds the package and
 run the unit-tests. To also execute the code snippets embedded in the documentation during the `test` command, you can:
