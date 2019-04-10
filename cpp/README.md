@@ -8,7 +8,7 @@ ensure they are properly followed over time.
 
 Development Guidelines are split in the following sections:
 * [Tooling](./Tooling.md)
-* [Process](./Process.md)
+* [Development Lifecycle](./DevelopmentLifecycle.md)
 * [Code Formatting](./formatting/README.md)
 * Best Practices
 * Python bindings
