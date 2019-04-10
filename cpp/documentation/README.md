@@ -97,7 +97,7 @@ Python code may be documented with docstrings formatted using the
 The standard documentation tool for C++ projects is Doxygen whereas Sphinx is more widely used
 in the Python community.
 
-Breathe and Exhale are Sphinx extensions that allow a seemsless integration
+Breathe and Exhale are Sphinx extensions that allow a seamless integration
 of Doxygen in the Sphinx documentation pipeline.
 Furthermore, most C++ projects within the HPC team provide Python bindings, which is another reason to use Sphinx as the standard tool to generate documentation of C++ projects.
 
@@ -112,7 +112,7 @@ non-exhaustive list of recommended extensions:
 
 #### m2r
 
-This extension provides a reStructuredText command named `mdinclude` to import a Mardown document.
+This extension provides a reStructuredText command named `mdinclude` to import a Markdown document.
 For instance you can have a `readme.rst` file that reads the top-level README.md of your project that looks like:
 
 ```rst
@@ -378,7 +378,7 @@ setup(
 )
 ```
 
-#### test command on steroïd
+#### test command on steroid
 
 By default, the command `python setup.py test` builds the package and
 run the unit-tests. To also execute the code snippets embedded in the documentation during the `test` command, you can:
