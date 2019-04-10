@@ -75,7 +75,7 @@ void advance(InputIterator& it, Distance n);
 
 ```cpp
 const double AVOGADRO = 6.022140857e23;
-const int LONG_MAX = 9223372036854775807L;
+const int LIGHT_SPEED = 299792458L;
 ```
 
 ## Namespace names are all lower-case
