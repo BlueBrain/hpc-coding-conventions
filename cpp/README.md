@@ -10,6 +10,7 @@ Development Guidelines are split in the following sections:
 * [Tooling](./Tooling.md)
 * [Development Lifecycle](./DevelopmentLifecycle.md)
 * [Code Formatting](./formatting/README.md)
+* [Naming Conventions](./NamingConventions.md)
 * Best Practices
 * Python bindings
 
