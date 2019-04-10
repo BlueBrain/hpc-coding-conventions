@@ -1,9 +1,14 @@
-# BlueBrain HPC Team C++ Naming Conventions
+# C++ Naming Conventions
 
-This document describes how to name things in C++ projects.
+This document provides a set of recommendations regarding how things should be named
+in C++ projects.
 
 Because there is no automatic way to ensure that a code change follows this guideline,
 it is the responsibility of the code reviewers to enforce these rules over time.
+
+Should a project decide to not apply some or all of the recommendations
+below, it may provide written guidelines to the contributors with the rules
+that should be followed instead, in a `CONTRIBUTING.md` document for instance.
 
 ## File Names
 
