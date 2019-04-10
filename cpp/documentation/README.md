@@ -386,7 +386,7 @@ setup(
 )
 ```
 
-#### test command on steroid
+#### Test command on steroids
 
 By default, the command `python setup.py test` builds the package and
 run the unit-tests. To also execute the code snippets embedded in the documentation during the `test` command, you can:
