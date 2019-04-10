@@ -10,19 +10,27 @@ Public APIs may be documented with Doxygen. Documentation of private code is rec
 
 #### Documentation style
 
-Doxygen allows [multiple syntax](http://www.doxygen.nl/manual/docblocks.html)
+Doxygen supports [multiple syntax](http://www.doxygen.nl/manual/docblocks.html)
 to document the code. There is no preferred syntax but Doxygen comments of a particular
-project may use the same syntax.
+project may use the same one.
 
-It is suggested to turn the
+Nevertheless, it is suggested to turn the
 [JAVADOC_AUTOBRIEF](http://www.doxygen.nl/manual/config.html#cfg_javadoc_autobrief)
 option to `YES` to shrink comments size:
 
 ```c++
-/// A brief function description
-/// A more elaborated function description
+/// A brief function description.
+/// A more elaborated function description.
 void a_function();
 ```
+
+instead of:
+```c++
+/// \brief A brief function description.
+///
+/// A more elaborated function description.
+void a_function();
+
 
 #### Document files
 
@@ -30,10 +38,9 @@ Document header files, and source files if possible by adding a `\file` paragrap
 file prelude.
 
 ```c++
-/** \file
- * A brief file description
- * A more elaborated file description
- */
+/// \file
+/// A brief file description
+/// A more elaborated file description
 ```
 
 #### Only document the declarations
@@ -55,7 +62,7 @@ vertex_uid_t make_id(vertex_t type, vertex_id_t id) {
 
 #### Group member methods together
 
-Doxygen allows
+Doxygen supports
 [grouping of symbols](http://www.doxygen.nl/manual/grouping.html)
 so that they appear in dedicated subsections in the generated documentation.
 
@@ -75,7 +82,8 @@ class Graph {
     /// \}
 
     /// \name data accessors and modifiers
-    /// \{ */
+    /// \{
+
     /// allow the manipulation of the graph's edges
     Edges& edges();
 
