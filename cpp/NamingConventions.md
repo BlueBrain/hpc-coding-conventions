@@ -21,6 +21,27 @@ convention of Google C++ Style Guide but use the following extension instead:
 
 ## Use descriptive variable names
 
+See [General Naming Rules](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
+in Google C++ Style Guide.
+
+Generally use `snake_case` style as it is compliant with spell checkers.
+
+### Banish universal variables
+
+This is probably the most important point of this document.
+
+Symbols names should speak for themselves to highlight they particular usage.
+
+```cpp
+// no
+int count;
+
+// yes
+int num_molecules;
+```
+
+### Concision does not necessarily mean "smallest as possible"
+
 ```cpp
 // no
 int bufsz;
@@ -29,10 +50,17 @@ int bufsz;
 int buffer_size;
 ```
 
-See [General Naming Rules](https://google.github.io/styleguide/cppguide.html#General_Naming_Rules)
-in Google C++ Style Guide.
+### The naming is domain specific
 
-Generally use `snake_case` style as it is compliant with spell checkers.
+There are no strict rules, and every project may adapt the naming conventions according
+to the domains they apply to.
+
+For instance, the _degrees of freedom_ of a system in physics or statistics is a quantity
+commonly used. In this regards, projects in such domains may use the `dof` abbreviation
+instead of naming every variable `degrees_of_freedom`. The full term can still be
+mentioned in comment though.
+
+Besides, new contributors can get up to speed quicker if they can refer to a glossary.
 
 ### Exception
 
