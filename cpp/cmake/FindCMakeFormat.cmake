@@ -16,6 +16,7 @@ mark_as_advanced(CMakeFormat_EXECUTABLE)
 if(CMakeFormat_EXECUTABLE)
   execute_process(COMMAND ${CMakeFormat_EXECUTABLE} --version
                   OUTPUT_VARIABLE CMakeFormat_VERSION
+                  ERROR_VARIABLE CMakeFormat_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # Extract version components
