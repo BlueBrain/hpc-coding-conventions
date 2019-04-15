@@ -133,11 +133,11 @@ case 3: return;  // NOT THIS
 ### Example
 ```cpp
 class Foo {
-  void f() {
-      foo();
-  }
+    void f() {
+        foo();
+    }
 
-  void f() {}
+    void f() {}
 };
 
 ```
