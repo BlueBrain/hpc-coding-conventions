@@ -15,7 +15,7 @@ AllowShortLoopsOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
 BasedOnStyle: WebKit
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: false
 BraceWrapping:
   AfterClass: false
