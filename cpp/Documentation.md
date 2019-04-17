@@ -26,25 +26,16 @@ on stackoverflow.
 
 Doxygen supports [multiple syntax](http://www.doxygen.nl/manual/docblocks.html)
 to document the code. There is no preferred syntax but Doxygen comments of a particular
-project may use the same one.
+project may use the same one. The recommended one is:
 
-Nevertheless, it is suggested to turn the
-[JAVADOC_AUTOBRIEF](http://www.doxygen.nl/manual/config.html#cfg_javadoc_autobrief)
-option to `YES` to shrink comments size:
-
-```c++
-/// A brief function description.
-/// A more elaborated function description.
-void a_function();
-```
-
-instead of:
 ```c++
 /// \brief A brief function description.
 ///
 /// A more elaborated function description.
-void a_function();
-
+/// \param num_mols Number of molecules
+/// \return description of value returned
+int a_function(int num_mols);
+```
 
 #### Document files
 
@@ -59,7 +50,7 @@ file prelude.
 
 #### Only document the declarations
 
-Only function or class declarations should be documented, not the definition.
+Documentation of public symbols may be specified in the declaration, not the definition.
 
 ```c++
 /// Helper function to create a vertex unique identifier.
@@ -73,6 +64,8 @@ vertex_uid_t make_id(vertex_t type, vertex_id_t id) {
     return {type, id};
 }
 ```
+
+This rule is optional for internal symbols.
 
 #### Group member methods together
 
