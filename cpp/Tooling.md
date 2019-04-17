@@ -4,7 +4,7 @@
 
 Recommended flags are:
 
-* Clang: `-Werror -Weverything`. And then disable then one you dislike.
+* Clang: `-Werror -Weverything`. And then disable those you dislike.
 * GCC:
   * `-Wall`
   * `-Wcast-align`
