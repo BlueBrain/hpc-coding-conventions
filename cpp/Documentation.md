@@ -4,9 +4,23 @@ This document provides instructions and hints to document C++ projects.
 
 ## How to document code?
 
-### C++ code
+### C++ API
 
-Public APIs may be documented with Doxygen. Documentation of private code is recommended.
+Public APIs may be documented with Doxygen, with comments specified in
+headers so that they remain visible to the developers consuming your APIs.
+
+### C++ Internal Code
+
+Documentation of internal code is highly recommended to help the maintainers
+of the project. Using Doxygen is not mandatory though. But if used, then the
+documentations of public and internal code should be well separated, such
+that it remains easy to the reader to distinguish public symbols from internal
+ones.
+
+Documentation of internal symbols can be specified in cpp files where symbols
+are defined, presumably more accessible to the maintainers.
+See [the following discussion](https://stackoverflow.com/questions/355619/where-to-put-the-doxygen-comment-blocks-for-an-internal-library-in-h-or-in-cpp)
+on stackoverflow.
 
 #### Documentation style
 
@@ -292,7 +306,7 @@ To generate documentation of symbols imported by `hello` module, consider using
 the `:imported-members:` option of the `automodule` command.
 
 
-#### Integrates documentation of C++ code
+#### Integrate documentation of C++ code
 
 ```diff
 diff --git a/doc/source/conf.py b/doc/source/conf.py
