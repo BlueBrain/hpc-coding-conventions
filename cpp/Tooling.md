@@ -41,6 +41,8 @@ The ClangFormat configuration file to comply to these conventions can be found [
 Only ClangFormat 7 is supported, the LLVM stable version by the time
 of the writing of this document.
 
+It is recommended to use the CMake project provided by this repository to automate the source code formatting.
+
 ## Static Analysis
 
 You may use C++ linter tools to identify well known design mistakes like ClangTidy. A generic
@@ -49,10 +51,11 @@ configuration file can be found
 Only ClangTidy 7 is supported, the LLVM stable
 version by the time of the writing of this document.
 
+It is recommended to use the CMake project provided by this repository to automate the static analysis of the source code.
+
 ## GitHook
 
-[pre-commit](https://pre-commit.com/) allows
-you to identify simple issues before committing
+[pre-commit](https://pre-commit.com/) allows you to identify common mistakes before committing
 changes.
 
 ## External C++ Libraries
