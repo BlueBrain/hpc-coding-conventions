@@ -5,6 +5,8 @@ in C++ projects.
 
 Because there is no automatic way to ensure that a code change follows this guideline,
 it is the responsibility of the code reviewers to enforce these rules over time.
+Besides, CLion 2019.1.1 allows coherent
+[C++ naming of symbols](https://blog.jetbrains.com/clion/2019/03/clion-2019-1-embedded-dev-clangformat-memory-view/#code_style).
 
 Should a project decide to not apply some or all of the recommendations
 below, it may provide written guidelines to the contributors with the rules
