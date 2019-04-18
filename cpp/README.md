@@ -25,6 +25,7 @@ its documentation pretends. Here is a raw summary of the status:
 | ClangTidy             | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | WIP      |
 | Naming Conventions    | :heavy_check_mark: | :heavy_check_mark: |                    |          |
 | Writing Documentation | WIP                |                    |                    |          |
+| Project template      | WIP                |                    |                    |          |
 | Good Practices        |                    |                    |                    |          |
 | Memory Check          |                    |                    |                    |          |
 | UT Code Coverage      |                    |                    |                    |          |
