@@ -40,12 +40,11 @@ its documentation pretends. Here is a raw summary of the status:
 ## CMake Project
 
 This directory provides a CMake project that allows one to use the tools and the processes
-described in this document. This project requires CMake version 3.7 or higher.
+described in this document. This project requires CMake version 3.6 or higher.
 
 ### Requirements
 
 This CMake project expects for the following utilities to be available:
-* [CMake 3.6 or higher](https://cmake.org/)
 * [Python 3.5 or higher](https://python.org)
 * [ClangFormat 7](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html)
 * [ClangTidy 7](https://releases.llvm.org/7.0.0/tools/clang/tools/extra/docs/clang-tidy/index.html)
