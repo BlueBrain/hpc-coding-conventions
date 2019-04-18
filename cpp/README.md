@@ -4,6 +4,13 @@ This document describes both C++ Best Practices adopted by
 HPC team, and the tools and processes required to
 ensure they are properly followed over time.
 
+## Contributing
+
+Tristan CAREL (tristan0x) is in charge of this repository activity and well-being but every change is welcome through pull-request.
+
+Should you want to contribute to the naming conventions,
+please refer to the dedicated [contributing document](./formatting/CONTRIBUTING.md) first.
+
 ## Documentation
 
 Development Guidelines are split in the following sections:
