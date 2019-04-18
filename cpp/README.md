@@ -44,7 +44,8 @@ This CMake project expects for the following utilities to be available:
 * [ClangTidy 7](https://releases.llvm.org/7.0.0/tools/clang/tools/extra/docs/clang-tidy/index.html)
 * [cmake-format](https://github.com/cheshirekow/cmake_format) Python package
 * [pre-commit](https://pre-commit.com/) Python package
-Optionally, it will also looks for:
+
+Optionally, it will also look for:
 * [valgrind](http://valgrind.org/) memory checker
 * code coverage utilities like gcov, lcov, or gcov
 
