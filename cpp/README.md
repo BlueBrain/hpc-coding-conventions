@@ -31,7 +31,7 @@ its documentation pretends. Here is a raw summary of the status:
 | ClangFormat           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | WIP                 |
 | ClangTidy             | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | WIP                 |
 | Naming Conventions    | :heavy_check_mark: | :heavy_check_mark: | :no_entry_sign: N/A | :no_entry_sign: N/A |
-| Writing Documentation | WIP                |                    |                     |                     |
+| Writing Documentation | :heavy_check_mark: | WIP (see #22)      |                     |                     |
 | Project template      | WIP                |                    |                     |                     |
 | Good Practices        |                    |                    |                     |                     |
 | Memory Check          |                    |                    |                     |                     |
