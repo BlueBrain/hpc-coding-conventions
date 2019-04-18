@@ -1,6 +1,6 @@
 # BlueBrain HPC Team C++ Development Guidelines
 
-This document describes both C++ Best Practices adopted by
+This document describes both C++ development guidelines adopted by
 HPC team, and the tools and processes required to
 ensure they are properly followed over time.
 
