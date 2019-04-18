@@ -87,12 +87,14 @@ For instance, given a project `foo`:
 
 This will add the following *make* targets:
 
-* `clang-format`: to format C/C++ code
-* `check-clang-format`: task fails it at least one C/C++ file has improper format.
+* `clang-format`: to format C/C++ code.
+* `check-clang-format`: the target fails if at least one C/C++ file has improper format.
+* `cmake-format`: to format CMake files.
+* `check-cmake-format`: the target fails it at least one CMakef file has improper format.
 
 ##### Advanced configuration
 
-A list of CMake cache variables can be used to customize code formatting:
+A list of CMake cache variables can be used to customize the code formatting:
 
 * `${PROJECT}_ClangFormat_OPTIONS`: additional options given to `clang-format` command.
   Default value is `""`.
