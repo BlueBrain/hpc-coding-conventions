@@ -222,7 +222,7 @@ Selected root path: .
 The project name will occur in several places in the built documentation.
 > Project name: MyProject
 > Author name(s): BlueBrain HPC Team
-> Project release []: 
+> Project release []:
 
 Creating file ./source/conf.py.
 Creating file ./source/index.rst.
@@ -241,39 +241,35 @@ $ git commit -m 'Create Sphinx documentation skeleton with sphinx-quickstart'
 
 #### Add Python package to the PYTHONPATH used by sphinx
 
-For package `hello`:
+This section is only relevant for C++/Python hybrid project distributing a Python package.
+It is suggested to use setuptools to retrieve the packag version number so that versioning
+becomes automatic. For instance, for Python package *foo*:
 
 ```diff
 diff --git a/docs/conf.py b/docs/conf.py
 index 41dc1a7..4b51de3 100644
 --- a/docs/conf.py
 +++ b/docs/conf.py
-@@ -12,9 +12,9 @@
- # add these directories to sys.path here. If the directory is relative to the
- # documentation root, use os.path.abspath to make it absolute, like shown here.
- #
--# import os
--# import sys
--# sys.path.insert(0, os.path.abspath('.'))
-+import os
-+import sys
-+sys.path.insert(0, os.path.abspath('..'))
-+import hello
+@@ -16,6 +16,7 @@
+ # import sys
+ # sys.path.insert(0, os.path.abspath('.'))
 
++from pkg_resources import get_distribution
 
  # -- Project information -----------------------------------------------------
-@@ -24,9 +25,9 @@ copyright = '2019, BlueBrain HPC Team'
- author = 'BlueBrain HPC Team'
 
- # The short X.Y version
+@@ -23,11 +24,10 @@
+ copyright = '2019, Foo'
+ author = 'Foo'
+
+-# The short X.Y version
 -version = ''
-+version = hello.__version__
  # The full version, including alpha/beta/rc tags
--release = '0.0.1'
-+release = hello.__version__
-
-
- # -- General configuration ---------------------------------------------------
+-release = ''
+-
++release = get_distribution('foo').version
++# The short X.Y.Z version
++version = '.'.join(release.split('.')[:3])
 ```
 
 #### Generate skeleton or reStructuredText files for Python package
@@ -358,28 +354,19 @@ index d218dc5..8c1cdd0 100644
 
 ### Toward a decent `setup.py`
 
+This section is only relevant for C++/Python hybrid project distributing a Python package.
+
 Sphinx provides a `build_sphinx` setuptools target to generate documentation
 with the command: `python setup.py build_sphinx`.
 
 #### Setup dependencies
 
-Add all Python packages required to build the documentation to the `setup_requires`
+Add all Python packages required to build the documentation to the `tests_require`
 [*setup* keyword](https://setuptools.readthedocs.io/en/latest/setuptools.html#new-and-changed-setup-keywords)
-
-If `doctest` is activated, then the generation of the documentation executes the Python package. Thus it is
-recommended to also add the content of `install_requires` *setup* keyword to the `setup_requires` keyword.
 
 For instance:
 
 ```python
-install_requirements = [
-    "cached-property>=1.5.1",
-    "docopt>=0.6.2",
-    "h5py>=2.7.1",
-    "humanize>=0.5.1",
-    "numpy>=1.13",
-    "progress>=1.4",
-]
 doc_requirements = [
     "exhale",
     "m2r",
@@ -388,8 +375,7 @@ doc_requirements = [
 ]
 setup(
     # [...]
-    install_requires=install_requirements,
-    setup_requires=install_requirements + doc_requirements
+    tests_require=doc_requirements,
 )
 ```
 
