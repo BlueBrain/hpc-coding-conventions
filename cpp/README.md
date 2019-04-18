@@ -19,16 +19,16 @@ Development Guidelines are split in the following sections:
 This project in currently under development, and shall not provide the features
 its documentation pretends. Here is a raw summary of the status:
 
-| Feature               | Definition         | Documentation      | Integration        | Adoption |
-| --------------------- | ------------------ | ------------------ | ------------------ | -------- |
-| ClangFormat           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | WIP      |
-| ClangTidy             | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | WIP      |
-| Naming Conventions    | :heavy_check_mark: | :heavy_check_mark: |                    |          |
-| Writing Documentation | WIP                |                    |                    |          |
-| Project template      | WIP                |                    |                    |          |
-| Good Practices        |                    |                    |                    |          |
-| Memory Check          |                    |                    |                    |          |
-| UT Code Coverage      |                    |                    |                    |          |
+| Feature               | Definition         | Documentation      | Integration         | Adoption (>10 proj) |
+| --------------------- | ------------------ | ------------------ | ------------------  | ------------------- |
+| ClangFormat           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | WIP                 |
+| ClangTidy             | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | WIP                 |
+| Naming Conventions    | :heavy_check_mark: | :heavy_check_mark: | :no_entry_sign: N/A | :no_entry_sign: N/A |
+| Writing Documentation | WIP                |                    |                     |                     |
+| Project template      | WIP                |                    |                     |                     |
+| Good Practices        |                    |                    |                     |                     |
+| Memory Check          |                    |                    |                     |                     |
+| UT Code Coverage      |                    |                    |                     |                     |
 
 ## CMake Project
 
