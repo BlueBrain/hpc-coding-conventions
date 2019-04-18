@@ -50,16 +50,24 @@ file prelude.
 
 #### Only document the declarations
 
-Documentation of public symbols may be specified in the declaration, not the definition.
+* Document how to use public symbols in the declaration, not the definition.
+* Specify any additional technical or implementation detail is the definition
+using the `\internal` Doxygen command.
+(see [command documentation](http://www.doxygen.nl/manual/commands.html#cmdinternal))
+
 
 ```c++
 /// Helper function to create a vertex unique identifier.
 /// \param type vertex type
 /// \param id vertex identifier
+/// \return vertex unique identifier
 vertex_uid_t make_id(vertex_t type, vertex_id_t id);
 
 // [...]
 
+///
+/// \internal the implementation uses C++11 aggregate initialization.
+///
 vertex_uid_t make_id(vertex_t type, vertex_id_t id) {
     return {type, id};
 }
