@@ -115,7 +115,7 @@ Python code may be documented with docstrings formatted using the
 
 ## Tooling
 
-### Sphinx as unique documentation generator
+### Sphinx as the only documentation generator
 
 The standard documentation tool for C++ projects is Doxygen whereas Sphinx is more widely used
 in the Python community.
