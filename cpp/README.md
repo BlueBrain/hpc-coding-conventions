@@ -18,6 +18,7 @@ Development Guidelines are split in the following sections:
 * [Development Lifecycle](./DevelopmentLifecycle.md)
 * [Code Formatting](./formatting/README.md)
 * [Naming Conventions](./NamingConventions.md)
+* [Code Documentation](./Documentation.md)
 * Best Practices
 * Python bindings
 
@@ -31,7 +32,7 @@ its documentation pretends. Here is a raw summary of the status:
 | ClangFormat           | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | WIP                 |
 | ClangTidy             | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark:  | WIP                 |
 | Naming Conventions    | :heavy_check_mark: | :heavy_check_mark: | :no_entry_sign: N/A | :no_entry_sign: N/A |
-| Writing Documentation | :heavy_check_mark: | WIP (see #22)      |                     |                     |
+| Writing Documentation | :heavy_check_mark: | :heavy_check_mark: |                     |                     |
 | Project template      | WIP                |                    |                     |                     |
 | Good Practices        |                    |                    |                     |                     |
 | Memory Check          |                    |                    |                     |                     |
