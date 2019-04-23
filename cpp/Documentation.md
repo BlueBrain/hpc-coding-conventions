@@ -51,7 +51,7 @@ file prelude.
 #### Only document the declarations
 
 * Document how to use public symbols in the declaration, not the definition.
-* Specify any additional technical or implementation detail is the definition
+* Specify any additional technical or implementation detail in the definition
 using the `\internal` Doxygen command.
 (see [command documentation](http://www.doxygen.nl/manual/commands.html#cmdinternal))
 
