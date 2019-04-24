@@ -106,7 +106,9 @@ class Graph {
     explicit Graph(const std::string& path);
 
     ~Graph();
-    /** \} */
+    /**
+     * \}
+     */
 
     /**
      * \name data accessors and modifiers
@@ -122,7 +124,9 @@ class Graph {
      * allow the manipulation of the graph's vertices
      */
     Vertices& vertices();
-    /** \} */
+    /**
+     * \}
+     */
 };
 ```
 
