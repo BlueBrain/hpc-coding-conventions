@@ -62,7 +62,7 @@ using the `\internal` Doxygen command.
 
 ```c++
 /**
- *  Helper function to create a vertex unique identifier.
+ * Helper function to create a vertex unique identifier.
  * \param type vertex type
  * \param id vertex identifier
  * \return vertex unique identifier
