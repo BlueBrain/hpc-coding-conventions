@@ -29,11 +29,13 @@ to document the code. There is no preferred syntax but Doxygen comments of a par
 project may use the same one. The recommended one is:
 
 ```c++
-/// \brief A brief function description.
-///
-/// A more elaborated function description.
-/// \param num_mols Number of molecules
-/// \return description of value returned
+/**
+ * \brief A brief function description.
+ *
+ * A more elaborated function description.
+ * \param num_mols Number of molecules
+ * \return description of value returned
+ */
 int a_function(int num_mols);
 ```
 
@@ -43,9 +45,11 @@ Document header files, and source files if possible by adding a `\file` paragrap
 file prelude.
 
 ```c++
-/// \file
-/// A brief file description
-/// A more elaborated file description
+/**
+ * \file
+ * A brief file description
+ * A more elaborated file description
+ */
 ```
 
 #### Only document the declarations
@@ -57,17 +61,19 @@ using the `\internal` Doxygen command.
 
 
 ```c++
-/// Helper function to create a vertex unique identifier.
-/// \param type vertex type
-/// \param id vertex identifier
-/// \return vertex unique identifier
+/**
+ * Helper function to create a vertex unique identifier.
+ * \param type vertex type
+ * \param id vertex identifier
+ * \return vertex unique identifier
+ */
 vertex_uid_t make_id(vertex_t type, vertex_id_t id);
 
 // [...]
 
-///
-/// \internal the implementation uses C++11 aggregate initialization.
-///
+/**
+ * \internal the implementation uses C++11 aggregate initialization.
+ */
 vertex_uid_t make_id(vertex_t type, vertex_id_t id) {
     return {type, id};
 }
@@ -82,29 +88,45 @@ Doxygen supports
 so that they appear in dedicated subsections in the generated documentation.
 
 ```c++
-/// \brief Undirected Connectivity Graph
+/**
+ * \brief Undirected Connectivity Graph
+ */
 class Graph {
   public:
-    /// \name Ctor & dtor.
-    /// \{
+    /**
+     * \name Ctor & dtor.
+     * \{
+     */
 
-    /// load or create a graph from the filesystem
-    /// \a path is created if nonexistent.
-    /// \param path directory on the filesystem.
+    /**
+     * load or create a graph from the filesystem
+     * \a path is created if nonexistent.
+     * \param path directory on the filesystem.
+     */
     explicit Graph(const std::string& path);
 
     ~Graph();
-    /// \}
+    /**
+     * \}
+     */
 
-    /// \name data accessors and modifiers
-    /// \{
+    /**
+     * \name data accessors and modifiers
+     * \{
+     */
 
-    /// allow the manipulation of the graph's edges
+    /**
+     * allow the manipulation of the graph's edges
+     */
     Edges& edges();
 
-    /// allow the manipulation of the graph's vertices
+    /**
+     * allow the manipulation of the graph's vertices
+     */
     Vertices& vertices();
-    /// \}
+    /**
+     * \}
+     */
 };
 ```
 
