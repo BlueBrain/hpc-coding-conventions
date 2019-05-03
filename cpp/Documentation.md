@@ -401,7 +401,7 @@ doc_requirements = [
     "exhale",
     "m2r",
     "sphinx-rtd-theme",
-    "sphinx<2"
+    "sphinx>=2"
 ]
 setup(
     # [...]
