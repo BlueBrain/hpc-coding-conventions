@@ -9,7 +9,7 @@ function(bbp_enable_precommit)
   execute_process(COMMAND ${PreCommit_EXECUTABLE} install)
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
-            --regenerate-hooks ${PROJECT_NAME}_PRECOMMIT_REGEN
+            --regenerate-hooks ${${PROJECT_NAME}_PRECOMMIT_REGEN}
             --clang-format ${${PROJECT_NAME}_FORMATTING} --cmake-format
             ${${PROJECT_NAME}_FORMATTING} --clang-tidy ${${PROJECT_NAME}_STATIC_ANALYSIS}
             ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
@@ -84,7 +84,9 @@ function(bbp_enable_formatting)
   set(${PROJECT_NAME}_CMakeFormat_OPTIONS "" CACHE STRING "cmake-format options")
   set(${PROJECT_NAME}_CMakeFormat_FILES_RE "^.*\\\\.cmake$$" "^.*CMakeLists.txt$$"
       CACHE STRING "List of regular expressions matching CMake files")
-  set(${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$" ".*/.*build.*/.*$$" ".*/ext.*/.*$$"
+  set(${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE
+      ".*/third[-_]parties/.*$$"
+      ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude CMake files from formatting")
   mark_as_advanced(${PROJECT_NAME}_CMakeFormat_OPTIONS ${PROJECT_NAME}_CMakeFormat_FILES_RE
                    ${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE)
