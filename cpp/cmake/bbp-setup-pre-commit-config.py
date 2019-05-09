@@ -37,6 +37,12 @@ def _parse_cli(args=None):
         nargs="?",
     )
     parser.add_argument(
+        "--regenerate-hooks",
+        type=str2bool,
+        help="Regenerate pre-commit hooks",
+        default=False,
+    )
+    parser.add_argument(
         "--cmake-format", type=str2bool, help="Enable CMake files code formatting check"
     )
     parser.add_argument(
@@ -91,11 +97,14 @@ def disable_cmake_hook(repo, hook_id):
 def main(**kwargs):
     args = _parse_cli(**kwargs)
     PRE_COMMIT_CONFIG = osp.join(args.source_dir, ".pre-commit-config.yaml")
-    if not osp.exists(PRE_COMMIT_CONFIG):
-        config = {}
+    if osp.exists(PRE_COMMIT_CONFIG):
+        if not args.regenerate_hooks:
+            return
+        else:
+            with open(PRE_COMMIT_CONFIG) as istr:
+                config = yaml.load(istr, Loader=Loader) or {}
     else:
-        with open(PRE_COMMIT_CONFIG) as istr:
-            config = yaml.load(istr, Loader=Loader) or {}
+        config = {}
 
     repo = get_or_set_bbp_pre_commit_repo(config)
     if args.clang_format:
