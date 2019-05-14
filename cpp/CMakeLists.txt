@@ -26,8 +26,8 @@ function(bbp_disable_precommit)
   endif()
 endfunction(bbp_disable_precommit)
 
-function(bbp_enable_formatting)
-  find_package(PythonInterp 3.5 REQUIRED)
+function(bbp_enable_clang_formatting)
+  find_package(Python COMPONENTS Interpreter REQUIRED)
   find_package(ClangFormat 7 EXACT REQUIRED)
   set(${PROJECT_NAME}_ClangFormat_OPTIONS "" CACHE STRING "clang-format command options")
   set(${PROJECT_NAME}_ClangFormat_FILES_RE "^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$"
@@ -79,10 +79,15 @@ function(bbp_enable_formatting)
     add_dependencies(clang-format ${${PROJECT_NAME}_ClangFormat_DEPENDENCIES})
     add_dependencies(check-clang-format ${${PROJECT_NAME}_ClangFormat_DEPENDENCIES})
   endif()
+endfunction(bbp_enable_clang_formatting)
 
-  find_package(CMakeFormat REQUIRED)
-  set(${PROJECT_NAME}_CMakeFormat_OPTIONS "" CACHE STRING "cmake-format options")
-  set(${PROJECT_NAME}_CMakeFormat_FILES_RE "^.*\\\\.cmake$$" "^.*CMakeLists.txt$$"
+function(bbp_enable_cmake_formatting)
+  find_package(PythonInterp 3.5 REQUIRED)
+  find_package(CMakeFormat 0.4.5 EXACT REQUIRED)
+  set(${PROJECT_NAME}_CMakeFormat_OPTIONS ""
+      CACHE STRING "cmake-format options")
+  set(${PROJECT_NAME}_CMakeFormat_FILES_RE "^.*\\\\.cmake$$"
+      "^.*CMakeLists.txt$$"
       CACHE STRING "List of regular expressions matching CMake files")
   set(${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE
       ".*/third[-_]parties/.*$$"
@@ -123,7 +128,7 @@ function(bbp_enable_formatting)
                     check
                     --
                     ${${PROJECT_NAME}_CMakeFormat_OPTIONS})
-endfunction(bbp_enable_formatting)
+endfunction(bbp_enable_cmake_formatting)
 
 function(bbp_enable_static_analysis)
   find_package(PythonInterp 3.5 REQUIRED)
@@ -166,12 +171,26 @@ endfunction(bbp_enable_static_analysis)
 
 bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code properly formatted"
            OFF)
+bob_option(${PROJECT_NAME}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted"
+           OFF)
+bob_option(${PROJECT_NAME}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted"
+           OFF)
+
 bob_option(${PROJECT_NAME}_PRECOMMIT "Enable automatic checks before git commits" OFF)
 bob_option(${PROJECT_NAME}_PRECOMMIT_REGEN "Force precommit hook regeneration" OFF)
 bob_option(${PROJECT_NAME}_STATIC_ANALYSIS "Enable C++ static analysis during compilation" OFF)
 
+if(${PROJECT_NAME}_CLANG_FORMAT)
+  bbp_enable_clang_formatting()
+endif(${PROJECT_NAME}_CLANG_FORMAT)
+
+if(${PROJECT_NAME}_CMAKE_FORMAT)
+  bbp_enable_cmake_formatting()
+endif(${PROJECT_NAME}_CMAKE_FORMAT)
+
 if(${PROJECT_NAME}_FORMATTING)
-  bbp_enable_formatting()
+  bbp_enable_clang_formatting()
+  bbp_enable_cmake_formatting()
 endif(${PROJECT_NAME}_FORMATTING)
 
 if(${PROJECT_NAME}_PRECOMMIT)
