@@ -1,4 +1,5 @@
 import argparse
+import configparser
 import json
 import logging
 import os.path as osp
@@ -21,6 +22,23 @@ def make_cpp_file_filter(source_dir, binary_dir, excludes_re, files_re):
         return True
 
     return _func
+
+
+def collect_submodules(source_dir):
+    """Obtain a list of paths from `.gitmodules`
+
+    Args:
+        source_dir: The directory potentially containing `.gitmodules`
+    Returns:
+        A generator yielding the submodule paths
+    """
+    fn = osp.join(source_dir, ".gitmodules")
+    cfg = configparser.ConfigParser()
+    cfg.read(fn)
+    for section in cfg.sections():
+        value = cfg.get(section, "path", fallback=None)
+        if value:
+            yield osp.join(source_dir, value)
 
 
 def collect_included_headers(entry, filter_cpp_file):
@@ -71,16 +89,25 @@ def parse_cli(compile_commands=True, choices=None, args=None):
     parser.add_argument(
         "--excludes-re",
         nargs="*",
+        default=[],
         help="list of regular expressions of files to exclude",
     )
     parser.add_argument(
         "--files-re", nargs="*", help="List of regular expressions of files to include"
     )
+    parser.add_argument(
+        "--git-modules",
+        action="store_true",
+        help="Parse .gitmodules of the project to exclude external projects"
+    )
     if compile_commands:
         parser.add_argument("-p", dest="compile_commands_file", type=str)
     parser.add_argument("--action", choices=choices)
     parser.add_argument("options", nargs="*", help="Options given to executable")
-    return parser.parse_args(args=args)
+    result = parser.parse_args(args=args)
+    if result.git_modules:
+        result.excludes_re.extend(collect_submodules(result.source_dir))
+    return result
 
 
 def log_command(cmd):

@@ -49,6 +49,7 @@ function(bbp_enable_clang_formatting)
                     --executable="${ClangFormat_EXECUTABLE}"
                     --files-re
                     ${${PROJECT_NAME}_ClangFormat_FILES_RE}
+                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
                     --excludes-re
                     ${${PROJECT_NAME}_ClangFormat_EXCLUDES_RE}
                     -p
@@ -67,6 +68,7 @@ function(bbp_enable_clang_formatting)
                     --executable="${ClangFormat_EXECUTABLE}"
                     --files-re
                     ${${PROJECT_NAME}_ClangFormat_FILES_RE}
+                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
                     --excludes-re
                     ${${PROJECT_NAME}_ClangFormat_EXCLUDES_RE}
                     -p
@@ -106,6 +108,7 @@ function(bbp_enable_cmake_formatting)
                     --executable="${CMakeFormat_EXECUTABLE}"
                     --files-re
                     ${${PROJECT_NAME}_CMakeFormat_FILES_RE}
+                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
                     --excludes-re
                     ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE}
                     --action
@@ -122,6 +125,7 @@ function(bbp_enable_cmake_formatting)
                     --executable="${CMakeFormat_EXECUTABLE}"
                     --files-re
                     ${${PROJECT_NAME}_CMakeFormat_FILES_RE}
+                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
                     --excludes-re
                     ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE}
                     --action
@@ -155,6 +159,7 @@ function(bbp_enable_static_analysis)
                     --executable="${ClangTidy_EXECUTABLE}"
                     --files-re
                     ${${PROJECT_NAME}_ClangTidy_FILES_RE}
+                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
                     --excludes-re
                     ${${PROJECT_NAME}_ClangTidy_EXCLUDES_RE}
                     -p
@@ -171,6 +176,8 @@ endfunction(bbp_enable_static_analysis)
 
 bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code properly formatted"
            OFF)
+bob_option(${PROJECT_NAME}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting"
+           ON)
 bob_option(${PROJECT_NAME}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted"
            OFF)
 bob_option(${PROJECT_NAME}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted"
