@@ -56,6 +56,8 @@ def collect_files(cmake_source_dir, cmake_binary_dir, excludes_re, cmake_files_r
             if osp.isdir(p):
                 if f in EXCLUDED_DIRS:
                     continue
+                elif osp.isfile(osp.join(p, "CMakeCache.txt")):
+                    continue
                 queue.append(p)
             else:
                 if f in EXCLUDED_FILES:
