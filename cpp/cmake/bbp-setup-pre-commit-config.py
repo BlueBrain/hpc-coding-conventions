@@ -37,9 +37,9 @@ def _parse_cli(args=None):
         nargs="?",
     )
     parser.add_argument(
-        "--regenerate-hooks",
+        "-f", "--force",
         type=str2bool,
-        help="Regenerate pre-commit hooks",
+        help="Force regenerating pre-commit hooks",
         default=False,
     )
     parser.add_argument(
