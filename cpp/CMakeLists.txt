@@ -9,7 +9,7 @@ function(bbp_enable_precommit)
   execute_process(COMMAND ${PreCommit_EXECUTABLE} install)
   execute_process(
     COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
-            --regenerate-hooks ${${PROJECT_NAME}_PRECOMMIT_REGEN}
+            --force ${${PROJECT_NAME}_PRECOMMIT_REGEN}
             --clang-format ${${PROJECT_NAME}_FORMATTING} --cmake-format
             ${${PROJECT_NAME}_FORMATTING} --clang-tidy ${${PROJECT_NAME}_STATIC_ANALYSIS}
             ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
