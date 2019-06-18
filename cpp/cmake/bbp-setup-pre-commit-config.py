@@ -98,7 +98,7 @@ def main(**kwargs):
     args = _parse_cli(**kwargs)
     PRE_COMMIT_CONFIG = osp.join(args.source_dir, ".pre-commit-config.yaml")
     if osp.exists(PRE_COMMIT_CONFIG):
-        if not args.regenerate_hooks:
+        if not args.force:
             return
         else:
             with open(PRE_COMMIT_CONFIG) as istr:
