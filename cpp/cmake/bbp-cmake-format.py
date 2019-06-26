@@ -53,31 +53,31 @@ def collect_files(cmake_source_dir, cmake_binary_dir, excludes_re, cmake_files_r
             rp = p[len(cmake_source_dir):]
             if p == cmake_binary_dir:
                 continue
-            if osp.isdir(p):
-                if f in EXCLUDED_DIRS:
-                    continue
-                elif osp.isfile(osp.join(p, "CMakeCache.txt")):
-                    continue
-                queue.append(p)
+            for regex in excludes_re:
+                if regex.match(p):
+                    break
             else:
-                if f in EXCLUDED_FILES:
-                    continue
-                coupled_suffixes = ["Config.cmake", "ConfigVersion.cmake"]
-                for i in range(len(coupled_suffixes)):
-                    if f.endswith(coupled_suffixes[i]):
-                        base = f[: -len(coupled_suffixes[i])]
-                        if osp.isfile(
-                            osp.join(
-                                d,
-                                base
-                                + coupled_suffixes[(i + 1) % len(coupled_suffixes)],
-                            )
-                        ):
-                            break
+                if osp.isdir(p):
+                    if f in EXCLUDED_DIRS:
+                        continue
+                    elif osp.isfile(osp.join(p, "CMakeCache.txt")):
+                        continue
+                    queue.append(p)
                 else:
-                    for regex in excludes_re:
-                        if regex.match(rp):
-                            break
+                    if f in EXCLUDED_FILES:
+                        continue
+                    coupled_suffixes = ["Config.cmake", "ConfigVersion.cmake"]
+                    for i in range(len(coupled_suffixes)):
+                        if f.endswith(coupled_suffixes[i]):
+                            base = f[: -len(coupled_suffixes[i])]
+                            if osp.isfile(
+                                osp.join(
+                                    d,
+                                    base
+                                    + coupled_suffixes[(i + 1) % len(coupled_suffixes)],
+                                )
+                            ):
+                                break
                     else:
                         for regexp in cmake_files_re:
                             if regexp.match(rp):

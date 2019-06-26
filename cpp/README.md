@@ -111,6 +111,8 @@ A list of CMake cache variables can be used to customize the code formatting:
 * `${PROJECT}_ClangFormat_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
   from formatting. Default value is:<br/>
   `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
+
+  Regular expressions are tested against the **full file path**.
 * `${PROJECT}_ClangFormat_DEPENDENCIES`: list of CMake targets to build before
   formatting C/C++ code. Default value is `""`
 
