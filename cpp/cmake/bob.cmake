@@ -272,6 +272,7 @@ function(bob_cxx_standard_flags standard)
     endif()
   endif()
   set(CMAKE_CXX_STANDARD ${standard})
+  set(CXX_STANDARD_REQUIRED TRUE)
 endfunction(bob_cxx_standard_flags standard)
 
 function(bob_cxx11_flags)
