@@ -155,12 +155,11 @@ function(bob_get_semver)
 endfunction(bob_get_semver)
 
 function(bob_cxx_pedantic_flags)
-  # Append to variable CMAKE_CXX_FLAGS the set of warnings recommended
-  # for development, based on compiler family and version.
+  # Append to variable CMAKE_CXX_FLAGS the set of warnings recommended for development, based on
+  # compiler family and version.
   #
-  # Flags are appended to a custom variable instead of CMAKE_CXX_FLAGS
-  # if passed in parameter, for instance:
-  #     bob_cxx_pedantic_flags(PEDANTIC_FLAGS)
+  # Flags are appended to a custom variable instead of CMAKE_CXX_FLAGS if passed in parameter, for
+  # instance: bob_cxx_pedantic_flags(PEDANTIC_FLAGS)
   #
   set(FLAGS "")
   if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -265,16 +264,17 @@ function(bob_begin_cxx_flags)
   endif()
 endfunction(bob_begin_cxx_flags)
 
-function(bob_cxx_standard_flags standard)
+macro(bob_cxx_standard_flags standard)
   if(standard GREATER 98 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(${PROJECT_NAME}_CXX_WARNINGS)
-      set(FLAGS "${FLAGS} -Wno-c++98-compat-pedantic -Wno-c++98-compat")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat-pedantic -Wno-c++98-compat"
+          PARENT_SCOPE)
     endif()
   endif()
-  set(CMAKE_CXX_STANDARD ${standard})
-  set(CXX_STANDARD_REQUIRED TRUE)
-  set(CMAKE_CXX_EXTENSIONS NO)
-endfunction(bob_cxx_standard_flags standard)
+  set(CMAKE_CXX_STANDARD "${standard}" PARENT_SCOPE)
+  set(CXX_STANDARD_REQUIRED "TRUE" PARENT_SCOPE)
+  set(CMAKE_CXX_EXTENSIONS "NO" PARENT_SCOPE)
+endmacro(bob_cxx_standard_flags standard)
 
 function(bob_cxx11_flags)
   bob_cxx_standard_flags(11)
