@@ -100,6 +100,11 @@ def parse_cli(compile_commands=True, choices=None, args=None):
         action="store_true",
         help="Parse .gitmodules of the project to exclude external projects"
     )
+    parser.add_argument(
+        "--make-unescape-re",
+        action="store_true",
+        help="Unescape make-escaped regular-expression arguments"
+    )
     if compile_commands:
         parser.add_argument("-p", dest="compile_commands_file", type=str)
     parser.add_argument("--action", choices=choices)
@@ -107,6 +112,16 @@ def parse_cli(compile_commands=True, choices=None, args=None):
     result = parser.parse_args(args=args)
     if result.git_modules:
         result.excludes_re.extend(collect_submodules(result.source_dir))
+    if result.make_unescape_re:
+        def make_unescape_re(pattern):
+            if pattern.endswith('$$'):
+                pattern = pattern[:-1]
+            pattern = pattern.replace('\\\\', '\\')
+            return pattern
+        def make_unescape_res(patterns):
+            return [make_unescape_re(pattern) for pattern in patterns]
+        result.files_re = make_unescape_res(result.files_re)
+        result.excludes_re = make_unescape_res(result.excludes_re)
     return result
 
 

@@ -39,44 +39,40 @@ function(bbp_enable_clang_formatting)
   mark_as_advanced(${PROJECT_NAME}_ClangFormat_OPTIONS ${PROJECT_NAME}_ClangFormat_FILES_RE
                    ${PROJECT_NAME}_ClangFormat_EXCLUDES_RE)
   configure_file(.clang-format ${PROJECT_SOURCE_DIR})
+  set(clang_format_command_prefix
+      ${PYTHON_EXECUTABLE}
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
+      -S
+      "${CMAKE_SOURCE_DIR}"
+      -B
+      "${CMAKE_BINARY_DIR}"
+      --executable="${ClangFormat_EXECUTABLE}"
+      --files-re
+      ${${PROJECT_NAME}_ClangFormat_FILES_RE}
+      $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
+      --excludes-re
+      ${${PROJECT_NAME}_ClangFormat_EXCLUDES_RE}
+      -p
+      ${CMAKE_BINARY_DIR}/compile_commands.json)
   add_custom_target(clang-format
-                    ${PYTHON_EXECUTABLE}
-                    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
-                    -S
-                    "${CMAKE_SOURCE_DIR}"
-                    -B
-                    "${CMAKE_BINARY_DIR}"
-                    --executable="${ClangFormat_EXECUTABLE}"
-                    --files-re
-                    ${${PROJECT_NAME}_ClangFormat_FILES_RE}
-                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
-                    --excludes-re
-                    ${${PROJECT_NAME}_ClangFormat_EXCLUDES_RE}
-                    -p
-                    ${CMAKE_BINARY_DIR}/compile_commands.json
+                    ${clang_format_command_prefix}
                     --action
                     format
                     --
                     "${${PROJECT_NAME}_ClangFormat_OPTIONS}")
   add_custom_target(check-clang-format
-                    ${PYTHON_EXECUTABLE}
-                    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
-                    -S
-                    "${CMAKE_SOURCE_DIR}"
-                    -B
-                    "${CMAKE_BINARY_DIR}"
-                    --executable="${ClangFormat_EXECUTABLE}"
-                    --files-re
-                    ${${PROJECT_NAME}_ClangFormat_FILES_RE}
-                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
-                    --excludes-re
-                    ${${PROJECT_NAME}_ClangFormat_EXCLUDES_RE}
-                    -p
-                    ${CMAKE_BINARY_DIR}/compile_commands.json
+                    ${clang_format_command_prefix}
                     --action
                     check
                     --
                     "${${PROJECT_NAME}_ClangFormat_OPTIONS}")
+  if(${PROJECT_NAME}_TEST_FORMATTING)
+    add_test(NAME ClangFormat
+             COMMAND ${clang_format_command_prefix}
+                     --action check
+                     --make-unescape-re
+                     -- "${${PROJECT_NAME}_ClangFormat_OPTIONS}")
+  endif()
   if(${PROJECT_NAME}_ClangFormat_DEPENDENCIES)
     add_dependencies(clang-format ${${PROJECT_NAME}_ClangFormat_DEPENDENCIES})
     add_dependencies(check-clang-format ${${PROJECT_NAME}_ClangFormat_DEPENDENCIES})
@@ -94,40 +90,39 @@ function(bbp_enable_cmake_formatting)
   mark_as_advanced(${PROJECT_NAME}_CMakeFormat_OPTIONS ${PROJECT_NAME}_CMakeFormat_FILES_RE
                    ${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE)
   configure_file(.cmake-format.yaml ${PROJECT_SOURCE_DIR})
+  set(cmake_format_command_prefix
+      ${PYTHON_EXECUTABLE}
+      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"
+      -S
+      "${CMAKE_SOURCE_DIR}"
+      -B
+      "${CMAKE_BINARY_DIR}"
+      "--executable=${CMakeFormat_EXECUTABLE}"
+      --files-re
+      ${${PROJECT_NAME}_CMakeFormat_FILES_RE}
+      $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
+      --excludes-re
+      ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE})
   add_custom_target(cmake-format
-                    ${PYTHON_EXECUTABLE}
-                    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"
-                    -S
-                    "${CMAKE_SOURCE_DIR}"
-                    -B
-                    "${CMAKE_BINARY_DIR}"
-                    --executable="${CMakeFormat_EXECUTABLE}"
-                    --files-re
-                    ${${PROJECT_NAME}_CMakeFormat_FILES_RE}
-                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
-                    --excludes-re
-                    ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE}
+                    ${cmake_format_command_prefix}
                     --action
                     format
                     --
                     "${${PROJECT_NAME}_CMakeFormat_OPTIONS}")
   add_custom_target(check-cmake-format
-                    ${PYTHON_EXECUTABLE}
-                    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"
-                    -S
-                    "${CMAKE_SOURCE_DIR}"
-                    -B
-                    "${CMAKE_BINARY_DIR}"
-                    --executable="${CMakeFormat_EXECUTABLE}"
-                    --files-re
-                    ${${PROJECT_NAME}_CMakeFormat_FILES_RE}
-                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
-                    --excludes-re
-                    ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE}
+                    ${cmake_format_command_prefix}
                     --action
                     check
                     --
                     ${${PROJECT_NAME}_CMakeFormat_OPTIONS})
+  if(${PROJECT_NAME}_TEST_FORMATTING)
+    add_test(NAME CMakeFormat
+             COMMAND ${cmake_format_command_prefix}
+                     --action check
+                     --make-unescape-re
+                     -- ${${PROJECT_NAME}_CMakeFormat_OPTIONS})
+  endif()
+
 endfunction(bbp_enable_cmake_formatting)
 
 function(bbp_enable_static_analysis)
@@ -136,7 +131,7 @@ function(bbp_enable_static_analysis)
   set(${PROJECT_NAME}_ClangTidy_OPTIONS -extra-arg=-Wno-unknown-warning-option
       CACHE STRING "clang-tidy command options")
   mark_as_advanced(${PROJECT_NAME}_ClangTidy_OPTIONS)
-  set(${PROJECT_NAME}_ClangTidy_FILES_RE "^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$"
+  set(${PROJECT_NAME}_ClangTidy_FILES_RE "^.*\\\\.c$$"  "^.*\\\\.cpp$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
   set(${PROJECT_NAME}_ClangTidy_EXCLUDES_RE ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
@@ -145,25 +140,28 @@ function(bbp_enable_static_analysis)
   mark_as_advanced(${PROJECT_NAME}_ClangTidy_OPTIONS ${PROJECT_NAME}_ClangTidy_FILES_RE
                    ${PROJECT_NAME}_ClangTidy_EXCLUDES_RE)
   configure_file(.clang-tidy ${PROJECT_SOURCE_DIR})
-  add_custom_target(clang-tidy
-                    ${PYTHON_EXECUTABLE}
-                    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py"
-                    -S
-                    "${CMAKE_SOURCE_DIR}"
-                    -B
-                    "${CMAKE_BINARY_DIR}"
-                    --executable="${ClangTidy_EXECUTABLE}"
-                    --files-re
-                    ${${PROJECT_NAME}_ClangTidy_FILES_RE}
-                    $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
-                    --excludes-re
-                    ${${PROJECT_NAME}_ClangTidy_EXCLUDES_RE}
-                    -p
-                    ${CMAKE_BINARY_DIR}/compile_commands.json
-                    --action
-                    check
-                    --
-                    ${${PROJECT_NAME}_ClangTidy_OPTIONS})
+  set(clang_tidy_command_prefix
+          ${PYTHON_EXECUTABLE}
+          "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py"
+          -S
+          "${CMAKE_SOURCE_DIR}"
+          -B
+          "${CMAKE_BINARY_DIR}"
+          --executable=${ClangTidy_EXECUTABLE}
+          --files-re
+          "${${PROJECT_NAME}_ClangTidy_FILES_RE}"
+          $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
+          --excludes-re
+          ${${PROJECT_NAME}_ClangTidy_EXCLUDES_RE}
+          -p
+          ${CMAKE_BINARY_DIR}/compile_commands.json
+          --action
+          check
+          )
+  add_custom_target(clang-tidy ${clang_tidy_command_prefix} -- ${${PROJECT_NAME}_ClangTidy_OPTIONS})
+  if(${PROJECT_NAME}_TEST_STATIC_ANALYSIS)
+    add_test(NAME ClangTidy COMMAND ${clang_tidy_command_prefix} --make-unescape-re -- ${${PROJECT_NAME}_ClangTidy_OPTIONS})
+  endif()
   if(${PROJECT_NAME}_ClangTidy_DEPENDENCIES)
     add_dependencies(clang-tidy ${${PROJECT_NAME}_ClangTidy_DEPENDENCIES})
   endif()
@@ -172,13 +170,16 @@ endfunction(bbp_enable_static_analysis)
 
 bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code properly formatted"
            OFF)
+bob_option(${PROJECT_NAME}_TEST_FORMATTING "Add CTest formatting test" OFF)
 bob_option(${PROJECT_NAME}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
 bob_option(${PROJECT_NAME}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
 bob_option(${PROJECT_NAME}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted" OFF)
 
 bob_option(${PROJECT_NAME}_PRECOMMIT "Enable automatic checks before git commits" OFF)
 bob_option(${PROJECT_NAME}_PRECOMMIT_REGEN "Force precommit hook regeneration" OFF)
+
 bob_option(${PROJECT_NAME}_STATIC_ANALYSIS "Enable C++ static analysis during compilation" OFF)
+bob_option(${PROJECT_NAME}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
 
 if(${PROJECT_NAME}_CLANG_FORMAT)
   bbp_enable_clang_formatting()

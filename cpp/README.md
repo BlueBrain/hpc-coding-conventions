@@ -82,13 +82,19 @@ This will setup or update git [pre-commit](https://pre-commit.com) hooks of this
 
 #### Code Formatting
 
-To activate code formatting of both C++ and CMake files,
+To activate code formatting of both C/C++ and CMake files,
 enable CMake variable `${PROJECT}_FORMATTING` where `${PROJECT}` is the name given
 to the CMake `project` function.
 
 For instance, given a project `foo`:
 
 `cmake -Dfoo_FORMATTING:BOOL=ON <path>`
+
+To individually enable the formatting of C/C++ code or CMake files, use the following
+CMake variables:
+
+* `${PROJECT}_CLANG_FORMAT:BOOL`
+* `${PROJECT}_CMAKE_FORMAT:BOOL`
 
 ##### Usage
 
@@ -116,11 +122,11 @@ A list of CMake cache variables can be used to customize the code formatting:
 * `${PROJECT}_ClangFormat_DEPENDENCIES`: list of CMake targets to build before
   formatting C/C++ code. Default value is `""`
 
-Where `${PROJECT}_FORMATTING` CMake variable is supposed to be defined by the user,
-the variables above are meant to be overridden inside CMake project directly.
-They are CMake CACHE variables whose value must be forced.
-For instance, to ignore code of third-parties located in `ext/` subdirectory,
-add this to your CMake project:
+Unlike `${PROJECT}_FORMATTING` which is supposed to be defined by the user,
+These variables are already defined and may be overridden inside your CMake project.
+They are CMake _CACHE_ variables whose value must be forced.
+For instance, to ignore code of third-parties located in `ext/` subdirectory
+(`third[-_]part(y|ies)` regular expression by default), add this to your CMake project:
 
 ```cmake
 set(
@@ -128,6 +134,11 @@ set(
   CACHE STRING "list of regular expressions to exclude C/C++ files from formatting"
   FORCE)
 ```
+
+##### Continuous Integration
+
+Define `${PROJECT}_TEST_FORMATTING:BOOL` CMake variable to enforce formatting during
+the `test` make target.
 
 #### Static Analysis
 
@@ -160,6 +171,14 @@ A list of CMake cache variables can be used to customize static analysis:
   `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
 * `${PROJECT}_ClangTidy_DEPENDENCIES`: list of CMake targets to build before
   check C/C++ code. Default value is `""`
+
+These variables are meant to be overridden inside your CMake project.
+They are CMake _CACHE_ variables whose value must be forced.
+
+##### Continuous Integration
+
+Define `${PROJECT}_TEST_STATIC_ANALYSIS:BOOL` CMake variable to enforce formatting during
+the `test` make target.
 
 #### Pre-Commit
 
