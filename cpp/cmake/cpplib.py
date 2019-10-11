@@ -122,6 +122,7 @@ def parse_cli(compile_commands=True, choices=None, args=None):
             return [make_unescape_re(pattern) for pattern in patterns]
         result.files_re = make_unescape_res(result.files_re)
         result.excludes_re = make_unescape_res(result.excludes_re)
+    result.options = [opt for opt in result.options if opt]
     return result
 
 

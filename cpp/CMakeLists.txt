@@ -46,7 +46,7 @@ function(bbp_enable_clang_formatting)
       "${CMAKE_SOURCE_DIR}"
       -B
       "${CMAKE_BINARY_DIR}"
-      --executable="${ClangFormat_EXECUTABLE}"
+      "--executable=${ClangFormat_EXECUTABLE}"
       --files-re
       ${${PROJECT_NAME}_ClangFormat_FILES_RE}
       $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
@@ -147,7 +147,7 @@ function(bbp_enable_static_analysis)
           "${CMAKE_SOURCE_DIR}"
           -B
           "${CMAKE_BINARY_DIR}"
-          --executable=${ClangTidy_EXECUTABLE}
+          "--executable=${ClangTidy_EXECUTABLE}"
           --files-re
           "${${PROJECT_NAME}_ClangTidy_FILES_RE}"
           $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
