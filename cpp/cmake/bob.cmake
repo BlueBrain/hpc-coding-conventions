@@ -266,7 +266,7 @@ function(bob_begin_cxx_flags)
 endfunction(bob_begin_cxx_flags)
 
 macro(bob_cxx_standard_flags standard)
-  if(standard GREATER 98 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  if(NOT standard VERSION_EQUAL 98 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(${PROJECT_NAME}_CXX_WARNINGS)
       set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-c++98-compat-pedantic -Wno-c++98-compat"
           PARENT_SCOPE)
