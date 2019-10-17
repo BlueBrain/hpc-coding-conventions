@@ -2,9 +2,16 @@
 
 ## C++ Compiler
 
-Recommended flags are:
+### Compilation flags
 
-* Clang: `-Werror -Weverything`. And then disable those you dislike.
+Here is the list of recommended compilation flags, set by the `bob_begin_cxx_flags`
+helper function provided by this CMake project.
+
+* Clang: `-Werror -Weverything`. And then disable those you dislike:
+  * `-Wno-disabled-macro-expansion`
+  * `-Wno-documentation-unknown-command`
+  * `-Wno-padded`
+  * `-Wno-unused-member-function`
 * GCC:
   * `-Wall`
   * `-Wcast-align`
@@ -30,6 +37,7 @@ Recommended flags are:
   * `-Wrestrict`
 & GCC 8 and greater:
   * `-Wclass-memaccess`
+  * `-Wstringop-truncation`
 
 Continuous integration should compile your code with as many compilers as possible to get best feedback.
 
