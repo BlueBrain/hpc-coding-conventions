@@ -192,3 +192,60 @@ For instance, given a project `foo`:
 if `${PROJECT}_FORMATTING` CMake variable is enabled, when performing a git
 commit, a succession of checks will be executed to ensure that your change
 complies with the coding conventions. It will be discarded otherwise.
+
+#### Bob
+
+`bob.cmake` is a CMake utility file part of hpc-coding-conventions that provides
+a set of convenient macros and functions used to:
+* specify your project options and dependencies
+* specify the proper compilation flags
+* install the proper CMake export flags so that your project can be
+  loaded by another project with the `find_package` CMake function.
+
+##### Compilation flags
+
+By default, CMake relies on the `CMAKE_BUILD_TYPE` variable to set the proper
+compilation flags. Because _bob_ is now taking care of it, you must configure
+your project with `CMAKE_BUILD_TYPE` empty.
+
+_bob_ sets the compilation flags according to a set of CMake variables:
+* `${PROJECT_NAME}_CXX_OPTIMIZE:BOOL`: Compile C++ with optimization (default is ON)
+* `${PROJECT_NAME}_CXX_SYMBOLS:BOOL`: Compile C++ with debug symbols (default is ON)
+* `${PROJECT_NAME}_CXX_WARNINGS:BOOL`: Compile C++ with warnings" (default is ON)
+* `${PROJECT_NAME}_EXTRA_CXX_FLAGS:STRING`: Additional C++ compilation flags
+* `${PROJECT_NAME}_CXX_FLAGS:STRING`: bypass variables above and use the specified
+  compilation flags. `CMAKE_BUILD_TYPE` is ignored.
+* `${PROJECT_NAME}_NORMAL_CXX_FLAGS:BOOL`: Allow `CMAKE_CXX_FLAGS` to follow _normal_ CMake behavior
+  and bypass all variables above.
+
+Default `CMAKE_CXX_FLAGS` variable value is taken into account.
+
+##### Integration
+
+The top-level CMakelists.txt of your project may look like:
+
+```cmake
+cmake_minimum_required(VERSION 3.6)
+project(HelloWorld VERSION 1.0.0 LANGUAGES CXX)
+add_subdirectory(hpc-coding-conventions/cpp)
+
+bob_begin_package()
+bob_begin_cxx_flags()
+bob_cxx17_flags()
+# specify custom compilation flags
+find_package(OpenMP)
+if(OpenMP_FOUND)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_FLAGS "${CMAKE_FLAGS} ${OpenMP_FLAGS}")
+else()
+  message(WARNING "OpenMP support is disabled because it could not be found.")
+endif()
+bob_end_cxx_flags()
+
+# specify your targets:
+add_library(...)
+add_executable(...)
+
+bob_end_package()
+```
