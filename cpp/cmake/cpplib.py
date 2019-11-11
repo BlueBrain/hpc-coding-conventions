@@ -1,10 +1,23 @@
 import argparse
 import configparser
+import contextlib
 import json
 import logging
+import os
 import os.path as osp
 import shlex
 import subprocess
+
+
+@contextlib.contextmanager
+def pushd(dir):
+    """Change working directory within a Python context"""
+    cwd = os.getcwd()
+    try:
+        os.chdir(dir)
+        yield dir
+    finally:
+        os.chdir(cwd)
 
 
 def make_cpp_file_filter(source_dir, binary_dir, excludes_re, files_re):
@@ -61,6 +74,36 @@ def collect_included_headers(entry, filter_cpp_file):
                 yield header
 
 
+def git_added_modified(git_dir, cached=True, git=None):
+    """A generator providing the list of added and modified files
+
+    Args:
+        git_dir: root repository directory (containing .git/)
+        cached: look into staging area if enabled, unstaged changes otherwise
+        git: path to git executable (look into PATH if `None`)
+
+    """
+    git_diff_cmd = [git or 'git', 'diff', '--name-status']
+    if cached:
+        git_diff_cmd.append('--cached')
+    with pushd(git_dir):
+        for line in subprocess.check_output(git_diff_cmd).decode('utf-8').splitlines():
+            if line[0] in ['A', 'M']:
+                filename = osp.abspath(line[1:].lstrip())
+                yield filename
+
+
+def filter_git_modified(cli_args, generator):
+    if cli_args.staged:
+        modified_files = set(git_added_modified(cli_args.source_dir, git=cli_args.git_executable))
+        for file in generator:
+            if osp.realpath(file) in modified_files:
+                yield file
+    else:
+        for file in generator:
+            yield file
+
+
 def collect_files(compile_commands, filter_cpp_file):
     files = set()
     with open(compile_commands) as istr:
@@ -104,6 +147,14 @@ def parse_cli(compile_commands=True, choices=None, args=None):
         "--make-unescape-re",
         action="store_true",
         help="Unescape make-escaped regular-expression arguments"
+    )
+    parser.add_argument(
+        "--git-executable", default='git', help="Path to git executable"
+    )
+    parser.add_argument(
+        '--staged',
+        action='store_true',
+        help="Apply command only on the files in the git staging area"
     )
     if compile_commands:
         parser.add_argument("-p", dest="compile_commands_file", type=str)

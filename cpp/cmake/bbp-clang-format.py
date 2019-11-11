@@ -9,7 +9,7 @@ import subprocess
 import sys
 import tempfile
 
-from cpplib import collect_files, log_command, make_cpp_file_filter, parse_cli
+from cpplib import collect_files, filter_git_modified, log_command, make_cpp_file_filter, parse_cli
 
 
 def do_format(cpp_file, clang_format, options):
@@ -62,7 +62,7 @@ def main(**kwargs):
     )
     with build_action_func(args) as action:
         succeeded = True
-        for cpp_file in collect_files(args.compile_commands_file, filter_cpp_file):
+        for cpp_file in filter_git_modified(args, collect_files(args.compile_commands_file, filter_cpp_file)):
             succeeded &= action(cpp_file, args.executable, args.options)
     return succeeded
 

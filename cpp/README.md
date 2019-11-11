@@ -96,6 +96,11 @@ CMake variables:
 * `${PROJECT}_CLANG_FORMAT:BOOL`
 * `${PROJECT}_CMAKE_FORMAT:BOOL`
 
+Although it is possible to overwrite the default settings to restrict the scanned
+directories, the formatting applies to the entire repository.
+To perform the formatting only on files in the git staging area,
+enable the `${PROJECT}_FORMATTING_STAGED_ONLY:BOOL` CMake variable.
+
 ##### Usage
 
 This will add the following *make* targets:
