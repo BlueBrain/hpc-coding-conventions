@@ -97,7 +97,11 @@ CMake variables:
 * `${PROJECT}_CMAKE_FORMAT:BOOL`
 
 Although it is possible to overwrite the default settings to restrict the scanned
-directories, the formatting applies to the entire repository by default.
+directories, the formatting applies to the entire repository except git submodules
+by default.
+
+To enable the formatting of CMake and C++ code inside git submodules, enable the
+`${PROJECT_NAME}_FORMATTING_NO_SUBMODULES:BOOL` CMake variable.
 
 Use `${PROJECT}_FORMATTING_ON:STRING` CMake variable to apply formatting on a subset.
 Possible values are:
