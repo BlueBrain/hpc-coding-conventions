@@ -97,9 +97,22 @@ CMake variables:
 * `${PROJECT}_CMAKE_FORMAT:BOOL`
 
 Although it is possible to overwrite the default settings to restrict the scanned
-directories, the formatting applies to the entire repository.
-To perform the formatting only on files in the git staging area,
-enable the `${PROJECT}_FORMATTING_STAGED_ONLY:BOOL` CMake variable.
+directories, the formatting applies to the entire repository by default.
+
+Use `${PROJECT}_FORMATTING_ON:STRING` CMake variable to apply formatting on a subset.
+Possible values are:
+* `all`: apply formatting on the entire repository (the default).
+* `staged`: apply formatting only on added and modified files in the git staging area.
+* `since-ref:GIT_REF`: apply formatting only on added and modified files in the commits
+since the given ref. For instance `since-ref:origin/master` is equivalent to:
+   ```
+   fork_point=`git merge-base --fork-point origin/master HEAD`
+   git diff --name-status $fork_point | grep '^[AM]'
+   ```
+* `base-branch`: an alias for `since-ref:$CHANGE_TARGET`. CHANGE_TARGET is a Jenkins
+environment variable that contains the target or base branch to which the change
+could be merged.
+* `since-rev:GIT_REV`. For instance `since-ref:fcfc8b6a`
 
 ##### Usage
 

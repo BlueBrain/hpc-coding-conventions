@@ -53,10 +53,8 @@ function(bbp_enable_clang_formatting)
       --excludes-re
       ${${PROJECT_NAME}_ClangFormat_EXCLUDES_RE}
       -p
-      ${CMAKE_BINARY_DIR}/compile_commands.json)
-  if(${PROJECT_NAME}_FORMATTING_STAGED_ONLY)
-    set(clang_format_command_prefix ${clang_format_command_prefix} --staged-only)
-  endif()
+      ${CMAKE_BINARY_DIR}/compile_commands.json
+      --applies-on=${${PROJECT_NAME}_FORMATTING_ON})
   add_custom_target(clang-format
                     ${clang_format_command_prefix}
                     --action
@@ -105,10 +103,8 @@ function(bbp_enable_cmake_formatting)
       ${${PROJECT_NAME}_CMakeFormat_FILES_RE}
       $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
       --excludes-re
-      ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE})
-  if(${PROJECT_NAME}_FORMATTING_STAGED)
-    set(cmake_format_command_prefix ${cmake_format_command_prefix} --staged)
-  endif()
+      ${${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE}
+      --applies-on=${${PROJECT_NAME}_FORMATTING_ON})
   add_custom_target(cmake-format
                     ${cmake_format_command_prefix}
                     --action
@@ -178,8 +174,9 @@ endfunction(bbp_enable_static_analysis)
 
 bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code properly formatted"
            OFF)
-bob_option(${PROJECT_NAME}_FORMATTING_STAGED
-           "Perform formatting checks only on files in the git staging area" OFF)
+bob_option(${PROJECT_NAME}_FORMATTING_ON
+           "Specify changeset where formatting applies (see documentation for detailed information)"
+           all)
 bob_option(${PROJECT_NAME}_TEST_FORMATTING "Add CTest formatting test" OFF)
 bob_option(${PROJECT_NAME}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
 bob_option(${PROJECT_NAME}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
