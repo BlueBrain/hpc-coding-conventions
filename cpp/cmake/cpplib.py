@@ -63,6 +63,13 @@ def collect_included_headers(entry, filter_cpp_file):
 
 def collect_files(compile_commands, filter_cpp_file):
     files = set()
+    if not osp.exists(compile_commands):
+        msg = 'Could not find file %s. Please make sure ' + \
+              'CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on.'
+        msg = msg % compile_commands
+        logging.error(msg)
+        raise Exception(msg)
+
     with open(compile_commands) as istr:
         for entry in json.load(istr):
             cpp_file = osp.realpath(osp.join(entry["directory"], entry["file"]))
@@ -118,6 +125,7 @@ def parse_cli(compile_commands=True, choices=None, args=None):
                 pattern = pattern[:-1]
             pattern = pattern.replace('\\\\', '\\')
             return pattern
+
         def make_unescape_res(patterns):
             return [make_unescape_re(pattern) for pattern in patterns]
         result.files_re = make_unescape_res(result.files_re)
