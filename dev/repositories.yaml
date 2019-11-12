@@ -4,6 +4,7 @@ repositories:
     formatting: true
     precommit: true
   cmake_project_name: Zee
+  spack_spec: zee@develop+codechecks%gcc
 - url: git@github.com:tristan0x/basalt.git
   features:
     formatting: true
@@ -11,6 +12,7 @@ repositories:
     static_analysis: true
   cmake_project_name: Basalt
   location: cmake/hpc-coding-conventions
+  spack_spec: py-basalt@develop+codechecks%gcc
 - url: ssh://bbpcode.epfl.ch/incubator/nocmodl
   features:
     formatting: true
@@ -22,3 +24,10 @@ repositories:
     formatting: true
   location: CMake/hpc-coding-conventions
   cmake_project_name: FLATIndex
+- url: ssh://bbpcode.epfl.ch/building/TouchDetector
+  features:
+    clang_format: true
+  location: deps/hpc-coding-conventions
+  cmake_project_name: TouchDetector
+  spack_spec: touchdetector@develop+codechecks%gcc^morpho-kit@develop
+#  patch: add-extensions.patch

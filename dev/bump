@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 
-# TODO
-# * nix/spack
-# * integration in new project
-
 import argparse
 from contextlib import contextmanager
 from collections import namedtuple
 import logging
 import os
 import os.path as osp
+import re
 import shutil
 import subprocess
 from subprocess import check_output
@@ -28,6 +25,26 @@ IGNORED_CONFIG_FILES = {
     ".cmake-format.yaml",
     ".pre-commit-config.yaml",
 }
+
+
+@contextmanager
+def spack_build_env(spec):
+    """Execute a Python context within a `spack build-env` environment
+    """
+    cur_environ = os.environ.copy()
+    cmd = ['spack', 'build-env', spec, 'bash', '--norc', '-c', 'env']
+    output = check_output(cmd).decode('utf-8')
+    VAR_RE = re.compile('^[a-zA-Z][a-zA-Z0-9_]*=.*')
+    environ = {
+        tuple(var.split('=', 1)) for var in output.splitlines() if VAR_RE.match(var)
+    }
+    try:
+        os.environ.clear()
+        os.environ.update(environ)
+        yield environ
+    finally:
+        os.environ.clear()
+        os.environ.update(cur_environ)
 
 
 def git_status():
@@ -70,16 +87,35 @@ def pushd(path):
 
 
 class Repository(
-    namedtuple("Repository", ["url", "features", "location", "cmake_project_name"])
+    namedtuple(
+        "Repository",
+        [
+            "url",
+            "features",
+            "location",
+            "cmake_project_name",
+            "default_branch",
+            "spack_spec",
+            "patch",
+        ],
+    )
 ):
     @staticmethod
     def create(**kwargs):
         url = kwargs["url"]
         kwargs.setdefault("location", "hpc-coding-conventions")
+        kwargs.setdefault("default_branch", "master")
+        kwargs.setdefault("spack_spec", None)
+        if 'patch' in kwargs:
+            kwargs['patch'] = osp.abspath(kwargs['patch'])
+        else:
+            kwargs['patch'] = None
         if "github.com" in url:
             repo = GitHubRepository(**kwargs)
         elif "bbpcode.epfl.ch" in url:
             repo = GerritRepository(**kwargs)
+        else:
+            raise Exception('Unsupported git server')
         repo.log = LOGGER.getChild(repo.name)
         return repo
 
@@ -124,14 +160,6 @@ class Repository(
             _check_call("git", "remote", "add", self.name, self.url)
         _check_call("git", "fetch", self.name)
         return True
-
-    @property
-    def default_branch(self):
-        return "master"
-        # ref = check_output(
-        #     ["git", "symbolic-ref", "refs/remotes/{}/HEAD".format(self.remote)]
-        # ).strip()
-        # return ref.rsplit(":", 1)[-1]
 
     def _bump_branch(self, revision):
         return self.name + "-" + revision[:8]
@@ -224,13 +252,16 @@ class Repository(
             for feature, value in self.features.items():
                 if value:
                     cmd.append(var_prefix + feature.upper() + ":BOOL=ON")
+            python = check_output(['which', 'python']).decode('utf-8').rstrip()
+            cmd.append('-DPYTHON_EXECUTABLE=' + python)
             cmd.append("..")
             _check_call(*cmd)
 
     def _test_formatting_targets(self):
         with pushd("_build"):
-            if self.features.get("formatting"):
+            if self.features.get("formatting") or self.features.get('clang_format'):
                 _check_call("make", "clang-format")
+            if self.features.get("formatting") or self.features.get('cmake_format'):
                 _check_call("make", "cmake-format")
 
     def _test_static_analysis(self):
@@ -248,6 +279,9 @@ class Repository(
         for branch in self.branches:
             if branch.startswith(self.remote):
                 _check_call("git", "branch", "-D", branch)
+        precommit_hook = osp.join('.git', 'hooks', 'pre-commit')
+        if osp.exists(precommit_hook):
+            os.remove(precommit_hook)
 
 
 class GitHubRepository(Repository):
@@ -302,6 +336,7 @@ class IntegrationRepository:
         with pushd(self.top_repository):
             self._fetch()
             self._checkout_branch(revision)
+            self._patch()
             self._bump(revision)
             self._test()
             self._update_gitignore()
@@ -330,6 +365,11 @@ class IntegrationRepository:
         if not succeeded:
             raise Exception("Checkout operation failed")
 
+    def _patch(self):
+        for repo in self.repos:
+            if repo.patch:
+                subprocess.check_call("patch -p1 <" + repo.patch, shell=True)
+
     def _bump(self, revision):
         for repo in self.repos:
             if not repo.bump(revision):
@@ -339,7 +379,13 @@ class IntegrationRepository:
     def _test(self):
         succeeded = True
         for repo in self.repos:
-            succeeded &= repo.test()
+            if repo.spack_spec:
+                with spack_build_env(repo.spack_spec):
+                    subprocess.check_call(['spack', 'setup', repo.spack_spec])
+                    os.remove('spconfig.py')
+                    succeeded &= repo.test()
+            else:
+                succeeded &= repo.test()
         if not succeeded:
             raise Exception("Test operation failed")
 
@@ -353,7 +399,11 @@ class IntegrationRepository:
     def _commit(self, revision):
         succeeded = True
         for repo in self.repos:
-            succeeded &= repo.commit(revision)
+            if repo.spack_spec:
+                with spack_build_env(repo.spack_spec):
+                    succeeded &= repo.commit(revision)
+            else:
+                succeeded &= repo.commit(revision)
         if not succeeded:
             raise Exception("Commit operation failed")
 
