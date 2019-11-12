@@ -103,7 +103,7 @@ This will add the following *make* targets:
 * `clang-format`: to format C/C++ code.
 * `check-clang-format`: the target fails if at least one C/C++ file has improper format.
 * `cmake-format`: to format CMake files.
-* `check-cmake-format`: the target fails it at least one CMakef file has improper format.
+* `check-cmake-format`: the target fails it at least one CMake file has improper format.
 
 ##### Advanced configuration
 
@@ -113,7 +113,7 @@ A list of CMake cache variables can be used to customize the code formatting:
   Default value is `""`.
 * `${PROJECT}_ClangFormat_FILES_RE`: list of regular expressions matching C/C++ filenames
   to format. Default is:<br/>
-  `"^.*\\\\.c$$" "^.*\\\\.h$$" "^.*\\\\.cpp$$" "^.*\\\\.hpp$$"`
+  `"^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$"`
 * `${PROJECT}_ClangFormat_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
   from formatting. Default value is:<br/>
   `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
@@ -123,16 +123,28 @@ A list of CMake cache variables can be used to customize the code formatting:
   formatting C/C++ code. Default value is `""`
 
 Unlike `${PROJECT}_FORMATTING` which is supposed to be defined by the user,
-These variables are already defined and may be overridden inside your CMake project.
+These variables are already defined and may be overridden inside your CMake project,
+**before including this CMake project**.
 They are CMake _CACHE_ variables whose value must be forced.
+
 For instance, to ignore code of third-parties located in `ext/` subdirectory
 (`third[-_]part(y|ies)` regular expression by default), add this to your CMake project:
 
-```cmake
-set(
-  foo_ClangFormat_EXCLUDES_RE "${PROJECT_SOURCE_DIR}/ext/.*$$"
-  CACHE STRING "list of regular expressions to exclude C/C++ files from formatting"
-  FORCE)
+```diff
++set(
++  foo_ClangFormat_EXCLUDES_RE "${PROJECT_SOURCE_DIR}/ext/.*$$"
++  CACHE STRING "list of regular expressions to exclude C/C++ files from formatting"
++  FORCE)
+ add_subdirectory(hpc-coding-conventions/cpp)
+```
+
+Default C++ file extensions are .cpp and .h. To also take .cxx and .tcc into account
+during code formatting:
+```diff
++set(foo_ClangFormat_FILES_RE
++    "^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$" "^.*\\\\.tcc$$" "^.*\\\\.cxx$$"
++    CACHE STRING "List of regular expressions matching C/C++ filenames" FORCE)
+ add_subdirectory(deps/hpc-coding-conventions/cpp)
 ```
 
 ##### Continuous Integration
