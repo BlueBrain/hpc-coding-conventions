@@ -52,13 +52,13 @@ def collect_included_headers(entry, filter_cpp_file):
         pass
     cmd.insert(1, "-M")
     output = subprocess.check_output(cmd).decode("utf-8")
-    headers = output.splitlines()[1:]
-    for header in headers:
-        if header[-1] == "\\":
-            header = header[:-1]
-        header = header.strip()
-        if not filter_cpp_file(header):
-            yield header
+    lines = output.splitlines()[1:]
+    for line in lines:
+        if line[-1] == "\\":
+            line = line[:-1]
+        for header in line.split():
+            if not filter_cpp_file(header):
+                yield header
 
 
 def collect_files(compile_commands, filter_cpp_file):
