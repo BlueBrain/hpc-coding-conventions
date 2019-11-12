@@ -44,10 +44,9 @@ Continuous integration should compile your code with as many compilers as possib
 ## Code formatting
 
 C++ code can be formatted to meet the formatting conventions with
-[ClangFormat](https://releases.llvm.org/7.0.0/tools/clang/docs/ClangFormat.html) utility.
+[ClangFormat](https://releases.llvm.org/9.0.0/tools/clang/docs/ClangFormat.html) utility.
 The ClangFormat configuration file to comply to these conventions can be found [here](./.clang-format).
-Only ClangFormat 7 is supported, the LLVM stable version by the time
-of the writing of this document.
+ClangFormat 9 is recommended but this coding conventions also support versions 7 and 8.
 
 It is recommended to use the CMake project provided by this repository to automate the source code formatting.
 
