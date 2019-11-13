@@ -134,8 +134,13 @@ A list of CMake cache variables can be used to customize the code formatting:
 * `${PROJECT}_ClangFormat_OPTIONS`: additional options given to `clang-format` command.
   Default value is `""`.
 * `${PROJECT}_ClangFormat_FILES_RE`: list of regular expressions matching C/C++ filenames
-  to format. Default is:<br/>
-  `"^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$"`
+  to format. Despite the recommended extensions of this guidelines are `.cpp`, `.h`, and `.ipp`
+  (see [Naming Conventions](./NamingConventions.md)), files with the following extensions
+  will be formatted by default:
+  * C++ implementation files: `.cpp`, `.cc`, `.cxx`, `.c`
+  * C++ header files: `.h`, `.hh`, `.hpp`, `.hxx`
+  * C++ files with template methods definitions: `.tpp`, `.txx`, `.tcc`, `.ipp`, `.ixx`, `.icc`
+
 * `${PROJECT}_ClangFormat_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
   from formatting. Default value is:<br/>
   `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
@@ -193,13 +198,14 @@ It will also activate static analysis report during the compilation phase.
 
 ##### Advanced configuration
 
-A list of CMake cache variables can be used to customize static analysis:
+The following CMake cache variables can be used to customize the static analysis
+of the code:
 
 * `${PROJECT}_ClangTidy_OPTIONS`: additional options given to `clang-tidy` command.
   Default value is `""`.
 * `${PROJECT}_ClangTidy_FILES_RE`: list of regular expressions matching C/C++ filenames
   to check. Default is:<br/>
-  `"^.*\\\\.c$$" "^.*\\\\.h$$" "^.*\\\\.cpp$$" "^.*\\\\.hpp$$"`
+  `"^.*\\\\.cc$$" "^.*\\\\.cpp$$" "^.*\\\\.cxx$$"`
 * `${PROJECT}_ClangTidy_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
   from static analysis. Default value is:<br/>
   `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
@@ -207,7 +213,8 @@ A list of CMake cache variables can be used to customize static analysis:
   check C/C++ code. Default value is `""`
 
 These variables are meant to be overridden inside your CMake project.
-They are CMake _CACHE_ variables whose value must be forced.
+They are CMake _CACHE_ variables whose value must be forced
+**before including this CMake project**.
 
 ##### Continuous Integration
 

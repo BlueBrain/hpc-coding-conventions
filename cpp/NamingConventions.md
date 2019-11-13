@@ -18,8 +18,8 @@ Follow [File Names](https://google.github.io/styleguide/cppguide.html#General_Na
 convention of Google C++ Style Guide but use the following extension instead:
 
 * C++ files: `.cpp`
-* C++ header: `.hpp`
-* C++ template implementations: `.ipp`
+* C++ header: `.h`
+* C++ template definitions: `.ipp`
 
 ## Use descriptive variable names
 
