@@ -1,10 +1,23 @@
 import argparse
 import configparser
+import contextlib
 import json
 import logging
+import os
 import os.path as osp
 import shlex
 import subprocess
+
+
+@contextlib.contextmanager
+def pushd(dir):
+    """Change working directory within a Python context"""
+    cwd = os.getcwd()
+    try:
+        os.chdir(dir)
+        yield dir
+    finally:
+        os.chdir(cwd)
 
 
 def make_cpp_file_filter(source_dir, binary_dir, excludes_re, files_re):
@@ -61,6 +74,68 @@ def collect_included_headers(entry, filter_cpp_file):
                 yield header
 
 
+def git_added_modified(git_dir, cached=True, rev=None, git=None):
+    """A generator providing the list of added and modified files
+
+    Args:
+        git_dir: root repository directory (containing .git/)
+        cached: look into staging area if enabled, unstaged changes otherwise
+        git: path to git executable (look into PATH if `None`)
+
+    """
+    git_diff_cmd = [git or 'git', 'diff', '--name-status']
+    if cached:
+        git_diff_cmd.append('--cached')
+    if rev:
+        git_diff_cmd.append(rev)
+    with pushd(git_dir):
+        log_command(git_diff_cmd)
+        for line in subprocess.check_output(git_diff_cmd).decode('utf-8').splitlines():
+            status, file = line.split('\t', 1)
+            if status[0] in ['A', 'M']:
+                yield osp.abspath(file.lstrip('\t'))
+
+
+def git_added_modified_since_ref(git_dir, ref, git=None):
+    fork_point_cmd = [git or 'git', 'merge-base', '--fork-point', ref, 'HEAD']
+    log_command(fork_point_cmd)
+    fork_point = subprocess.check_output(fork_point_cmd).decode('utf-8').strip()
+    return git_added_modified(git_dir, cached=False, rev=fork_point, git=git)
+
+
+def get_git_changes(git_dir, applies_on, git=None):
+    if applies_on == 'staged':
+        return git_added_modified(git_dir, True, git=git)
+    elif applies_on.startswith('since-ref:'):
+        git_ref = applies_on[len('since-ref:'):]
+        return git_added_modified_since_ref(git_dir, git_ref, git=git)
+    elif applies_on == 'base-branch':
+        git_ref = os.environ.get('CHANGE_BRANCH')
+        if git_ref is None:
+            msg = 'undefined environment variable CHANGE_BRANCH'
+            logging.error(msg)
+            raise Exception(msg)
+        return git_added_modified_since_ref(git_dir, git_ref, git=git)
+    elif applies_on.startswith('since-rev:'):
+        git_rev = applies_on[len('since-rev:'):]
+        return git_added_modified(git_dir, False, rev=git_rev, git=git)
+    else:
+        msg = 'Unknown applies-on argument: ' + applies_on
+        logging.error(msg)
+        raise Exception(msg)
+
+
+def filter_git_modified(cli_args, generator):
+    if cli_args.applies_on == 'all':
+        for file in generator:
+            yield file
+    else:
+        modified_files = set(get_git_changes(cli_args.source_dir, cli_args.applies_on, git=cli_args.git_executable))
+        for file in generator:
+            if osp.realpath(file) in modified_files:
+                yield file
+
+
 def collect_files(compile_commands, filter_cpp_file):
     files = set()
     if not osp.exists(compile_commands):
@@ -111,6 +186,13 @@ def parse_cli(compile_commands=True, choices=None, args=None):
         "--make-unescape-re",
         action="store_true",
         help="Unescape make-escaped regular-expression arguments"
+    )
+    parser.add_argument(
+        "--git-executable", default='git', help="Path to git executable"
+    )
+    parser.add_argument(
+        '--applies-on',
+        help="Specify changeset where formatting applies"
     )
     if compile_commands:
         parser.add_argument("-p", dest="compile_commands_file", type=str)

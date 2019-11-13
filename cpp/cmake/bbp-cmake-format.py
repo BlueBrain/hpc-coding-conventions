@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-from cpplib import log_command, parse_cli
+from cpplib import filter_git_modified, log_command, parse_cli
 
 
 def _build_excluded_dirs():
@@ -90,7 +90,6 @@ def do_format(cmake_file, cmake_format, options):
         cmd.append("-i")
     cmd.append(cmake_file)
     log_command(cmd)
-    LOGGER.info(" ".join(cmd))
     return subprocess.call(cmd) == 0
 
 
@@ -132,9 +131,9 @@ def main(**kwargs):
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
         succeeded = True
-        for cmake_file in collect_files(
+        for cmake_file in filter_git_modified(args, collect_files(
             args.source_dir, args.binary_dir, excludes_re, files_re
-        ):
+        )):
             succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded
 
