@@ -99,6 +99,11 @@ if(ClangFormat_EXECUTABLE)
     else()
       set(ClangFormat_VERSION_PATCH 0)
     endif()
+
+    find_program(ClangFormatDiff_EXECUTABLE
+                 NAMES clang-format-diff-${ClangFormat_VERSION_MAJOR} clang-format-diff
+                 DOC "clang-format-diff executable")
+    mark_as_advanced(ClangFormatDiff_EXECUTABLE)
   endif()
   unset(ClangFormat_version)
 endif()

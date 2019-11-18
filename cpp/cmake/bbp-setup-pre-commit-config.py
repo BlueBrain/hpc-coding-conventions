@@ -2,10 +2,13 @@ import argparse
 import os.path as osp
 
 import yaml
+
 try:
     from yaml import CLoader as Loader
 except ImportError:
     from yaml import Loader
+
+from cpplib import str2bool
 
 
 HPC_PRE_COMMITS_REPO_URL = "https://github.com/BlueBrain/hpc-pre-commits"
@@ -15,15 +18,6 @@ DEFAULT_HPC_PRE_COMMIT_REPO = dict(
 CHECK_CLANG_FORMAT_HOOK_ID = "check-clang-format"
 CHECK_CMAKE_FORMAT_HOOK_ID = "check-cmake-format"
 CHECK_CLANG_TIDY_HOOK_ID = "clang-tidy"
-
-
-def str2bool(v):
-    if v.lower() in ("yes", "true", "t", "y", "1", "on"):
-        return True
-    elif v.lower() in ("no", "false", "f", "n", "0", "off"):
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def _parse_cli(args=None):
@@ -37,7 +31,8 @@ def _parse_cli(args=None):
         nargs="?",
     )
     parser.add_argument(
-        "-f", "--force",
+        "-f",
+        "--force",
         type=str2bool,
         help="Force regenerating pre-commit hooks",
         default=False,

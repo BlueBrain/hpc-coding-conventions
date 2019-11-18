@@ -52,6 +52,8 @@ function(bbp_enable_clang_formatting)
       -B
       "${CMAKE_BINARY_DIR}"
       "--executable=${ClangFormat_EXECUTABLE}"
+      "--clang-format-diff-executable=${ClangFormatDiff_EXECUTABLE}"
+      "--changes-only=${${PROJECT_NAME}_FORMATTING_CPP_CHANGES_ONLY}"
       --files-re
       ${${PROJECT_NAME}_ClangFormat_FILES_RE}
       $<$<BOOL:${PROJECT_NAME}_FORMATTING_NO_SUBMODULES>:--git-modules>
@@ -184,6 +186,8 @@ bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code
            OFF)
 bob_input(${PROJECT_NAME}_FORMATTING_ON "all" STRING
           "Specify changeset where formatting applies (see documentation for detailed information)")
+bob_option(${PROJECT_NAME}_FORMATTING_CPP_CHANGES_ONLY
+           "Only format the modified chunks, not the entire files" OFF)
 bob_option(${PROJECT_NAME}_TEST_FORMATTING "Add CTest formatting test" OFF)
 bob_option(${PROJECT_NAME}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
 bob_option(${PROJECT_NAME}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
