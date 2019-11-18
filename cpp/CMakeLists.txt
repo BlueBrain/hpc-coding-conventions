@@ -182,9 +182,8 @@ endfunction(bbp_enable_static_analysis)
 
 bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code properly formatted"
            OFF)
-bob_option(${PROJECT_NAME}_FORMATTING_ON
-           "Specify changeset where formatting applies (see documentation for detailed information)"
-           all)
+bob_input(${PROJECT_NAME}_FORMATTING_ON "all" STRING
+          "Specify changeset where formatting applies (see documentation for detailed information)")
 bob_option(${PROJECT_NAME}_TEST_FORMATTING "Add CTest formatting test" OFF)
 bob_option(${PROJECT_NAME}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
 bob_option(${PROJECT_NAME}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
