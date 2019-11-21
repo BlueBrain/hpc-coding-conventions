@@ -180,6 +180,22 @@ during code formatting:
  add_subdirectory(deps/hpc-coding-conventions/cpp)
 ```
 
+##### Custom ClangFormat configuration
+
+These coding conventions come with a predefined configuration of ClangFormat that
+will be copied in the top directory of the project.
+
+It is recommended to not add this `.clang-format` to git so that it is fully
+driven by this project. It will get updated along with the evolution of these
+guidelines. Thus it is recommended to ignore file `.clang-format` by adding
+it to the top `.gitignore`.
+
+A project can however override the predefined configuration of ClangFormat
+in two ways:
+1. Create a `.clang-format.changes` containing only the required modifications.
+1. Add `.clang-format` to the git repository. This project will never try
+to modify it.
+
 ##### Continuous Integration
 
 Define `${PROJECT}_TEST_FORMATTING:BOOL` CMake variable to enforce formatting during

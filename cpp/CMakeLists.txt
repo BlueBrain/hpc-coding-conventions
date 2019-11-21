@@ -43,7 +43,22 @@ function(bbp_enable_clang_formatting)
       CACHE STRING "list of CMake targets to build before formatting C/C++ code")
   mark_as_advanced(${PROJECT_NAME}_ClangFormat_OPTIONS ${PROJECT_NAME}_ClangFormat_FILES_RE
                    ${PROJECT_NAME}_ClangFormat_EXCLUDES_RE)
-  configure_file(.clang-format ${PROJECT_SOURCE_DIR})
+  execute_process(COMMAND git ls-files --error-unmatch .clang-format
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                  RESULT_VARIABLE is_clang_format_config_tracked
+                  ERROR_QUIET)
+  if(NOT is_clang_format_config_tracked EQUAL 0)
+    if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
+                              merge-yaml "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format"
+                              "${PROJECT_SOURCE_DIR}/.clang-format.changes"
+                              "${PROJECT_SOURCE_DIR}/.clang-format")
+    else()
+      configure_file(.clang-format ${PROJECT_SOURCE_DIR} COPYONLY)
+    endif()
+  endif()
+  unset(is_clang_format_config_tracked)
+
   set(clang_format_command_prefix
       ${PYTHON_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
@@ -184,7 +199,9 @@ endfunction(bbp_enable_static_analysis)
 
 bob_option(${PROJECT_NAME}_FORMATTING "Enable helpers to keep CMake and C++ code properly formatted"
            OFF)
-bob_input(${PROJECT_NAME}_FORMATTING_ON "all" STRING
+bob_input(${PROJECT_NAME}_FORMATTING_ON
+          "all"
+          STRING
           "Specify changeset where formatting applies (see documentation for detailed information)")
 bob_option(${PROJECT_NAME}_FORMATTING_CPP_CHANGES_ONLY
            "Only format the modified chunks, not the entire files" OFF)
