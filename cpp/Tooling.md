@@ -35,7 +35,7 @@ helper function provided by this CMake project.
   * `-Wlogical-op`
   * `-Wduplicated-branches`
   * `-Wrestrict`
-& GCC 8 and greater:
+* GCC 8 and greater:
   * `-Wclass-memaccess`
   * `-Wstringop-truncation`
 
