@@ -1,4 +1,5 @@
 import argparse
+from collections import namedtuple
 import configparser
 import contextlib
 import json
@@ -7,6 +8,50 @@ import os
 import os.path as osp
 import shlex
 import subprocess
+import tempfile
+
+
+def pipe_processes(*commands, **kwargs):
+    """
+    Execute given shell commands such that
+    standard output of command N is given to standard input of command N + 1
+
+    Args:
+       commands: list of commands pipe and execute
+        kwargs: additional options given to the `subprocess.Popen` constructor
+                of the last process downstream.
+
+    Returns:
+        subprocess.Popen instance of the process downstream
+    """
+    log_command(*commands)
+    prev_process = subprocess.Popen(commands[0], stdout=subprocess.PIPE)
+    for cmd in commands[1:-1]:
+        process = subprocess.Popen(
+            cmd, stdin=prev_process.stdout, stdout=subprocess.PIPE
+        )
+        prev_process.stdout.close()
+        prev_process = process
+    return subprocess.Popen(commands[-1], stdin=prev_process.stdout, **kwargs)
+
+
+@contextlib.contextmanager
+def mkstemp(*args, **kwargs):
+    """
+    Create a temporary file within a Python context.
+    File is removed when leaving the context
+
+    Args:
+        kwargs: additional argument given to `tempfile.mkstemp`
+    Returns:
+        path to create file
+    """
+    fd, path = tempfile.mkstemp(*args, **kwargs)
+    os.close(fd)
+    try:
+        yield path
+    finally:
+        os.remove(path)
 
 
 @contextlib.contextmanager
@@ -20,7 +65,25 @@ def pushd(dir):
         os.chdir(cwd)
 
 
+def str2bool(v):
+    """
+    Convert a string meaning "yes" or "no" into a bool
+    """
+    if v.lower() in ("yes", "true", "t", "y", "1", "on"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0", "off"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
 def make_cpp_file_filter(source_dir, binary_dir, excludes_re, files_re):
+    """
+    Returns:
+        a Python function used to filter the C++ files that needs to
+        be formatted.
+    """
+
     def _func(cpp_file):
         if not cpp_file.startswith(source_dir):
             return True
@@ -74,21 +137,83 @@ def collect_included_headers(entry, filter_cpp_file):
                 yield header
 
 
-def git_added_modified(git_dir, cached=True, rev=None, git=None):
-    """A generator providing the list of added and modified files
-
-    Args:
-        git_dir: root repository directory (containing .git/)
-        cached: look into staging area if enabled, unstaged changes otherwise
-        git: path to git executable (look into PATH if `None`)
-
+class GitDiffDelta(namedtuple("GitDiffDelta", ["from_", "to", "staged"])):
     """
-    git_diff_cmd = [git or 'git', 'diff', '--name-status']
-    if cached:
-        git_diff_cmd.append('--cached')
-    if rev:
-        git_diff_cmd.append(rev)
-    with pushd(git_dir):
+    A set of changes, either:
+    - the working area
+    - the staging area
+    - a range of revisions
+    """
+
+    def __str__(self):
+        if self.from_ is None and self.to is None:
+            if self.staged:
+                return "git staging area"
+            return "git working area"
+        else:
+            return "{}:{}".format(self.from_ or "", self.to or "")
+
+    @property
+    def diff_command(self):
+        cmd = ["git", "diff", '-U0', "--no-color"]
+        if self.staged:
+            cmd.append("--cached")
+        if self.from_:
+            cmd.append(self.from_)
+        if self.to:
+            cmd.append(self.to)
+        return cmd
+
+    @classmethod
+    def fork_point(cls, ref):
+        fork_point_cmd = ['git', 'merge-base', '--fork-point', ref, 'HEAD']
+        log_command(fork_point_cmd)
+        return subprocess.check_output(fork_point_cmd).decode('utf-8').strip()
+
+    @classmethod
+    def from_applies_on(cls, applies_on):
+        if applies_on == 'working':
+            return GitDiffDelta(from_=None, to=None, staged=False)
+        if applies_on == 'staging':
+            return GitDiffDelta(from_=None, to=None, staged=True)
+        elif applies_on.startswith('since-rev'):
+            git_rev = applies_on[len('since-rev:') :]
+            return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
+        elif applies_on.startswith('since-ref:'):
+            git_ref = applies_on[len('since-ref:') :]
+            git_rev = cls.fork_point(git_ref)
+            return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
+        elif applies_on == 'base-branch':
+            git_ref = os.environ.get('CHANGE_BRANCH')
+            if git_ref is None:
+                msg = 'Expecting environment variable CHANGE_BRANCH. '
+                msg += 'This command may be executed within Jenkins'
+                logging.error(msg)
+                raise Exception(msg)
+            git_rev = cls.fork_point(git_ref)
+            return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
+        elif applies_on == 'all':
+            raise Exception('GitDiffDelta does not apply to option applies-on=all')
+        else:
+            msg = 'Unknown applies-on argument: ' + applies_on
+            logging.error(msg)
+            raise Exception(msg)
+
+    def diff_name_status(self):
+        """A generator providing the list of added and modified files
+
+        Args:
+            git_dir: root repository directory (containing .git/)
+            delta(GitDiffDelta): interval of changes to look into
+            git: path to git executable (look into PATH if `None`)
+        """
+        git_diff_cmd = ['git', 'diff', '--name-status']
+        if self.staged:
+            git_diff_cmd.append('--cached')
+        if self.from_:
+            git_diff_cmd.append(self.from_)
+        if self.to:
+            git_diff_cmd.append(self.to)
         log_command(git_diff_cmd)
         for line in subprocess.check_output(git_diff_cmd).decode('utf-8').splitlines():
             status, file = line.split('\t', 1)
@@ -96,51 +221,46 @@ def git_added_modified(git_dir, cached=True, rev=None, git=None):
                 yield osp.abspath(file.lstrip('\t'))
 
 
-def git_added_modified_since_ref(git_dir, ref, git=None):
-    fork_point_cmd = [git or 'git', 'merge-base', '--fork-point', ref, 'HEAD']
-    log_command(fork_point_cmd)
-    fork_point = subprocess.check_output(fork_point_cmd).decode('utf-8').strip()
-    return git_added_modified(git_dir, cached=False, rev=fork_point, git=git)
+def filter_files_outside_time_range(cli_args, generator):
+    """
+    Generator that reads files from input generator, and exclude those
+    that were not modified during the time interval specified in option
+    `applies-on` CLI option.
 
+    Args:
+        cli_args: parsed CLI options
+        generator: generator returning a list of files
 
-def get_git_changes(git_dir, applies_on, git=None):
-    if applies_on == 'staged':
-        return git_added_modified(git_dir, True, git=git)
-    elif applies_on.startswith('since-ref:'):
-        git_ref = applies_on[len('since-ref:'):]
-        return git_added_modified_since_ref(git_dir, git_ref, git=git)
-    elif applies_on == 'base-branch':
-        git_ref = os.environ.get('CHANGE_BRANCH')
-        if git_ref is None:
-            msg = 'undefined environment variable CHANGE_BRANCH'
-            logging.error(msg)
-            raise Exception(msg)
-        return git_added_modified_since_ref(git_dir, git_ref, git=git)
-    elif applies_on.startswith('since-rev:'):
-        git_rev = applies_on[len('since-rev:'):]
-        return git_added_modified(git_dir, False, rev=git_rev, git=git)
-    else:
-        msg = 'Unknown applies-on argument: ' + applies_on
-        logging.error(msg)
-        raise Exception(msg)
-
-
-def filter_git_modified(cli_args, generator):
+    Returns:
+        String generator
+    """
     if cli_args.applies_on == 'all':
         for file in generator:
             yield file
     else:
-        modified_files = set(get_git_changes(cli_args.source_dir, cli_args.applies_on, git=cli_args.git_executable))
+        with pushd(cli_args.source_dir):
+            delta = GitDiffDelta.from_applies_on(cli_args.applies_on)
+            modified_files = set(delta.diff_name_status())
         for file in generator:
             if osp.realpath(file) in modified_files:
                 yield file
 
 
 def collect_files(compile_commands, filter_cpp_file):
+    """
+    Args:
+        compile_commands: path to compile_commands.json JSON compilation database
+        filter_cpp_file: a function returning `True` if the given file should be
+        excluded, `False` otherwise.
+    Returns:
+        Generator of C++ files
+    """
     files = set()
     if not osp.exists(compile_commands):
-        msg = 'Could not find file %s. Please make sure ' + \
-              'CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on.'
+        msg = (
+            'Could not find file %s. Please make sure '
+            + 'CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on.'
+        )
         msg = msg % compile_commands
         logging.error(msg)
         raise Exception(msg)
@@ -158,9 +278,13 @@ def collect_files(compile_commands, filter_cpp_file):
                             files.add(header)
 
 
-def parse_cli(compile_commands=True, choices=None, args=None):
+def parse_cli(
+    compile_commands=True, choices=None, description=None, parser_args=None, args=None
+):
     choices = choices or ["check", "format"]
-    parser = argparse.ArgumentParser(description="Wrapper for checker utility")
+    parser = argparse.ArgumentParser(
+        description=description or "Wrapper for checker utility"
+    )
     parser.add_argument(
         "-S", dest="source_dir", metavar="PATH", help="Path to CMake source directory"
     )
@@ -180,20 +304,22 @@ def parse_cli(compile_commands=True, choices=None, args=None):
     parser.add_argument(
         "--git-modules",
         action="store_true",
-        help="Parse .gitmodules of the project to exclude external projects"
+        help="Parse .gitmodules of the project to exclude external projects",
     )
     parser.add_argument(
         "--make-unescape-re",
         action="store_true",
-        help="Unescape make-escaped regular-expression arguments"
+        help="Unescape make-escaped regular-expression arguments",
     )
     parser.add_argument(
         "--git-executable", default='git', help="Path to git executable"
     )
     parser.add_argument(
-        '--applies-on',
-        help="Specify changeset where formatting applies"
+        '--applies-on', help="Specify changeset where formatting applies"
     )
+
+    for name, kwargs in parser_args or []:
+        parser.add_argument(name, **kwargs)
     if compile_commands:
         parser.add_argument("-p", dest="compile_commands_file", type=str)
     parser.add_argument("--action", choices=choices)
@@ -202,6 +328,7 @@ def parse_cli(compile_commands=True, choices=None, args=None):
     if result.git_modules:
         result.excludes_re.extend(collect_submodules(result.source_dir))
     if result.make_unescape_re:
+
         def make_unescape_re(pattern):
             if pattern.endswith('$$'):
                 pattern = pattern[:-1]
@@ -210,11 +337,17 @@ def parse_cli(compile_commands=True, choices=None, args=None):
 
         def make_unescape_res(patterns):
             return [make_unescape_re(pattern) for pattern in patterns]
+
         result.files_re = make_unescape_res(result.files_re)
         result.excludes_re = make_unescape_res(result.excludes_re)
+    if result.applies_on:
+        result.applies_on = result.applies_on.lower()
     result.options = [opt for opt in result.options if opt]
     return result
 
 
-def log_command(cmd):
-    logging.info(" ".join([shlex.quote(e) for e in cmd]))
+def log_command(*commands):
+    if len(commands) == 1:
+        logging.info(" ".join([shlex.quote(e) for e in commands[0]]))
+    else:
+        logging.info("    " + " |\n    ".join([" ".join(cmd) for cmd in commands]))

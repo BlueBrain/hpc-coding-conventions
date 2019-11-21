@@ -11,7 +11,7 @@ import subprocess
 import sys
 import tempfile
 
-from cpplib import filter_git_modified, log_command, parse_cli
+from cpplib import filter_files_outside_time_range, log_command, parse_cli
 
 
 def _build_excluded_dirs():
@@ -50,7 +50,7 @@ def collect_files(cmake_source_dir, cmake_binary_dir, excludes_re, cmake_files_r
         d = queue.pop()
         for f in os.listdir(d):
             p = osp.realpath(osp.join(d, f))
-            rp = p[len(cmake_source_dir):]
+            rp = p[len(cmake_source_dir) :]
             if p == cmake_binary_dir:
                 continue
             for regex in excludes_re:
@@ -131,9 +131,9 @@ def main(**kwargs):
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
         succeeded = True
-        for cmake_file in filter_git_modified(args, collect_files(
-            args.source_dir, args.binary_dir, excludes_re, files_re
-        )):
+        for cmake_file in filter_files_outside_time_range(
+            args, collect_files(args.source_dir, args.binary_dir, excludes_re, files_re)
+        ):
             succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded
 
