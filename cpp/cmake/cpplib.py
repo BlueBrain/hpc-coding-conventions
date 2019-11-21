@@ -8,6 +8,7 @@ import os
 import os.path as osp
 import shlex
 import subprocess
+import sys
 import tempfile
 
 
@@ -351,3 +352,43 @@ def log_command(*commands):
         logging.info(" ".join([shlex.quote(e) for e in commands[0]]))
     else:
         logging.info("    " + " |\n    ".join([" ".join(cmd) for cmd in commands]))
+
+
+def do_merge_yaml(*files):
+    """Merge YAML files. The last argument is the destination file
+    """
+    import yaml
+
+    out = files[-1]
+    ins = files[:-1]
+
+    outdated = not osp.exists(out) or osp.getmtime(out) < max(
+        (osp.getmtime(f) for f in ins)
+    )
+    if outdated:
+        data = {}
+        for file in ins:
+            with open(file) as istr:
+                data.update(yaml.safe_load(istr))
+        logging.info("writing file %s", out)
+        with open(out, 'w') as ostr:
+            yaml.dump(data, ostr, default_flow_style=False)
+    else:
+        logging.info("file %s is up to date, nothing to do.", out)
+    return True
+
+
+def main(args=None):
+    parser = argparse.ArgumentParser(description="Utility program")
+    subparsers = parser.add_subparsers(help='sub-command help')
+    merge_yaml = subparsers.add_parser('merge-yaml', help='Merge yaml files')
+    merge_yaml.add_argument("files", nargs='+', help="input files then output file")
+    merge_yaml.set_defaults(func=do_merge_yaml)
+    result = parser.parse_args(args=args)
+    return result.func(*result.files)
+
+
+if __name__ == '__main__':
+    level = logging.INFO if 'VERBOSE' in os.environ else logging.WARN
+    logging.basicConfig(level=level, format="%(message)s")
+    sys.exit(0 if main() else 1)
