@@ -28,7 +28,20 @@ endfunction(bbp_disable_precommit)
 
 function(bbp_enable_clang_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(ClangFormat 7 EXACT REQUIRED)
+  find_package(ClangFormat REQUIRED)
+  if(NOT ClangFormat_FOUND)
+    message(SEND_ERROR "Could not find Clang-Format")
+    return()
+  endif()
+  if(ClangFormat_VERSION_MAJOR GREATER 6 AND ClangFormat_VERSION_MAJOR LESS 10)
+    set(${PROJECT_NAME}_ClangFormat_CONFIG_FILE .clang-format-${ClangFormat_VERSION_MAJOR})
+  else()
+    message(
+      SEND_ERROR
+        "Unsupported Clang-Format version ${ClangFormat_VERSION}. Supported versions are 7, 8, or 9"
+      )
+  endif()
+
   set(${PROJECT_NAME}_ClangFormat_OPTIONS "" CACHE STRING "clang-format command options")
   set(${PROJECT_NAME}_ClangFormat_FILES_RE
       "^.*\\\\.cc?$$"
@@ -50,11 +63,12 @@ function(bbp_enable_clang_formatting)
   if(NOT is_clang_format_config_tracked EQUAL 0)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
       execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
-                              merge-yaml "${CMAKE_CURRENT_SOURCE_DIR}/.clang-format"
+                              merge-yaml ${${PROJECT_NAME}_ClangFormat_CONFIG_FILE}
                               "${PROJECT_SOURCE_DIR}/.clang-format.changes"
                               "${PROJECT_SOURCE_DIR}/.clang-format")
     else()
-      configure_file(.clang-format ${PROJECT_SOURCE_DIR} COPYONLY)
+      configure_file(${${PROJECT_NAME}_ClangFormat_CONFIG_FILE} ${PROJECT_SOURCE_DIR}/.clang-format
+                     COPYONLY)
     endif()
   endif()
   unset(is_clang_format_config_tracked)

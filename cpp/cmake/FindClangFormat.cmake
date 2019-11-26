@@ -32,6 +32,7 @@ if(ClangFormat_FIND_VERSION AND ClangFormat_FIND_VERSION_EXACT)
 else()
   find_program(ClangFormat_EXECUTABLE
                NAMES clang-format
+                     clang-format-9
                      clang-format-8
                      clang-format-7
                      clang-format-6.0

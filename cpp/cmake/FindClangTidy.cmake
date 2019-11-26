@@ -19,6 +19,7 @@ if(ClangTidy_FIND_VERSION AND ClangTidy_FIND_VERSION_EXACT)
 else()
   find_program(ClangTidy_EXECUTABLE
                NAMES clang-tidy
+                     clang-tidy-9
                      clang-tidy-8
                      clang-tidy-7
                      clang-tidy-6.0
