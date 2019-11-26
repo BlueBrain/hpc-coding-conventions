@@ -166,7 +166,22 @@ function(bbp_enable_static_analysis)
       CACHE STRING "list of CMake targets to build before formatting C/C++ code")
   mark_as_advanced(${PROJECT_NAME}_ClangTidy_OPTIONS ${PROJECT_NAME}_ClangTidy_FILES_RE
                    ${PROJECT_NAME}_ClangTidy_EXCLUDES_RE)
-  configure_file(.clang-tidy ${PROJECT_SOURCE_DIR})
+  execute_process(COMMAND git ls-files --error-unmatch .clang-tidy
+                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+                  RESULT_VARIABLE is_clang_tidy_config_tracked
+                  ERROR_QUIET)
+  if(NOT is_clang_tidy_config_tracked EQUAL 0)
+    if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-tidy.changes)
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
+                              merge-clang-tidy-config "${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy"
+                              "${PROJECT_SOURCE_DIR}/.clang-tidy.changes"
+                              "${PROJECT_SOURCE_DIR}/.clang-tidy")
+    else()
+      configure_file(.clang-tidy ${PROJECT_SOURCE_DIR} COPYONLY)
+    endif()
+  endif()
+  unset(is_clang_tidy_config_tracked)
+
   set(clang_tidy_command_prefix
       ${PYTHON_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py"

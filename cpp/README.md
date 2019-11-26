@@ -183,11 +183,11 @@ during code formatting:
 ##### Custom ClangFormat configuration
 
 These coding conventions come with a predefined configuration of ClangFormat that
-will be copied in the top directory of the project.
+is by default copied in the top directory of the project.
 
 It is recommended to not add this `.clang-format` to git so that it is fully
 driven by this project. It will get updated along with the evolution of these
-guidelines. Thus it is recommended to ignore file `.clang-format` by adding
+guidelines. Thus it is recommended to inform git to ignore this file by adding
 it to the top `.gitignore`.
 
 A project can however override the predefined configuration of ClangFormat
@@ -237,6 +237,23 @@ of the code:
 These variables are meant to be overridden inside your CMake project.
 They are CMake _CACHE_ variables whose value must be forced
 **before including this CMake project**.
+
+##### Custom ClangTidy configuration
+
+These coding conventions come with a `.clang-tidy` file providing a predefined
+list of ClangTidy checks. By default, this file is copied in the top directory
+of the project.
+
+It is recommended to not add this `.clang-tidy` to git so that it is fully
+driven by this project. It will get updated along with the evolution of these
+guidelines. Thus it is recommended to inform git to ignore this file by adding
+it to the top `.gitignore`.
+
+A project can however override the predefined configuration of ClangFormat
+in two ways:
+1. Create a `.clang-tidy.changes` containing only the required modifications.
+1. Add `.clang-tidy` to the git repository. This project will never try
+to modify it.
 
 ##### Continuous Integration
 

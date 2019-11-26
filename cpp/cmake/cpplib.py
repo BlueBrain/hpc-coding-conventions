@@ -2,6 +2,8 @@ import argparse
 from collections import namedtuple
 import configparser
 import contextlib
+from fnmatch import fnmatch
+import functools
 import json
 import logging
 import os
@@ -354,11 +356,43 @@ def log_command(*commands):
         logging.info("    " + " |\n    ".join([" ".join(cmd) for cmd in commands]))
 
 
-def do_merge_yaml(*files):
+def merge_clang_tidy_checks(orig_checks, new_checks):
+    """Merge 2 'Checks' ClangTidy configuration key values"""
+    if orig_checks is None:
+        return new_checks
+    orig_checks = [check.strip() for check in orig_checks.split(",")]
+    new_checks = [check.strip() for check in new_checks.split(",")]
+
+    for new_check in new_checks:
+        if new_check.startswith("-"):
+            name = new_check[1:]
+            # remove check when check=google-runtime-references to_=-google-*
+            orig_checks = list(
+                check for check in orig_checks if not fnmatch(check, name)
+            )
+            # remove check when check=-google-runtime-references to_=-google-* (simplification)
+            orig_checks = list(
+                check for check in orig_checks if not fnmatch(check, new_check)
+            )
+        else:
+            # remove check when check=-google-runtime-references to_=google-*
+            orig_checks = list(
+                check for check in orig_checks if not fnmatch(check, "-" + new_check)
+            )
+            # remove check when check=google-runtime-references to_=google-* (simplification)
+            orig_checks = list(
+                check for check in orig_checks if not fnmatch(check, new_check)
+            )
+        orig_checks.append(new_check)
+    return ",".join(orig_checks)
+
+
+def do_merge_yaml(*files, **kwargs):
     """Merge YAML files. The last argument is the destination file
     """
     import yaml
 
+    transformers = kwargs.get("transformers", {})
     out = files[-1]
     ins = files[:-1]
 
@@ -369,7 +403,12 @@ def do_merge_yaml(*files):
         data = {}
         for file in ins:
             with open(file) as istr:
-                data.update(yaml.safe_load(istr))
+                for key, value in yaml.safe_load(istr).items():
+                    transform_func = transformers.get(key)
+                    if transform_func:
+                        data[key] = transform_func(data.get(key), value)
+                    else:
+                        data[key] = value
         logging.info("writing file %s", out)
         with open(out, 'w') as ostr:
             yaml.dump(data, ostr, default_flow_style=False)
@@ -384,6 +423,17 @@ def main(args=None):
     merge_yaml = subparsers.add_parser('merge-yaml', help='Merge yaml files')
     merge_yaml.add_argument("files", nargs='+', help="input files then output file")
     merge_yaml.set_defaults(func=do_merge_yaml)
+
+    merge_yaml = subparsers.add_parser(
+        'merge-clang-tidy-config', help='Merge ClangTidy configuration files'
+    )
+    merge_yaml.add_argument("files", nargs='+', help="input files then output file")
+    merge_yaml.set_defaults(
+        func=functools.partial(
+            do_merge_yaml, transformers=dict(Checks=merge_clang_tidy_checks)
+        )
+    )
+
     result = parser.parse_args(args=args)
     return result.func(*result.files)
 
