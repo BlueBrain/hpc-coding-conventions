@@ -118,7 +118,7 @@ endfunction(bbp_enable_clang_formatting)
 
 function(bbp_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(CMakeFormat 0.4.5 EXACT REQUIRED)
+  find_package(CMakeFormat 0.6.0 EXACT REQUIRED)
   set(${PROJECT_NAME}_CMakeFormat_OPTIONS "" CACHE STRING "cmake-format options")
   set(${PROJECT_NAME}_CMakeFormat_FILES_RE "^.*\\\\.cmake$$" "^.*CMakeLists.txt$$"
       CACHE STRING "List of regular expressions matching CMake files")

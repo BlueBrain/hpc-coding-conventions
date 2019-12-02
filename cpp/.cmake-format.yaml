@@ -1,33 +1,40 @@
+line_width: 100
+tab_size: 2
+max_subgroups_hwrap: 2
+max_pargs_hwrap: 6
+separate_ctrl_name_with_space: false
+separate_fn_name_with_space: false
+dangle_parens: false
+dangle_align: prefix
+min_prefix_chars: 4
+max_prefix_chars: 10
+max_lines_hwrap: 2
+line_ending: unix
+command_case: canonical
+keyword_case: unchanged
 additional_commands:
   foo:
     flags:
     - BAR
     - BAZ
     kwargs:
-      DEPENDS: '*'
       HEADERS: '*'
       SOURCES: '*'
-algorithm_order:
-- 0
-- 1
-- 2
-- 3
+      DEPENDS: '*'
 always_wrap: []
-bullet_char: '*'
-command_case: lower
-dangle_parens: false
-emit_byteorder_mark: false
-enable_markup: true
-enum_char: .
-fence_pattern: ^\s*([`~]{3}[`~]*)(.*)$
-first_comment_is_literal: false
-keyword_case: unchanged
-line_ending: unix
-line_width: 100
-literal_comment_pattern: null
-max_subargs_per_line: 3
+enable_sort: true
+autosort: false
+hashruler_min_length: 10
 per_command: {}
+layout_passes: {}
+bullet_char: '*'
+enum_char: .
+enable_markup: true
+first_comment_is_literal: false
+literal_comment_pattern: null
+fence_pattern: ^\s*([`~]{3}[`~]*)(.*)$
 ruler_pattern: ^\s*[^\w\s]{3}.*[^\w\s]{3}$
-separate_ctrl_name_with_space: false
-separate_fn_name_with_space: false
-tab_size: 2
+canonicalize_hashrulers: true
+emit_byteorder_mark: false
+input_encoding: utf-8
+output_encoding: utf-8
