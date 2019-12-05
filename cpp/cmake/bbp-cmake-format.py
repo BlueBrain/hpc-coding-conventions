@@ -15,7 +15,7 @@ from cpplib import filter_files_outside_time_range, log_command, parse_cli
 
 
 def _build_excluded_dirs():
-    eax = set(["CMakeTemp", "CMakeFiles", ".git", "HOME"])
+    eax = set(["CMakeTemp", "CMakeFiles", ".git", "HOME", "INSTALL"])
     actions = ["Start", "Configure", "Build", "Test", "Coverage", "MemCheck", "Submit"]
     prefixes = ["Continuous", "Nightly", "Experimental"]
     for prefix in prefixes:

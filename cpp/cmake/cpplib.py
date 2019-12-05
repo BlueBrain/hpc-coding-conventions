@@ -92,6 +92,10 @@ def make_cpp_file_filter(source_dir, binary_dir, excludes_re, files_re):
             return True
         if cpp_file.startswith(binary_dir):
             return True
+        # exclude some paths available in CI environment
+        for ci_dir in ["HOME", "INSTALL"]:
+            if cpp_file.startswith(osp.join(source_dir, ci_dir)):
+                return True
         for exclude_re in excludes_re:
             if exclude_re.match(cpp_file):
                 return True
