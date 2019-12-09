@@ -126,7 +126,20 @@ function(bbp_enable_cmake_formatting)
       CACHE STRING "list of regular expressions to exclude CMake files from formatting")
   mark_as_advanced(${PROJECT_NAME}_CMakeFormat_OPTIONS ${PROJECT_NAME}_CMakeFormat_FILES_RE
                    ${PROJECT_NAME}_CMakeFormat_EXCLUDES_RE)
-  configure_file(.cmake-format.yaml ${PROJECT_SOURCE_DIR})
+  execute_process(COMMAND git ls-files --error-unmatch .cmake-format
+          WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+          RESULT_VARIABLE is_cmake_format_config_tracked
+          ERROR_QUIET)
+  if(NOT is_cmake_format_config_tracked EQUAL 0)
+    if(EXISTS ${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml)
+      execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
+              merge-yaml "${CMAKE_CURRENT_SOURCE_DIR}/.cmake-format.yaml"
+              "${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml"
+              "${PROJECT_SOURCE_DIR}/.cmake-format.yaml")
+    else()
+      configure_file(.cmake-format.yaml ${PROJECT_SOURCE_DIR} COPYONLY)
+    endif()
+  endif()
   set(cmake_format_command_prefix
       ${PYTHON_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"

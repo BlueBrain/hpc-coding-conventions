@@ -196,6 +196,32 @@ in two ways:
 1. Add `.clang-format` to the git repository. This project will never try
 to modify it.
 
+##### Custom CMakeFormat configuration
+
+Like ClangFormat, these coding conventions already provide a CMakeFormat
+configuration that the user can customize with a file named
+`.cmake-format.changes.yaml` placed at the project's root directory.
+This file can be used to specify the signature of owned CMake functions
+and macros, for instance:
+
+```yaml
+additional_commands:
+  add_mpi_test:
+    kwargs:
+      NAME: 1
+      NUM_PROCS: 1
+      COMMAND: '*'
+```
+
+will allow CMakeFormat to properly format functions calls like below:
+
+```cmake
+add_mpi_test(
+  NAME OpSplitOmega_h_2D
+  NUM_PROCS 2
+  COMMAND $<TARGET_FILE:OpSplitOmega_h> --num-iterations 100 square.msh)
+```
+
 ##### Continuous Integration
 
 Define `${PROJECT}_TEST_FORMATTING:BOOL` CMake variable to enforce formatting during
