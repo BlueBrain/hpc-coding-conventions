@@ -63,7 +63,7 @@ function(bbp_enable_clang_formatting)
   if(NOT is_clang_format_config_tracked EQUAL 0)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
       execute_process(COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
-                              merge-yaml ${CMAKE_CURRENT_SOURCE_DIR}/${${PROJECT_NAME}_ClangFormat_CONFIG_FILE}
+                              merge-yaml "${CMAKE_CURRENT_SOURCE_DIR}/${${PROJECT_NAME}_ClangFormat_CONFIG_FILE}"
                               "${PROJECT_SOURCE_DIR}/.clang-format.changes"
                               "${PROJECT_SOURCE_DIR}/.clang-format")
     else()
