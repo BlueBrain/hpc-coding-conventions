@@ -2,6 +2,18 @@
 
 ## C++ Compiler
 
+### C++ Standard
+
+The C++ standard officially supported at BBP is C++14.
+An source project can support C++11 if this is a requirement for its community.
+BBP internal deployment toolchain supports C++17. Therefore software dedicated to BB5 or BlueBrain workstations can pick this standard.
+
+### Minimum Supported Compilers
+
+* GCC 5.4
+* CLang 7
+* Intel 18.0.3
+
 ### Compilation flags
 
 Here is the list of recommended compilation flags, set by the `bob_begin_cxx_flags`
