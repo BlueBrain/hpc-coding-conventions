@@ -16,8 +16,7 @@ BBP internal deployment toolchain supports C++17. Therefore software dedicated t
 
 ### Compilation flags
 
-Here is the list of recommended compilation flags, set by the `bob_begin_cxx_flags`
-helper function provided by this CMake project.
+Here is the list of recommended compilation flags you may use during the development phase in order to spot as much errors as possible. Use CMake function `bob_begin_cxx_flags` provided by this CMake project to set the compilation flags accordingly.
 
 * Clang: `-Werror -Weverything`. And then disable those you dislike:
   * `-Wno-disabled-macro-expansion`
