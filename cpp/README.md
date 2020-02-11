@@ -324,8 +324,15 @@ _bob_ sets the compilation flags according to a set of CMake variables:
 * `${PROJECT_NAME}_NORMAL_CXX_FLAGS:BOOL`: Allow `CMAKE_CXX_FLAGS` to follow _normal_ CMake behavior
   and bypass all variables above.
 
-Alternatively you can set `${PROJECT_NAME}_CODING_CONV_PREFIX:BOOL` to a user defined string to
-prefix above bob compilation flags.
+Alternatively you can set in your `CMakeLists.txt` `${PROJECT_NAME}_CODING_CONV_PREFIX:STRING` to a user
+defined string to prefix above bob compilation flags before including hpc-coding-conventions. For example:
+
+```cmake
+set(project_name_CODING_CONV_PREFIX
+        "my_cmake_prefix"
+        CACHE STRING "Override coding conventions options prefix (default: PROJECT_NAME)")
+add_subdirectory(cmake/hpc-coding-conventions/cpp)
+```
 
 Default `CMAKE_CXX_FLAGS` variable value is taken into account.
 
