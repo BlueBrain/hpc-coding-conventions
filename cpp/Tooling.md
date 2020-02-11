@@ -4,7 +4,7 @@
 
 ### C++ Standard
 
-The C++ standard officially supported at BBP is C++14.
+The minimal C++ standard officially supported at BBP is C++14, to be reviewed annually based on compiler support.
 An source project may support a standard as low as C++11 if this is a requirement for its community.
 BBP internal deployment toolchain supports C++17. Therefore software dedicated to BB5 or BlueBrain workstations can pick this standard.
 
