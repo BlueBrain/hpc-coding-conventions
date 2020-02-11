@@ -324,6 +324,9 @@ _bob_ sets the compilation flags according to a set of CMake variables:
 * `${PROJECT_NAME}_NORMAL_CXX_FLAGS:BOOL`: Allow `CMAKE_CXX_FLAGS` to follow _normal_ CMake behavior
   and bypass all variables above.
 
+Alternatively you can set `${PROJECT_NAME}_CODING_CONV_PREFIX:BOOL` to a user defined string to
+prefix above bob compilation flags.
+
 Default `CMAKE_CXX_FLAGS` variable value is taken into account.
 
 ##### Integration
