@@ -2,10 +2,20 @@
 
 ## C++ Compiler
 
+### C++ Standard
+
+The minimal C++ standard officially supported at BBP is C++14, to be reviewed annually based on compiler support.
+An open source project may support a standard as low as C++11 if this is a requirement for its community.
+
+### Compiler Versions Supporting C++14
+
+* GCC 5.4
+* CLang 7
+* Intel 18.0.3
+
 ### Compilation flags
 
-Here is the list of recommended compilation flags, set by the `bob_begin_cxx_flags`
-helper function provided by this CMake project.
+Here is the list of recommended compilation flags you may use during the development phase in order to spot as much errors as possible. For convenience, you may use the CMake function `bob_begin_cxx_flags` provided by this CMake project to set the compilation flags accordingly.
 
 * Clang: `-Werror -Weverything`. And then disable those you dislike:
   * `-Wno-disabled-macro-expansion`
