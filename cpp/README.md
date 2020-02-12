@@ -78,6 +78,16 @@ add_subdirectory(hpc-coding-conventions/cpp)
 After cloning or updating this git submodule, run CMake to take benefits of the latest changes.
 This will setup or update git [pre-commit](https://pre-commit.com) hooks of this repository.
 
+CMake variables defined by this project are prefixed by `${PROJECT_NAME}` by default.
+The CMake variable `BBPCC_VAR_PREFIX` allows to specify another prefix. It must be defined
+before including this CMake project, for instance:
+```cmake
+project(mylib CXX)
+# [...]
+set(BBPCC_VAR_PREFIX Foo)
+add_subdirectory(hpc-coding-conventions/cpp)
+```
+
 ### Usage
 
 #### Code Formatting
@@ -323,16 +333,6 @@ _bob_ sets the compilation flags according to a set of CMake variables:
   compilation flags. `CMAKE_BUILD_TYPE` is ignored.
 * `${PROJECT_NAME}_NORMAL_CXX_FLAGS:BOOL`: Allow `CMAKE_CXX_FLAGS` to follow _normal_ CMake behavior
   and bypass all variables above.
-
-Alternatively you can set in your `CMakeLists.txt` `${PROJECT_NAME}_CODING_CONV_PREFIX:STRING` to a user
-defined string to prefix above bob compilation flags before including hpc-coding-conventions. For example:
-
-```cmake
-set(project_name_CODING_CONV_PREFIX
-        "my_cmake_prefix"
-        CACHE STRING "Override coding conventions options prefix (default: PROJECT_NAME)")
-add_subdirectory(cmake/hpc-coding-conventions/cpp)
-```
 
 Default `CMAKE_CXX_FLAGS` variable value is taken into account.
 
