@@ -78,6 +78,16 @@ add_subdirectory(hpc-coding-conventions/cpp)
 After cloning or updating this git submodule, run CMake to take benefits of the latest changes.
 This will setup or update git [pre-commit](https://pre-commit.com) hooks of this repository.
 
+CMake variables defined by this project are prefixed by `${PROJECT_NAME}` by default.
+The CMake variable `CODING_CONV_PREFIX` allows to specify another prefix. It must be defined
+before including this CMake project, for instance:
+```cmake
+project(mylib CXX)
+# [...]
+set(CODING_CONV_PREFIX Foo)
+add_subdirectory(hpc-coding-conventions/cpp)
+```
+
 ### Usage
 
 #### Code Formatting
