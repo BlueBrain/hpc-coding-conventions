@@ -5,10 +5,10 @@ set(CMAKE_MODULE_PATH
 set(CMAKE_EXPORT_COMPILE_COMMANDS
     ON
     PARENT_SCOPE)
-if(NOT BBPCC_VAR_PREFIX)
-  set(BBPCC_VAR_PREFIX "${PROJECT_NAME}")
-  set(BBPCC_VAR_PREFIX "${PROJECT_NAME}" PARENT_SCOPE)
-endif(NOT BBPCC_VAR_PREFIX)
+if(NOT CODING_CONV_PREFIX)
+  set(CODING_CONV_PREFIX "${PROJECT_NAME}")
+  set(CODING_CONV_PREFIX "${PROJECT_NAME}" PARENT_SCOPE)
+endif(NOT CODING_CONV_PREFIX)
 include(cmake/bob.cmake)
 
 function(bbp_enable_precommit)
@@ -18,9 +18,9 @@ function(bbp_enable_precommit)
   execute_process(
     COMMAND
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
-      --force ${${BBPCC_VAR_PREFIX}_PRECOMMIT_REGEN} --clang-format
-      ${${BBPCC_VAR_PREFIX}_FORMATTING} --cmake-format ${${BBPCC_VAR_PREFIX}_FORMATTING}
-      --clang-tidy ${${BBPCC_VAR_PREFIX}_STATIC_ANALYSIS} ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+      --force ${${CODING_CONV_PREFIX}_PRECOMMIT_REGEN} --clang-format
+      ${${CODING_CONV_PREFIX}_FORMATTING} --cmake-format ${${CODING_CONV_PREFIX}_FORMATTING}
+      --clang-tidy ${${CODING_CONV_PREFIX}_STATIC_ANALYSIS} ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
   add_custom_target(git-pre-commits ${PreCommit_EXECUTABLE} run --all-files)
 endfunction(bbp_enable_precommit)
 
@@ -43,7 +43,7 @@ function(bbp_enable_clang_formatting)
     return()
   endif()
   if(ClangFormat_VERSION_MAJOR GREATER 6 AND ClangFormat_VERSION_MAJOR LESS 10)
-    set(${BBPCC_VAR_PREFIX}_ClangFormat_CONFIG_FILE .clang-format-${ClangFormat_VERSION_MAJOR})
+    set(${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE .clang-format-${ClangFormat_VERSION_MAJOR})
   else()
     message(
       SEND_ERROR
@@ -51,20 +51,20 @@ function(bbp_enable_clang_formatting)
     )
   endif()
 
-  set(${BBPCC_VAR_PREFIX}_ClangFormat_OPTIONS
+  set(${CODING_CONV_PREFIX}_ClangFormat_OPTIONS
       ""
       CACHE STRING "clang-format command options")
-  set(${BBPCC_VAR_PREFIX}_ClangFormat_FILES_RE
+  set(${CODING_CONV_PREFIX}_ClangFormat_FILES_RE
       "^.*\\\\.cc?$$" "^.*\\\\.hh?$$" "^.*\\\\.[it]cc$$" "^.*\\\\.[chit]pp$$" "^.*\\\\.[chit]xx$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
-  set(${BBPCC_VAR_PREFIX}_ClangFormat_EXCLUDES_RE
+  set(${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE
       ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
-  set(${BBPCC_VAR_PREFIX}_ClangFormat_DEPENDENCIES
+  set(${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES
       ""
       CACHE STRING "list of CMake targets to build before formatting C/C++ code")
-  mark_as_advanced(${BBPCC_VAR_PREFIX}_ClangFormat_OPTIONS ${BBPCC_VAR_PREFIX}_ClangFormat_FILES_RE
-                   ${BBPCC_VAR_PREFIX}_ClangFormat_EXCLUDES_RE)
+  mark_as_advanced(${CODING_CONV_PREFIX}_ClangFormat_OPTIONS ${CODING_CONV_PREFIX}_ClangFormat_FILES_RE
+                   ${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE)
   execute_process(
     COMMAND git ls-files --error-unmatch .clang-format
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -74,10 +74,10 @@ function(bbp_enable_clang_formatting)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
       execute_process(
         COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
-                "${CMAKE_CURRENT_SOURCE_DIR}/${${BBPCC_VAR_PREFIX}_ClangFormat_CONFIG_FILE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
                 "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format")
     else()
-      configure_file(${${BBPCC_VAR_PREFIX}_ClangFormat_CONFIG_FILE}
+      configure_file(${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}
                      ${PROJECT_SOURCE_DIR}/.clang-format COPYONLY)
     endif()
   endif()
@@ -92,44 +92,44 @@ function(bbp_enable_clang_formatting)
       "${CMAKE_BINARY_DIR}"
       "--executable=${ClangFormat_EXECUTABLE}"
       "--clang-format-diff-executable=${ClangFormatDiff_EXECUTABLE}"
-      "--changes-only=${${BBPCC_VAR_PREFIX}_FORMATTING_CPP_CHANGES_ONLY}"
+      "--changes-only=${${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY}"
       --files-re
-      ${${BBPCC_VAR_PREFIX}_ClangFormat_FILES_RE}
-      $<$<BOOL:${BBPCC_VAR_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
+      ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE}
+      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
       --excludes-re
-      ${${BBPCC_VAR_PREFIX}_ClangFormat_EXCLUDES_RE}
+      ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE}
       -p
       ${CMAKE_BINARY_DIR}/compile_commands.json
-      --applies-on=${${BBPCC_VAR_PREFIX}_FORMATTING_ON})
+      --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
   add_custom_target(clang-format ${clang_format_command_prefix} --action format --
-                    "${${BBPCC_VAR_PREFIX}_ClangFormat_OPTIONS}")
+                    "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   add_custom_target(check-clang-format ${clang_format_command_prefix} --action check --
-                    "${${BBPCC_VAR_PREFIX}_ClangFormat_OPTIONS}")
-  if(${BBPCC_VAR_PREFIX}_TEST_FORMATTING)
+                    "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+  if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
     add_test(NAME ClangFormat
              COMMAND ${clang_format_command_prefix} --action check --make-unescape-re --
-                     "${${BBPCC_VAR_PREFIX}_ClangFormat_OPTIONS}")
+                     "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   endif()
-  if(${BBPCC_VAR_PREFIX}_ClangFormat_DEPENDENCIES)
-    add_dependencies(clang-format ${${BBPCC_VAR_PREFIX}_ClangFormat_DEPENDENCIES})
-    add_dependencies(check-clang-format ${${BBPCC_VAR_PREFIX}_ClangFormat_DEPENDENCIES})
+  if(${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES)
+    add_dependencies(clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
+    add_dependencies(check-clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
   endif()
 endfunction(bbp_enable_clang_formatting)
 
 function(bbp_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(CMakeFormat 0.6.0 EXACT REQUIRED)
-  set(${BBPCC_VAR_PREFIX}_CMakeFormat_OPTIONS
+  set(${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS
       ""
       CACHE STRING "cmake-format options")
-  set(${BBPCC_VAR_PREFIX}_CMakeFormat_FILES_RE
+  set(${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE
       "^.*\\\\.cmake$$" "^.*CMakeLists.txt$$"
       CACHE STRING "List of regular expressions matching CMake files")
-  set(${BBPCC_VAR_PREFIX}_CMakeFormat_EXCLUDES_RE
+  set(${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE
       ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude CMake files from formatting")
-  mark_as_advanced(${BBPCC_VAR_PREFIX}_CMakeFormat_OPTIONS ${BBPCC_VAR_PREFIX}_CMakeFormat_FILES_RE
-                   ${BBPCC_VAR_PREFIX}_CMakeFormat_EXCLUDES_RE)
+  mark_as_advanced(${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS ${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE
+                   ${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE)
   execute_process(
     COMMAND git ls-files --error-unmatch .cmake-format
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -156,19 +156,19 @@ function(bbp_enable_cmake_formatting)
       "${CMAKE_BINARY_DIR}"
       "--executable=${CMakeFormat_EXECUTABLE}"
       --files-re
-      ${${BBPCC_VAR_PREFIX}_CMakeFormat_FILES_RE}
-      $<$<BOOL:${BBPCC_VAR_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
+      ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE}
+      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
       --excludes-re
-      ${${BBPCC_VAR_PREFIX}_CMakeFormat_EXCLUDES_RE}
-      --applies-on=${${BBPCC_VAR_PREFIX}_FORMATTING_ON})
+      ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE}
+      --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
   add_custom_target(cmake-format ${cmake_format_command_prefix} --action format --
-                    "${${BBPCC_VAR_PREFIX}_CMakeFormat_OPTIONS}")
+                    "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
   add_custom_target(check-cmake-format ${cmake_format_command_prefix} --action check --
-                    ${${BBPCC_VAR_PREFIX}_CMakeFormat_OPTIONS})
-  if(${BBPCC_VAR_PREFIX}_TEST_FORMATTING)
+                    ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
+  if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
     add_test(NAME CMakeFormat
              COMMAND ${cmake_format_command_prefix} --action check --make-unescape-re --
-                     ${${BBPCC_VAR_PREFIX}_CMakeFormat_OPTIONS})
+                     ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   endif()
 
 endfunction(bbp_enable_cmake_formatting)
@@ -176,21 +176,21 @@ endfunction(bbp_enable_cmake_formatting)
 function(bbp_enable_static_analysis)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(ClangTidy 7 EXACT REQUIRED)
-  set(${BBPCC_VAR_PREFIX}_ClangTidy_OPTIONS
+  set(${CODING_CONV_PREFIX}_ClangTidy_OPTIONS
       -extra-arg=-Wno-unknown-warning-option
       CACHE STRING "clang-tidy command options")
-  mark_as_advanced(${BBPCC_VAR_PREFIX}_ClangTidy_OPTIONS)
-  set(${BBPCC_VAR_PREFIX}_ClangTidy_FILES_RE
+  mark_as_advanced(${CODING_CONV_PREFIX}_ClangTidy_OPTIONS)
+  set(${CODING_CONV_PREFIX}_ClangTidy_FILES_RE
       "^.*\\\\.cc$$" "^.*\\\\.cpp$$" "^.*\\\\.cxx$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
-  set(${BBPCC_VAR_PREFIX}_ClangTidy_EXCLUDES_RE
+  set(${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE
       ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
-  set(${BBPCC_VAR_PREFIX}_ClangTidy_DEPENDENCIES
+  set(${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES
       ""
       CACHE STRING "list of CMake targets to build before formatting C/C++ code")
-  mark_as_advanced(${BBPCC_VAR_PREFIX}_ClangTidy_OPTIONS ${BBPCC_VAR_PREFIX}_ClangTidy_FILES_RE
-                   ${BBPCC_VAR_PREFIX}_ClangTidy_EXCLUDES_RE)
+  mark_as_advanced(${CODING_CONV_PREFIX}_ClangTidy_OPTIONS ${CODING_CONV_PREFIX}_ClangTidy_FILES_RE
+                   ${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE)
   execute_process(
     COMMAND git ls-files --error-unmatch .clang-tidy
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -217,68 +217,68 @@ function(bbp_enable_static_analysis)
       "${CMAKE_BINARY_DIR}"
       "--executable=${ClangTidy_EXECUTABLE}"
       --files-re
-      "${${BBPCC_VAR_PREFIX}_ClangTidy_FILES_RE}"
-      $<$<BOOL:${BBPCC_VAR_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
+      "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}"
+      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
       --excludes-re
-      ${${BBPCC_VAR_PREFIX}_ClangTidy_EXCLUDES_RE}
+      ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE}
       -p
       ${CMAKE_BINARY_DIR}/compile_commands.json
       --action
       check)
   add_custom_target(clang-tidy ${clang_tidy_command_prefix} --
-                    ${${BBPCC_VAR_PREFIX}_ClangTidy_OPTIONS})
-  if(${BBPCC_VAR_PREFIX}_TEST_STATIC_ANALYSIS)
+                    ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
+  if(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS)
     add_test(NAME ClangTidy COMMAND ${clang_tidy_command_prefix} --make-unescape-re --
-                                    ${${BBPCC_VAR_PREFIX}_ClangTidy_OPTIONS})
+                                    ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
   endif()
-  if(${BBPCC_VAR_PREFIX}_ClangTidy_DEPENDENCIES)
-    add_dependencies(clang-tidy ${${BBPCC_VAR_PREFIX}_ClangTidy_DEPENDENCIES})
+  if(${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES)
+    add_dependencies(clang-tidy ${${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES})
   endif()
 
 endfunction(bbp_enable_static_analysis)
 
-bob_option(${BBPCC_VAR_PREFIX}_FORMATTING
+bob_option(${CODING_CONV_PREFIX}_FORMATTING
            "Enable helpers to keep CMake and C++ code properly formatted" OFF)
-bob_input(${BBPCC_VAR_PREFIX}_FORMATTING_ON "all" STRING
+bob_input(${CODING_CONV_PREFIX}_FORMATTING_ON "all" STRING
           "Specify changeset where formatting applies (see documentation for detailed information)")
-bob_option(${BBPCC_VAR_PREFIX}_FORMATTING_CPP_CHANGES_ONLY
+bob_option(${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY
            "Only format the modified chunks, not the entire files" OFF)
-bob_option(${BBPCC_VAR_PREFIX}_TEST_FORMATTING "Add CTest formatting test" OFF)
-bob_option(${BBPCC_VAR_PREFIX}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
-bob_option(${BBPCC_VAR_PREFIX}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
-bob_option(${BBPCC_VAR_PREFIX}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted"
+bob_option(${CODING_CONV_PREFIX}_TEST_FORMATTING "Add CTest formatting test" OFF)
+bob_option(${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
+bob_option(${CODING_CONV_PREFIX}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
+bob_option(${CODING_CONV_PREFIX}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted"
            OFF)
 
-bob_option(${BBPCC_VAR_PREFIX}_PRECOMMIT "Enable automatic checks before git commits" OFF)
-bob_option(${BBPCC_VAR_PREFIX}_PRECOMMIT_REGEN "Force precommit hook regeneration" OFF)
+bob_option(${CODING_CONV_PREFIX}_PRECOMMIT "Enable automatic checks before git commits" OFF)
+bob_option(${CODING_CONV_PREFIX}_PRECOMMIT_REGEN "Force precommit hook regeneration" OFF)
 
-bob_option(${BBPCC_VAR_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis during compilation" OFF)
-bob_option(${BBPCC_VAR_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
+bob_option(${CODING_CONV_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis during compilation" OFF)
+bob_option(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
 
-if(${BBPCC_VAR_PREFIX}_CLANG_FORMAT)
+if(${CODING_CONV_PREFIX}_CLANG_FORMAT)
   bbp_enable_clang_formatting()
-endif(${BBPCC_VAR_PREFIX}_CLANG_FORMAT)
+endif(${CODING_CONV_PREFIX}_CLANG_FORMAT)
 
-if(${BBPCC_VAR_PREFIX}_CMAKE_FORMAT)
+if(${CODING_CONV_PREFIX}_CMAKE_FORMAT)
   bbp_enable_cmake_formatting()
-endif(${BBPCC_VAR_PREFIX}_CMAKE_FORMAT)
+endif(${CODING_CONV_PREFIX}_CMAKE_FORMAT)
 
-if(${BBPCC_VAR_PREFIX}_FORMATTING)
+if(${CODING_CONV_PREFIX}_FORMATTING)
   bbp_enable_clang_formatting()
   bbp_enable_cmake_formatting()
-endif(${BBPCC_VAR_PREFIX}_FORMATTING)
+endif(${CODING_CONV_PREFIX}_FORMATTING)
 
-if(${BBPCC_VAR_PREFIX}_PRECOMMIT)
+if(${CODING_CONV_PREFIX}_PRECOMMIT)
   bbp_enable_precommit()
-else(${BBPCC_VAR_PREFIX}_PRECOMMIT)
+else(${CODING_CONV_PREFIX}_PRECOMMIT)
   bbp_disable_precommit()
-endif(${BBPCC_VAR_PREFIX}_PRECOMMIT)
+endif(${CODING_CONV_PREFIX}_PRECOMMIT)
 
-if(${BBPCC_VAR_PREFIX}_STATIC_ANALYSIS)
+if(${CODING_CONV_PREFIX}_STATIC_ANALYSIS)
   cmake_minimum_required(VERSION 3.6)
   bbp_enable_static_analysis()
   set(CMAKE_CXX_CLANG_TIDY
       "${ClangTidy_EXECUTABLE}" -p "${CMAKE_BINARY_DIR}/compile_commands.json"
-      ${${BBPCC_VAR_PREFIX}_ClangTidy_OPTIONS}
+      ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS}
       PARENT_SCOPE)
-endif(${BBPCC_VAR_PREFIX}_STATIC_ANALYSIS)
+endif(${CODING_CONV_PREFIX}_STATIC_ANALYSIS)
