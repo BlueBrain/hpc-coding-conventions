@@ -13,7 +13,7 @@ distclean: clean
 
 # README.html
 .md.html: $<
-	$(PANDOC) -s -S -c github-pandoc.css $< -o $@
+	$(PANDOC) -s -c github-pandoc.css $< -o $@
 README.html: github-pandoc.css
 
 # README.md
@@ -24,7 +24,7 @@ README.md: README.md.jinja formatting.py $(SNIPPETS)
 	./formatting.py $< $@
 
 # update all snippets when .clang-format is changed
-$(SNIPPETS): ../.clang-format
+$(SNIPPETS): ../.clang-format-9
 	$(CLANG_FORMAT) -i $@
 	touch $@
 
