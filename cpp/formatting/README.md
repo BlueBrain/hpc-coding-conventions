@@ -9,7 +9,7 @@ code formatting conventions adopted by BlueBrain HPC team.
 
 # Conventions
 
-## Names and Order of Includes
+## Ordering of Includes
 
 You may follow the conventions described in the
 [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html#Names_and_Order_of_Includes)
