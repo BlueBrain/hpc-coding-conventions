@@ -43,7 +43,7 @@ function(bbp_enable_clang_formatting)
     return()
   endif()
   if(ClangFormat_VERSION_MAJOR GREATER 6 AND ClangFormat_VERSION_MAJOR LESS 12)
-    set(${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE .clang-format-${ClangFormat_VERSION_MAJOR})
+    set(${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE clang-format-${ClangFormat_VERSION_MAJOR})
   else()
     message(
       SEND_ERROR
@@ -142,9 +142,9 @@ function(bbp_enable_cmake_formatting)
           ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
           "${CMAKE_CURRENT_SOURCE_DIR}/.cmake-format.yaml"
           "${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml"
-          "${PROJECT_SOURCE_DIR}/.cmake-format.yaml")
+          "${PROJECT_SOURCE_DIR}/cmake-format.yaml")
     else()
-      configure_file(.cmake-format.yaml ${PROJECT_SOURCE_DIR} COPYONLY)
+      configure_file(cmake-format.yaml ${PROJECT_SOURCE_DIR}/.cmake-format.yaml COPYONLY)
     endif()
   endif()
   set(cmake_format_command_prefix
