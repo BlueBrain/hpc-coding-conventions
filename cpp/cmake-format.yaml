@@ -12,15 +12,6 @@ max_lines_hwrap: 2
 line_ending: unix
 command_case: canonical
 keyword_case: unchanged
-additional_commands:
-  foo:
-    flags:
-    - BAR
-    - BAZ
-    kwargs:
-      HEADERS: '*'
-      SOURCES: '*'
-      DEPENDS: '*'
 always_wrap: []
 enable_sort: true
 autosort: false
