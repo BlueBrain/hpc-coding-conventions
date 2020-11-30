@@ -1,6 +1,8 @@
 find_package(Git QUIET)
 
-set(THIRD_PARTY_DIRECTORY "${PROJECT_SOURCE_DIR}/3rdparty/" CACHE PATH "The path were all the 3rd party projects can be found")
+set(THIRD_PARTY_DIRECTORY
+    "${PROJECT_SOURCE_DIR}/3rdparty"
+    CACHE PATH "The path were all the 3rd party projects can be found")
 
 # initialize submodule with given path
 function(initialize_submodule path)
@@ -8,7 +10,7 @@ function(initialize_submodule path)
     message(
       FATAL_ERROR "git not found and ${path} sub-module not cloned (use git clone --recursive)")
   endif()
-  message(STATUS "Sub-module : missing ${path} : running git submodule update --init --recursive")
+  message(STATUS "Sub-module : missing ${path}: running git submodule update --init --recursive")
   execute_process(
     COMMAND
       git submodule update --init --recursive -- ${path}
@@ -20,11 +22,17 @@ function(add_external_project name)
   find_path(
     ${name}_PATH
     NAMES CMakeLists.txt
-    PATHS "${THIRD_PARTY_DIRECTORY}")
+    PATHS "${THIRD_PARTY_DIRECTORY}/${name}")
   if(NOT EXISTS ${${name}_PATH})
-    initialize_submodule("${THIRD_PARTY_DIRECTORY}")
+    initialize_submodule("${THIRD_PARTY_DIRECTORY}/${name}")
   else()
-    message(STATUS "Sub-project : using ${name} from \"${THIRD_PARTY_DIRECTORY}\"")
+    message(STATUS "Sub-project : using ${name} from \"${THIRD_PARTY_DIRECTORY}/${name}\"")
   endif()
-  add_subdirectory("${THIRD_PARTY_DIRECTORY}")
+  if(${ARGC} GREATER 1)
+    if(${ARGV2})
+      add_subdirectory("${THIRD_PARTY_DIRECTORY}/${name}")
+    endif()
+  else()
+    add_subdirectory("${THIRD_PARTY_DIRECTORY}/${name}")
+  endif()
 endfunction()
