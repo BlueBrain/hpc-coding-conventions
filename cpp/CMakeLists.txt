@@ -140,9 +140,9 @@ function(bbp_enable_cmake_formatting)
       execute_process(
         COMMAND
           ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
-          "${CMAKE_CURRENT_SOURCE_DIR}/.cmake-format.yaml"
+          "${CMAKE_CURRENT_SOURCE_DIR}/cmake-format.yaml"
           "${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml"
-          "${PROJECT_SOURCE_DIR}/cmake-format.yaml")
+          "${PROJECT_SOURCE_DIR}/.cmake-format.yaml")
     else()
       configure_file(cmake-format.yaml ${PROJECT_SOURCE_DIR}/.cmake-format.yaml COPYONLY)
     endif()
