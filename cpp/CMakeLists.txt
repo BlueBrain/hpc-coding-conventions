@@ -10,6 +10,7 @@ if(NOT CODING_CONV_PREFIX)
   set(CODING_CONV_PREFIX "${PROJECT_NAME}" PARENT_SCOPE)
 endif(NOT CODING_CONV_PREFIX)
 include(cmake/bob.cmake)
+include(cmake/3rdparty.cmake)
 
 function(bbp_enable_precommit)
   find_package(PythonInterp 3.5 REQUIRED)
