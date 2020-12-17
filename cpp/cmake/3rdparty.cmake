@@ -1,8 +1,8 @@
 find_package(Git QUIET)
 
-if(NOT ${CODING_CONV_PREFIX}_THIRD_PARTY_DIR)
-  set(${CODING_CONV_PREFIX}_THIRD_PARTY_DIR 3rdparty)
-  set(${CODING_CONV_PREFIX}_THIRD_PARTY_DIR
+if(NOT ${CODING_CONV_PREFIX}_3RDPARTY_DIR)
+  set(${CODING_CONV_PREFIX}_3RDPARTY_DIR 3rdparty)
+  set(${CODING_CONV_PREFIX}_3RDPARTY_DIR
       3rdparty
       PARENT_SCOPE)
 endif()
@@ -26,13 +26,27 @@ function(bbp_init_git_submodule path)
   endif()
 endfunction()
 
-# check for external project and initialize submodule if it is missing
-function(bbp_add_git_submodule_subdirectory name)
-  set(submodule_path "${${CODING_CONV_PREFIX}_THIRD_PARTY_DIR}/${name}")
+# initialize a git submodule if missing
+#
+# bbp_git_submodule(source_dir [BUILD] [<arguments>]
+#
+# if the BUILD argument is provided then the directory is added to the build
+# through the add_subdirectory CMake function. Arguments following the BUILD
+# arguments are passed to the add_subdirectory function call.
+#
+function(bbp_git_submodule name)
+  set(submodule_path "${${CODING_CONV_PREFIX}_3RDPARTY_DIR}/${name}")
   if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
     bbp_init_git_submodule("${submodule_path}")
   endif()
   message(STATUS "3rdparty project: using ${name} from \"${submodule_path}\"")
-  list(REMOVE_AT ARGV 0)
-  add_subdirectory(${submodule_path} ${ARGV})
+  if(ARGC GREATER 1)
+    list(REMOVE_AT ARGV 0)
+    if(ARGV1 STREQUAL "BUILD")
+      list(REMOVE_AT ARGV 0)
+      add_subdirectory(${submodule_path} ${ARGV})
+    else()
+      message(SEND_ERROR "Unexpected argument: ${ARGV1}")
+    endif()
+  endif()
 endfunction()
