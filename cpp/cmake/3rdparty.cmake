@@ -26,27 +26,52 @@ function(bbp_init_git_submodule path)
   endif()
 endfunction()
 
-# initialize a git submodule if missing
+# use a git submodule
 #
-# bbp_git_submodule(source_dir [BUILD] [<arguments>]
+# bbp_git_submodule(source_dir
+#                   [DISABLED]
+#                   [BUILD] [<arguments>]
+#
+# Add a CMake option in the cache to control whether the
+# submodule is used or not (default ON). The option is named after the source
+# directory passed in first argument, for instance:
+#   bbp_git_submodule(src/eigen)
+# adds the following CMake cached option:
+#  ${PROJECT_NAME}_3RDPARTY_USE_SRC_EIGEN:BOOL=ON
+#
+# If enabled, then the submodule is fetched if missing in the working copy.
+#
+# If the DISABLED argument is provided, then the default value for the CMake
+# option is OFF.
 #
 # if the BUILD argument is provided then the directory is added to the build
 # through the add_subdirectory CMake function. Arguments following the BUILD
 # arguments are passed to the add_subdirectory function call.
 #
 function(bbp_git_submodule name)
+  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "" "BUILD")
+  string(MAKE_C_IDENTIFIER "USE_${name}" option_suffix)
+  string(TOUPPER "3RDPARTY_${option_suffix}" option_suffix)
+  if(opt_DISABLED)
+    set(default OFF)
+  else()
+    set(default ON)
+  endif()
+  option(${CODING_CONV_PREFIX}_${option_suffix}
+          "Use the git submodule ${name}"
+          ${default})
+  if(NOT ${CODING_CONV_PREFIX}_${option_suffix})
+    message(STATUS RETURN)
+    return()
+  endif()
   set(submodule_path "${${CODING_CONV_PREFIX}_3RDPARTY_DIR}/${name}")
   if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
     bbp_init_git_submodule("${submodule_path}")
   endif()
   message(STATUS "3rdparty project: using ${name} from \"${submodule_path}\"")
-  if(ARGC GREATER 1)
-    list(REMOVE_AT ARGV 0)
-    if(ARGV1 STREQUAL "BUILD")
-      list(REMOVE_AT ARGV 0)
-      add_subdirectory(${submodule_path} ${ARGV})
-    else()
-      message(SEND_ERROR "Unexpected argument: ${ARGV1}")
-    endif()
+  if(opt_BUILD)
+      add_subdirectory(${submodule_path} ${opt_BUILD})
+  elseif("BUILD" IN_LIST opt_KEYWORDS_MISSING_VALUES)
+    add_subdirectory(${submodule_path})
   endif()
 endfunction()
