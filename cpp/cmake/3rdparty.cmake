@@ -30,7 +30,9 @@ endfunction()
 #
 # bbp_git_submodule(source_dir
 #                   [DISABLED]
+#                   SUBDIR path
 #                   [BUILD] [<arguments>]
+#                   [PACKAGE] [<arguments>]
 #
 # Add a CMake option in the cache to control whether the
 # submodule is used or not (default ON). The option is named after the source
@@ -48,8 +50,16 @@ endfunction()
 # through the add_subdirectory CMake function. Arguments following the BUILD
 # arguments are passed to the add_subdirectory function call.
 #
+# The optional SUBDIR argument is used by the BUILD argument to determine
+# the path to the directory added to the build. The path specified is relative
+# to the path to the git submodule.
+#
+# If the PACKAGE argument is provided and the CMake option to determine whether
+# the git submodule should be used or not is FALSE, then a call to the find_package
+# function is made with the arguments specified to the PACKAGE option.
+#
 function(bbp_git_submodule name)
-  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "" "BUILD")
+  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE BUILD")
   string(MAKE_C_IDENTIFIER "USE_${name}" option_suffix)
   string(TOUPPER "3RDPARTY_${option_suffix}" option_suffix)
   if(opt_DISABLED)
@@ -61,10 +71,17 @@ function(bbp_git_submodule name)
           "Use the git submodule ${name}"
           ${default})
   if(NOT ${CODING_CONV_PREFIX}_${option_suffix})
-    message(STATUS RETURN)
+    if(opt_PACKAGE)
+      find_package(${opt_PACKAGE})
+    elseif(PACKAGE IN_LIST opt_KEYWORDS_MISSING_VALUES)
+      message(SEND_ERROR "PACKAGE argument requires at least one argument")
+    endif()
     return()
   endif()
   set(submodule_path "${${CODING_CONV_PREFIX}_3RDPARTY_DIR}/${name}")
+  if(opt_SUBDIR)
+    set(submodule_path "${submodule_path}/${opt_SUBDIR}")
+  endif()
   if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
     bbp_init_git_submodule("${submodule_path}")
   endif()
