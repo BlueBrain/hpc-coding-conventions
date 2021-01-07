@@ -19,7 +19,7 @@ function(bbp_init_git_submodule path)
   execute_process(
     COMMAND
       ${GIT_EXECUTABLE} submodule update --init --recursive -- ${path}
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     RESULT_VARIABLE git_submodule_status)
   if(NOT git_submodule_status EQUAL 0)
     message(FATAL_ERROR "Could not clone git submodule ${path}")
@@ -82,7 +82,7 @@ function(bbp_git_submodule name)
   if(opt_SUBDIR)
     set(submodule_path "${submodule_path}/${opt_SUBDIR}")
   endif()
-  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
+  if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
     bbp_init_git_submodule("${submodule_path}")
   endif()
   message(STATUS "3rdparty project: using ${name} from \"${submodule_path}\"")

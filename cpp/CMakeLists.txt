@@ -21,18 +21,18 @@ function(bbp_enable_precommit)
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
       --force ${${CODING_CONV_PREFIX}_PRECOMMIT_REGEN} --clang-format
       ${${CODING_CONV_PREFIX}_FORMATTING} --cmake-format ${${CODING_CONV_PREFIX}_FORMATTING}
-      --clang-tidy ${${CODING_CONV_PREFIX}_STATIC_ANALYSIS} ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+      --clang-tidy ${${CODING_CONV_PREFIX}_STATIC_ANALYSIS} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
   add_custom_target(git-pre-commits ${PreCommit_EXECUTABLE} run --all-files)
 endfunction(bbp_enable_precommit)
 
 function(bbp_disable_precommit)
-  if(EXISTS ${CMAKE_SOURCE_DIR}/.pre-commit-config.yaml)
+  if(EXISTS ${PROJECT_SOURCE_DIR}/.pre-commit-config.yaml)
     find_package(PythonInterp 3.5 REQUIRED)
     execute_process(
       COMMAND
         ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
-        --clang-format off --cmake-format off --clang-tidy off ${CMAKE_SOURCE_DIR}
-        ${CMAKE_BINARY_DIR})
+        --clang-format off --cmake-format off --clang-tidy off ${PROJECT_SOURCE_DIR}
+        ${PROJECT_BINARY_DIR})
   endif()
 endfunction(bbp_disable_precommit)
 
@@ -88,9 +88,9 @@ function(bbp_enable_clang_formatting)
       ${PYTHON_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
       -S
-      "${CMAKE_SOURCE_DIR}"
+      "${PROJECT_SOURCE_DIR}"
       -B
-      "${CMAKE_BINARY_DIR}"
+      "${PROJECT_BINARY_DIR}"
       "--executable=${ClangFormat_EXECUTABLE}"
       "--clang-format-diff-executable=${ClangFormatDiff_EXECUTABLE}"
       "--changes-only=${${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY}"
@@ -100,7 +100,7 @@ function(bbp_enable_clang_formatting)
       --excludes-re
       ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE}
       -p
-      ${CMAKE_BINARY_DIR}/compile_commands.json
+      ${PROJECT_BINARY_DIR}/compile_commands.json
       --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
   add_custom_target(clang-format ${clang_format_command_prefix} --action format --
                     "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
@@ -152,9 +152,9 @@ function(bbp_enable_cmake_formatting)
       ${PYTHON_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"
       -S
-      "${CMAKE_SOURCE_DIR}"
+      "${PROJECT_SOURCE_DIR}"
       -B
-      "${CMAKE_BINARY_DIR}"
+      "${PROJECT_BINARY_DIR}"
       "--executable=${CMakeFormat_EXECUTABLE}"
       --files-re
       ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE}
@@ -213,9 +213,9 @@ function(bbp_enable_static_analysis)
       ${PYTHON_EXECUTABLE}
       "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py"
       -S
-      "${CMAKE_SOURCE_DIR}"
+      "${PROJECT_SOURCE_DIR}"
       -B
-      "${CMAKE_BINARY_DIR}"
+      "${PROJECT_BINARY_DIR}"
       "--executable=${ClangTidy_EXECUTABLE}"
       --files-re
       "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}"
@@ -223,7 +223,7 @@ function(bbp_enable_static_analysis)
       --excludes-re
       ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE}
       -p
-      ${CMAKE_BINARY_DIR}/compile_commands.json
+      ${PROJECT_BINARY_DIR}/compile_commands.json
       --action
       check)
   add_custom_target(clang-tidy ${clang_tidy_command_prefix} --
@@ -279,7 +279,7 @@ if(${CODING_CONV_PREFIX}_STATIC_ANALYSIS)
   cmake_minimum_required(VERSION 3.6)
   bbp_enable_static_analysis()
   set(CMAKE_CXX_CLANG_TIDY
-      "${ClangTidy_EXECUTABLE}" -p "${CMAKE_BINARY_DIR}/compile_commands.json"
+      "${ClangTidy_EXECUTABLE}" -p "${PROJECT_BINARY_DIR}/compile_commands.json"
       ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS}
       PARENT_SCOPE)
 endif(${CODING_CONV_PREFIX}_STATIC_ANALYSIS)
