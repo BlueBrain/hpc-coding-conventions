@@ -90,7 +90,7 @@ def make_cpp_file_filter(source_dir, binary_dir, excludes_re, files_re):
     def _func(cpp_file):
         if not cpp_file.startswith(source_dir):
             return True
-        if cpp_file.startswith(binary_dir):
+        if binary_dir != source_dir and cpp_file.startswith(binary_dir):
             return True
         # exclude some paths available in CI environment
         for ci_dir in ["HOME", "INSTALL"]:
