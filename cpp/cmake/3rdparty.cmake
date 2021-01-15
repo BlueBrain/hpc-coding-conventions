@@ -8,7 +8,15 @@ if(NOT ${CODING_CONV_PREFIX}_3RDPARTY_DIR)
 endif()
 
 # initialize submodule with given path
+#
+# bbp_init_git_submodule(path
+#                        GIT_ARGS [<arguments>])
+#
+# If the opt_GIT_ARGS argument is provided, then its value is passed
+# to the git command used to fetch the submodule
+#
 function(bbp_init_git_submodule path)
+  cmake_parse_arguments(PARSE_ARGV 1 opt "" "" "GIT_ARGS")
   if(NOT ${GIT_FOUND})
     message(
       FATAL_ERROR "git not found and ${path} submodule not cloned (use git clone --recursive)")
@@ -18,7 +26,7 @@ function(bbp_init_git_submodule path)
   )
   execute_process(
     COMMAND
-      ${GIT_EXECUTABLE} submodule update --init --recursive -- ${path}
+      ${GIT_EXECUTABLE} submodule update --init ${opt_GIT_ARGS} -- ${path}
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
     RESULT_VARIABLE git_submodule_status)
   if(NOT git_submodule_status EQUAL 0)
@@ -33,6 +41,7 @@ endfunction()
 #                   SUBDIR path
 #                   [BUILD] [<arguments>]
 #                   [PACKAGE] [<arguments>]
+#                   GIT_ARGS [<arguments>])
 #
 # Add a CMake option in the cache to control whether the
 # submodule is used or not (default ON). The option is named after the source
@@ -46,7 +55,7 @@ endfunction()
 # If the DISABLED argument is provided, then the default value for the CMake
 # option is OFF.
 #
-# if the BUILD argument is provided then the directory is added to the build
+# If the BUILD argument is provided then the directory is added to the build
 # through the add_subdirectory CMake function. Arguments following the BUILD
 # arguments are passed to the add_subdirectory function call.
 #
@@ -58,8 +67,11 @@ endfunction()
 # the git submodule should be used or not is FALSE, then a call to the find_package
 # function is made with the arguments specified to the PACKAGE option.
 #
+# If the GIT_ARGS argument is provided, then its value is passed to the
+# git command to fetch the submodule.
+#
 function(bbp_git_submodule name)
-  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE BUILD")
+  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE BUILD GIT_ARGS")
   string(MAKE_C_IDENTIFIER "USE_${name}" option_suffix)
   string(TOUPPER "3RDPARTY_${option_suffix}" option_suffix)
   if(opt_DISABLED)
@@ -83,7 +95,11 @@ function(bbp_git_submodule name)
     set(submodule_path "${submodule_path}/${opt_SUBDIR}")
   endif()
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
-    bbp_init_git_submodule("${submodule_path}")
+    if(opt_GIT_ARGS)
+      bbp_init_git_submodule("${submodule_path}" GIT_ARGS ${opt_GIT_ARGS})
+    else()
+      bbp_init_git_submodule("${submodule_path}")
+    endif()
   endif()
   message(STATUS "3rdparty project: using ${name} from \"${submodule_path}\"")
   if(opt_BUILD)
