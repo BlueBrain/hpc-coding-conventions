@@ -9,13 +9,13 @@ endif()
 
 # initialize submodule with given path
 #
-# bbp_init_git_submodule(path
-#                        GIT_ARGS [<arguments>])
+# cpp_cc_init_git_submodule(path
+#                           GIT_ARGS [<arguments>])
 #
 # Default options passed to the `git submodule update` command are `--init --recursive`.
 # If the opt_GIT_ARGS argument is provided, then its value supersedes the default options.
 #
-function(bbp_init_git_submodule path)
+function(cpp_cc_init_git_submodule path)
   cmake_parse_arguments(PARSE_ARGV 1 opt "" "" "GIT_ARGS")
   if(NOT opt_GIT_ARGS)
     set(opt_GIT_ARGS --init --recursive)
@@ -39,17 +39,17 @@ endfunction()
 
 # use a git submodule
 #
-# bbp_git_submodule(source_dir
-#                   [DISABLED]
-#                   SUBDIR path
-#                   [BUILD] [<arguments>]
-#                   [PACKAGE] [<arguments>]
-#                   GIT_ARGS [<arguments>])
+# cpp_cc_git_submodule(source_dir
+#                      [DISABLED]
+#                      SUBDIR path
+#                      [BUILD] [<arguments>]
+#                      [PACKAGE] [<arguments>]
+#                      GIT_ARGS [<arguments>])
 #
 # Add a CMake option in the cache to control whether the
 # submodule is used or not (default ON). The option is named after the source
 # directory passed in first argument, for instance:
-#   bbp_git_submodule(src/eigen)
+#   cpp_cc_git_submodule(src/eigen)
 # adds the following CMake cached option:
 #  ${PROJECT_NAME}_3RDPARTY_USE_SRC_EIGEN:BOOL=ON
 #
@@ -73,7 +73,7 @@ endfunction()
 # Default options passed to the `git submodule update` command are `--init --recursive`.
 # If the opt_GIT_ARGS argument is provided, then its value supersedes the default options.
 #
-function(bbp_git_submodule name)
+function(cpp_cc_git_submodule name)
   cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE BUILD GIT_ARGS")
   string(MAKE_C_IDENTIFIER "USE_${name}" option_suffix)
   string(TOUPPER "3RDPARTY_${option_suffix}" option_suffix)
@@ -99,9 +99,9 @@ function(bbp_git_submodule name)
   endif()
   if(NOT EXISTS ${PROJECT_SOURCE_DIR}/${submodule_path}/CMakeLists.txt)
     if(opt_GIT_ARGS)
-      bbp_init_git_submodule("${submodule_path}" GIT_ARGS ${opt_GIT_ARGS})
+      cpp_cc_init_git_submodule("${submodule_path}" GIT_ARGS ${opt_GIT_ARGS})
     else()
-      bbp_init_git_submodule("${submodule_path}")
+      cpp_cc_init_git_submodule("${submodule_path}")
     endif()
   endif()
   message(STATUS "3rdparty project: using ${name} from \"${submodule_path}\"")

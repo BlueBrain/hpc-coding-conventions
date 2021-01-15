@@ -12,7 +12,7 @@ endif(NOT CODING_CONV_PREFIX)
 include(cmake/bob.cmake)
 include(cmake/3rdparty.cmake)
 
-function(bbp_enable_precommit)
+function(cpp_cc_enable_precommit)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(PreCommit REQUIRED)
   execute_process(COMMAND ${PreCommit_EXECUTABLE} install)
@@ -23,9 +23,9 @@ function(bbp_enable_precommit)
       ${${CODING_CONV_PREFIX}_FORMATTING} --cmake-format ${${CODING_CONV_PREFIX}_FORMATTING}
       --clang-tidy ${${CODING_CONV_PREFIX}_STATIC_ANALYSIS} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
   add_custom_target(git-pre-commits ${PreCommit_EXECUTABLE} run --all-files)
-endfunction(bbp_enable_precommit)
+endfunction(cpp_cc_enable_precommit)
 
-function(bbp_disable_precommit)
+function(cpp_cc_disable_precommit)
   if(EXISTS ${PROJECT_SOURCE_DIR}/.pre-commit-config.yaml)
     find_package(PythonInterp 3.5 REQUIRED)
     execute_process(
@@ -34,9 +34,9 @@ function(bbp_disable_precommit)
         --clang-format off --cmake-format off --clang-tidy off ${PROJECT_SOURCE_DIR}
         ${PROJECT_BINARY_DIR})
   endif()
-endfunction(bbp_disable_precommit)
+endfunction(cpp_cc_disable_precommit)
 
-function(bbp_enable_clang_formatting)
+function(cpp_cc_enable_clang_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(ClangFormat REQUIRED)
   if(NOT ClangFormat_FOUND)
@@ -115,9 +115,9 @@ function(bbp_enable_clang_formatting)
     add_dependencies(clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
     add_dependencies(check-clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
   endif()
-endfunction(bbp_enable_clang_formatting)
+endfunction(cpp_cc_enable_clang_formatting)
 
-function(bbp_enable_cmake_formatting)
+function(cpp_cc_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(CMakeFormat 0.6.0 EXACT REQUIRED)
   set(${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS
@@ -172,9 +172,9 @@ function(bbp_enable_cmake_formatting)
                      ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   endif()
 
-endfunction(bbp_enable_cmake_formatting)
+endfunction(cpp_cc_enable_cmake_formatting)
 
-function(bbp_enable_static_analysis)
+function(cpp_cc_enable_static_analysis)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(ClangTidy 7 EXACT REQUIRED)
   set(${CODING_CONV_PREFIX}_ClangTidy_OPTIONS
@@ -236,7 +236,7 @@ function(bbp_enable_static_analysis)
     add_dependencies(clang-tidy ${${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES})
   endif()
 
-endfunction(bbp_enable_static_analysis)
+endfunction(cpp_cc_enable_static_analysis)
 
 bob_option(${CODING_CONV_PREFIX}_FORMATTING
            "Enable helpers to keep CMake and C++ code properly formatted" OFF)
@@ -257,27 +257,27 @@ bob_option(${CODING_CONV_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis dur
 bob_option(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
 
 if(${CODING_CONV_PREFIX}_CLANG_FORMAT)
-  bbp_enable_clang_formatting()
+  cpp_cc_enable_clang_formatting()
 endif(${CODING_CONV_PREFIX}_CLANG_FORMAT)
 
 if(${CODING_CONV_PREFIX}_CMAKE_FORMAT)
-  bbp_enable_cmake_formatting()
+  cpp_cc_enable_cmake_formatting()
 endif(${CODING_CONV_PREFIX}_CMAKE_FORMAT)
 
 if(${CODING_CONV_PREFIX}_FORMATTING)
-  bbp_enable_clang_formatting()
-  bbp_enable_cmake_formatting()
+  cpp_cc_enable_clang_formatting()
+  cpp_cc_enable_cmake_formatting()
 endif(${CODING_CONV_PREFIX}_FORMATTING)
 
 if(${CODING_CONV_PREFIX}_PRECOMMIT)
-  bbp_enable_precommit()
+  cpp_cc_enable_precommit()
 else(${CODING_CONV_PREFIX}_PRECOMMIT)
-  bbp_disable_precommit()
+  cpp_cc_disable_precommit()
 endif(${CODING_CONV_PREFIX}_PRECOMMIT)
 
 if(${CODING_CONV_PREFIX}_STATIC_ANALYSIS)
   cmake_minimum_required(VERSION 3.6)
-  bbp_enable_static_analysis()
+  cpp_cc_enable_static_analysis()
   set(CMAKE_CXX_CLANG_TIDY
       "${ClangTidy_EXECUTABLE}" -p "${PROJECT_BINARY_DIR}/compile_commands.json"
       ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS}
