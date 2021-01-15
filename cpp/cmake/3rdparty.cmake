@@ -13,7 +13,7 @@ endif()
 #                           GIT_ARGS [<arguments>])
 #
 # Default options passed to the `git submodule update` command are `--init --recursive`.
-# If the opt_GIT_ARGS argument is provided, then its value supersedes the default options.
+# If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 function(cpp_cc_init_git_submodule path)
   cmake_parse_arguments(PARSE_ARGV 1 opt "" "" "GIT_ARGS")
@@ -71,10 +71,10 @@ endfunction()
 # function is made with the arguments specified to the PACKAGE option.
 #
 # Default options passed to the `git submodule update` command are `--init --recursive`.
-# If the opt_GIT_ARGS argument is provided, then its value supersedes the default options.
+# If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 function(cpp_cc_git_submodule name)
-  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE BUILD GIT_ARGS")
+  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE;BUILD;GIT_ARGS")
   string(MAKE_C_IDENTIFIER "USE_${name}" option_suffix)
   string(TOUPPER "3RDPARTY_${option_suffix}" option_suffix)
   if(opt_DISABLED)
