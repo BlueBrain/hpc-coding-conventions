@@ -313,7 +313,7 @@ The following checks are available:
   named `.git-push-message.cmake.in` at the root of the project directory.
 
 To enable these checks, use CMake variables `${PROJECT}_GIT_COMMIT_HOOKS` and
-`${PROJECT}_GIT_PUSH_HOOKS` to specify which checks should be executeb for
+`${PROJECT}_GIT_PUSH_HOOKS` to specify which checks should be executed for
 each specific git operation. For instance:
 
 `cmake -Dfoo_GIT_COMMIT_HOOKS=clang-tidy \
