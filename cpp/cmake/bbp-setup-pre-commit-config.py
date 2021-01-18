@@ -64,7 +64,7 @@ class PreCommitConfig:
         )
         if extra:
             config.update(extra)
-        self.enable_hook(config)
+        self._enable_hook(config)
 
     def enable_cmake_target_hook(self, stages, build_dir, target, **kwargs):
         self.enable_cmake_hook(
