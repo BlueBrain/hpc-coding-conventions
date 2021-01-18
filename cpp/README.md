@@ -317,7 +317,7 @@ To enable these checks, use CMake variables `${PROJECT}_GIT_COMMIT_HOOKS` and
 each specific git operation. For instance:
 
 `cmake -Dfoo_GIT_COMMIT_HOOKS=clang-tidy \
-       -Dfood_GIT_PUSH_HOOKS=check-clang-format,courtesy-msg <path>`
+       -Dfoo_GIT_PUSH_HOOKS=check-clang-format,courtesy-msg <path>`
 
 This feature requires the `pre-commit` utility.
 
