@@ -118,7 +118,12 @@ endfunction(bbp_enable_clang_formatting)
 
 function(bbp_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(CMakeFormat 0.6.0 EXACT REQUIRED)
+  find_package(CMakeFormat 0.6 REQUIRED)
+  if(CMakeFormat_FOUND AND CMakeFormat_VERSION VERSION_GREATER_EQUAL 0.7)
+    message(SEND_ERROR "Unsupported cmake-format version.\
+    Expects 0.6 <= version < 0.7 but found version ${CMakeFormat_VERSION}")
+  endif()
+
   set(${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS
       ""
       CACHE STRING "cmake-format options")
@@ -255,18 +260,13 @@ bob_option(${CODING_CONV_PREFIX}_PRECOMMIT_REGEN "Force precommit hook regenerat
 bob_option(${CODING_CONV_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis during compilation" OFF)
 bob_option(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
 
-if(${CODING_CONV_PREFIX}_CLANG_FORMAT)
+if(${CODING_CONV_PREFIX}_CLANG_FORMAT OR ${CODING_CONV_PREFIX}_FORMATTING)
   bbp_enable_clang_formatting()
-endif(${CODING_CONV_PREFIX}_CLANG_FORMAT)
+endif()
 
-if(${CODING_CONV_PREFIX}_CMAKE_FORMAT)
+if(${CODING_CONV_PREFIX}_CMAKE_FORMAT OR ${CODING_CONV_PREFIX}_FORMATTING)
   bbp_enable_cmake_formatting()
-endif(${CODING_CONV_PREFIX}_CMAKE_FORMAT)
-
-if(${CODING_CONV_PREFIX}_FORMATTING)
-  bbp_enable_clang_formatting()
-  bbp_enable_cmake_formatting()
-endif(${CODING_CONV_PREFIX}_FORMATTING)
+endif()
 
 if(${CODING_CONV_PREFIX}_PRECOMMIT)
   bbp_enable_precommit()

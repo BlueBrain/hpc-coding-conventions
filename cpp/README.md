@@ -49,7 +49,7 @@ This CMake project expects for the following utilities to be available:
 * [Python 3.5 or higher](https://python.org)
 * [ClangFormat 9](https://releases.llvm.org/9.0.0/tools/clang/docs/ClangFormat.html)
 * [ClangTidy 7](https://releases.llvm.org/7.0.0/tools/clang/tools/extra/docs/clang-tidy/index.html)
-* [cmake-format](https://github.com/cheshirekow/cmake_format) Python package
+* [cmake-format](https://github.com/cheshirekow/cmake_format) Python package version 0.6
 * [pre-commit](https://pre-commit.com/) Python package
 
 Optionally, it will also look for:
