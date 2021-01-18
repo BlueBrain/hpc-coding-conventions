@@ -41,7 +41,7 @@ its documentation pretends. Here is a raw summary of the status:
 ## CMake Project
 
 This directory provides a CMake project that allows one to use the tools and the processes
-described in this document. This project requires CMake version 3.6 or higher.
+described in this document. This project requires CMake version 3.10 or higher.
 
 ### Requirements
 
@@ -341,7 +341,7 @@ Default `CMAKE_CXX_FLAGS` variable value is taken into account.
 The top-level CMakelists.txt of your project may look like:
 
 ```cmake
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 project(HelloWorld VERSION 1.0.0 LANGUAGES CXX)
 add_subdirectory(hpc-coding-conventions/cpp)
 

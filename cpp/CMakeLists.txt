@@ -119,6 +119,7 @@ endfunction(bbp_enable_clang_formatting)
 function(bbp_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(CMakeFormat 0.6 REQUIRED)
+  cmake_minimum_required(VERSION 3.10)
   if(CMakeFormat_FOUND AND CMakeFormat_VERSION VERSION_GREATER_EQUAL 0.7)
     message(SEND_ERROR "Unsupported cmake-format version.\
     Expects 0.6 <= version < 0.7 but found version ${CMakeFormat_VERSION}")
