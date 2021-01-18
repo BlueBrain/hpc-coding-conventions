@@ -46,7 +46,7 @@ class PreCommitConfig:
     def config(self):
         return self._config
 
-    def enable_hook(self, new_hook):
+    def _enable_hook(self, new_hook):
         logging.info(f"Enable hook {new_hook['name']}")
         for hook in self._bbp_repo["hooks"]:
             if (hook["id"], hook.get("name")) == (new_hook["id"], new_hook.get("name")):
