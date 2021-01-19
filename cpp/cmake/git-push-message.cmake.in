@@ -6,7 +6,8 @@
 # in ${PROJECT_SOURCE_DIR}/.git-push-message.cmake.in
 
 message(STATUS "\n\
-This is a courtesy message to remind you to properly test and format your changes.\n\
+This is a courtesy message to remind you to properly test and format your changes\n\
+before opening a Pull Request.\n\
 To format your changes:\n\
   pushd /path/to/build/dir\n\
   cmake -D@CODING_CONV_PREFIX@_FORMATTING=ON -D@CODING_CONV_PREFIX@_TEST_FORMATTING=ON .\n\
