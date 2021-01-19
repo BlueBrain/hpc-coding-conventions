@@ -419,6 +419,6 @@ This project provides helper functions to deal with these dependencies:
 # function is made with the arguments specified to the PACKAGE option.
 #
 # Default options passed to the `git submodule update` command are `--init --recursive`.
-# If the opt_GIT_ARGS argument is provided, then its value supersedes the default options.
+# If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 ````
