@@ -41,7 +41,7 @@ its documentation pretends. Here is a raw summary of the status:
 ## CMake Project
 
 This directory provides a CMake project that allows one to use the tools and the processes
-described in this document. This project requires CMake version 3.6 or higher.
+described in this document. This project requires CMake version 3.10 or higher.
 
 ### Requirements
 
@@ -49,7 +49,7 @@ This CMake project expects for the following utilities to be available:
 * [Python 3.5 or higher](https://python.org)
 * [ClangFormat 9](https://releases.llvm.org/9.0.0/tools/clang/docs/ClangFormat.html)
 * [ClangTidy 7](https://releases.llvm.org/7.0.0/tools/clang/tools/extra/docs/clang-tidy/index.html)
-* [cmake-format](https://github.com/cheshirekow/cmake_format) Python package
+* [cmake-format](https://github.com/cheshirekow/cmake_format) Python package version 0.6
 * [pre-commit](https://pre-commit.com/) Python package
 * [git](https://git-scm.com/) version control system 2.17 or higher.
 
@@ -342,7 +342,7 @@ Default `CMAKE_CXX_FLAGS` variable value is taken into account.
 The top-level CMakelists.txt of your project may look like:
 
 ```cmake
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.10)
 project(HelloWorld VERSION 1.0.0 LANGUAGES CXX)
 add_subdirectory(hpc-coding-conventions/cpp)
 
