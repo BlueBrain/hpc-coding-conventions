@@ -12,13 +12,14 @@ endif()
 # cpp_cc_init_git_submodule(path
 #                           GIT_ARGS [<arguments>])
 #
-# Default options passed to the `git submodule update` command are `--init --recursive`.
+# Default options passed to the `git submodule update` command are
+# `--init --recursive --depth 1` to perform a shallow clone of the submodule.
 # If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 function(cpp_cc_init_git_submodule path)
   cmake_parse_arguments(PARSE_ARGV 1 opt "" "" "GIT_ARGS")
   if(NOT opt_GIT_ARGS)
-    set(opt_GIT_ARGS --init --recursive)
+    set(opt_GIT_ARGS --init --recursive --depth 1)
   endif()
   if(NOT ${GIT_FOUND})
     message(
@@ -70,7 +71,8 @@ endfunction()
 # the git submodule should be used or not is FALSE, then a call to the find_package
 # function is made with the arguments specified to the PACKAGE option.
 #
-# Default options passed to the `git submodule update` command are `--init --recursive`.
+# Default options passed to the `git submodule update` command are
+# `--init --recursive --depth 1` to perform a shallow clone of the submodule.
 # If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 function(cpp_cc_git_submodule name)

@@ -418,7 +418,8 @@ This project provides helper functions to deal with these dependencies:
 # the git submodule should be used or not is FALSE, then a call to the find_package
 # function is made with the arguments specified to the PACKAGE option.
 #
-# Default options passed to the `git submodule update` command are `--init --recursive`.
+# Default options passed to the `git submodule update` command are
+# `--init --recursive --depth 1` to perform a shallow clone of the submodule.
 # If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 ````
