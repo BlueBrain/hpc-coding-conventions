@@ -297,18 +297,30 @@ to modify it.
 Define `${PROJECT}_TEST_STATIC_ANALYSIS:BOOL` CMake variable to enforce formatting during
 the `test` make target.
 
-#### Pre-Commit
+#### Pre-Commit utility
 
-Enable CMake variable `${PROJECT}_PRECOMMIT` to enable automatic checks
-before git commits.
+Enable CMake option `${PROJECT}_GIT_HOOKS` to enable automatic checks
+before committing or pushing with git. the git operation will fail if
+one of the registered checks fails.
 
-For instance, given a project `foo`:
+The following checks are available:
+* `check-clang-format`: check C++ formatting
+* `check-cmake-format`: check CMake formatting
+* `clang-tidy`: execute static-analysis
+* `courtesy-msg`: print a courtesy message to the console.
+  This check never fails. The default message is a reminder to test and
+  format the changes when pushing a contribution with git.
+  A project can overwrite the message displayed by adding the CMake template
+  named `.git-push-message.cmake.in` at the root of the project directory.
 
-`cmake -Dfoo_PRECOMMIT:BOOL=ON <path>`
+To enable these checks, use CMake variables `${PROJECT}_GIT_COMMIT_HOOKS` and
+`${PROJECT}_GIT_PUSH_HOOKS` to specify which checks should be executed for
+each specific git operation. For instance:
 
-if `${PROJECT}_FORMATTING` CMake variable is enabled, when performing a git
-commit, a succession of checks will be executed to ensure that your change
-complies with the coding conventions. It will be discarded otherwise.
+`cmake -Dfoo_GIT_COMMIT_HOOKS=clang-tidy \
+       -Dfoo_GIT_PUSH_HOOKS=check-clang-format,courtesy-msg <path>`
+
+This feature requires the `pre-commit` utility.
 
 #### Bob
 

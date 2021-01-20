@@ -7,7 +7,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS
     PARENT_SCOPE)
 if(NOT CODING_CONV_PREFIX)
   set(CODING_CONV_PREFIX "${PROJECT_NAME}")
-  set(CODING_CONV_PREFIX "${PROJECT_NAME}" PARENT_SCOPE)
+  set(CODING_CONV_PREFIX
+      "${PROJECT_NAME}"
+      PARENT_SCOPE)
 endif(NOT CODING_CONV_PREFIX)
 include(cmake/bob.cmake)
 include(cmake/3rdparty.cmake)
@@ -15,13 +17,27 @@ include(cmake/3rdparty.cmake)
 function(cpp_cc_enable_precommit)
   find_package(PythonInterp 3.5 REQUIRED)
   find_package(PreCommit REQUIRED)
-  execute_process(COMMAND ${PreCommit_EXECUTABLE} install)
+  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/.git/hooks/pre-commit)
+    execute_process(COMMAND ${PreCommit_EXECUTABLE} install)
+  endif()
+  if(NOT EXISTS ${CMAKE_SOURCE_DIR}/.git/hooks/pre-push)
+    execute_process(COMMAND ${PreCommit_EXECUTABLE} install --hook-type pre-push)
+  endif()
+  if(${CODING_CONV_PREFIX}_GIT_COMMIT_HOOKS MATCHES "courtesy-msg"
+     OR ${CODING_CONV_PREFIX}_GIT_PUSH_HOOKS MATCHES "courtesy-msg")
+    if(EXISTS ${PROJECT_SOURCE_DIR}/.git-push-message.cmake.in)
+      configure_file(${PROJECT_SOURCE_DIR}/.git-push-message.cmake.in
+                     ${PROJECT_BINARY_DIR}/git-push-message.cmake @ONLY)
+    else()
+      configure_file(cmake/git-push-message.cmake.in ${PROJECT_BINARY_DIR}/git-push-message.cmake
+                     @ONLY)
+    endif()
+  endif()
   execute_process(
     COMMAND
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
-      --force ${${CODING_CONV_PREFIX}_PRECOMMIT_REGEN} --clang-format
-      ${${CODING_CONV_PREFIX}_FORMATTING} --cmake-format ${${CODING_CONV_PREFIX}_FORMATTING}
-      --clang-tidy ${${CODING_CONV_PREFIX}_STATIC_ANALYSIS} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
+      --commit-checks=${${CODING_CONV_PREFIX}_GIT_COMMIT_HOOKS}
+      --push-checks=${${CODING_CONV_PREFIX}_GIT_PUSH_HOOKS} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
   add_custom_target(git-pre-commits ${PreCommit_EXECUTABLE} run --all-files)
 endfunction(cpp_cc_enable_precommit)
 
@@ -29,11 +45,11 @@ function(cpp_cc_disable_precommit)
   if(EXISTS ${PROJECT_SOURCE_DIR}/.pre-commit-config.yaml)
     find_package(PythonInterp 3.5 REQUIRED)
     execute_process(
-      COMMAND
-        ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
-        --clang-format off --cmake-format off --clang-tidy off ${PROJECT_SOURCE_DIR}
-        ${PROJECT_BINARY_DIR})
+      COMMAND ${PYTHON_EXECUTABLE}
+              "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py" --commit-checks=
+              --push-checks= ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
   endif()
+  file(REMOVE ${PROJECT_BINARY_DIR}/git-push-message.cmake)
 endfunction(cpp_cc_disable_precommit)
 
 function(cpp_cc_enable_clang_formatting)
@@ -64,8 +80,9 @@ function(cpp_cc_enable_clang_formatting)
   set(${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES
       ""
       CACHE STRING "list of CMake targets to build before formatting C/C++ code")
-  mark_as_advanced(${CODING_CONV_PREFIX}_ClangFormat_OPTIONS ${CODING_CONV_PREFIX}_ClangFormat_FILES_RE
-                   ${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE)
+  mark_as_advanced(
+    ${CODING_CONV_PREFIX}_ClangFormat_OPTIONS ${CODING_CONV_PREFIX}_ClangFormat_FILES_RE
+    ${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE)
   execute_process(
     COMMAND git ls-files --error-unmatch .clang-format
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -135,8 +152,9 @@ function(cpp_cc_enable_cmake_formatting)
   set(${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE
       ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude CMake files from formatting")
-  mark_as_advanced(${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS ${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE
-                   ${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE)
+  mark_as_advanced(
+    ${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS ${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE
+    ${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE)
   execute_process(
     COMMAND git ls-files --error-unmatch .cmake-format
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
@@ -251,15 +269,22 @@ bob_input(${CODING_CONV_PREFIX}_FORMATTING_ON "all" STRING
 bob_option(${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY
            "Only format the modified chunks, not the entire files" OFF)
 bob_option(${CODING_CONV_PREFIX}_TEST_FORMATTING "Add CTest formatting test" OFF)
-bob_option(${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting" ON)
-bob_option(${CODING_CONV_PREFIX}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted" OFF)
+bob_option(${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting"
+           ON)
+bob_option(${CODING_CONV_PREFIX}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted"
+           OFF)
 bob_option(${CODING_CONV_PREFIX}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted"
            OFF)
 
-bob_option(${CODING_CONV_PREFIX}_PRECOMMIT "Enable automatic checks before git commits" OFF)
-bob_option(${CODING_CONV_PREFIX}_PRECOMMIT_REGEN "Force precommit hook regeneration" OFF)
+bob_option(${CODING_CONV_PREFIX}_GIT_HOOKS
+           "Enable automatic checks when committing and pushing changes" OFF)
+bob_input(${CODING_CONV_PREFIX}_GIT_COMMIT_HOOKS "" STRING
+          "Comma-separated list of checks to perform when committing changes")
+bob_input(${CODING_CONV_PREFIX}_GIT_PUSH_HOOKS "courtesy-msg" STRING
+          "Comma-separated list of checks to perform when pushing changes")
 
-bob_option(${CODING_CONV_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis during compilation" OFF)
+bob_option(${CODING_CONV_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis during compilation"
+           OFF)
 bob_option(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
 
 if(${CODING_CONV_PREFIX}_CLANG_FORMAT OR ${CODING_CONV_PREFIX}_FORMATTING)
@@ -270,11 +295,11 @@ if(${CODING_CONV_PREFIX}_CMAKE_FORMAT OR ${CODING_CONV_PREFIX}_FORMATTING)
   cpp_cc_enable_cmake_formatting()
 endif()
 
-if(${CODING_CONV_PREFIX}_PRECOMMIT)
+if(${CODING_CONV_PREFIX}_GIT_HOOKS)
   cpp_cc_enable_precommit()
-else(${CODING_CONV_PREFIX}_PRECOMMIT)
+else()
   cpp_cc_disable_precommit()
-endif(${CODING_CONV_PREFIX}_PRECOMMIT)
+endif()
 
 if(${CODING_CONV_PREFIX}_STATIC_ANALYSIS)
   cmake_minimum_required(VERSION 3.6)
