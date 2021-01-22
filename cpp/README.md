@@ -51,6 +51,7 @@ This CMake project expects for the following utilities to be available:
 * [ClangTidy 7](https://releases.llvm.org/7.0.0/tools/clang/tools/extra/docs/clang-tidy/index.html)
 * [cmake-format](https://github.com/cheshirekow/cmake_format) Python package version 0.6
 * [pre-commit](https://pre-commit.com/) Python package
+* [git](https://git-scm.com/) version control system 2.17 or higher.
 
 Optionally, it will also look for:
 * [valgrind](http://valgrind.org/) memory checker
@@ -377,3 +378,61 @@ add_executable(...)
 
 bob_end_package()
 ```
+
+#### Embedded third parties
+
+External libraries required to build or test your C++ project can be either
+directly added to the git repository or as a git submodule. The standard
+root location for this kind of files is the `3rdparty/` directory but can be
+overriden with the `${PROJECT_NAME}_3RDPARTY_DIR` CMake variable.
+
+Adding single-file/header-only C++ libraries directly to the git repository
+of your project is acceptable in general, like catch2 or the JSON library
+of Niels Lohmann for instance.
+
+More significant dependencies should be considered as pure external
+dependencies. But it can also be very convenient to have them as git
+submodules, and be able to switch between the two.
+
+This project provides helper functions to deal with these dependencies:
+
+###### cpp_cc_git_submodule
+
+````cmake
+#
+# cpp_cc_git_submodule(source_dir
+#                      [DISABLED]
+#                      SUBDIR path
+#                      [BUILD] [<arguments>]
+#                      [PACKAGE] [<arguments>]
+#                      GIT_ARGS [<arguments>])
+#
+# Add a CMake option in the cache to control whether the
+# submodule is used or not (default ON). The option is named after the source
+# directory passed in first argument, for instance:
+#   cpp_cc_git_submodule(src/eigen)
+# adds the following CMake cached option:
+#  ${PROJECT_NAME}_3RDPARTY_USE_SRC_EIGEN:BOOL=ON
+#
+# If enabled, then the submodule is fetched if missing in the working copy.
+#
+# If the DISABLED argument is provided, then the default value for the CMake
+# option is OFF.
+#
+# If the BUILD argument is provided then the directory is added to the build
+# through the add_subdirectory CMake function. Arguments following the BUILD
+# arguments are passed to the add_subdirectory function call.
+#
+# The optional SUBDIR argument is used by the BUILD argument to determine
+# the path to the directory added to the build. The path specified is relative
+# to the path to the git submodule.
+#
+# If the PACKAGE argument is provided and the CMake option to determine whether
+# the git submodule should be used or not is FALSE, then a call to the find_package
+# function is made with the arguments specified to the PACKAGE option.
+#
+# Default options passed to the `git submodule update` command are
+# `--init --recursive --depth 1` to perform a shallow clone of the submodule.
+# If the GIT_ARGS argument is provided, then its value supersedes the default options.
+#
+````
