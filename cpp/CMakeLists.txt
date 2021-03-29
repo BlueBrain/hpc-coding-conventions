@@ -13,6 +13,7 @@ if(NOT CODING_CONV_PREFIX)
 endif(NOT CODING_CONV_PREFIX)
 include(cmake/bob.cmake)
 include(cmake/3rdparty.cmake)
+include(cmake/build-time-copy.cmake)
 
 function(cpp_cc_enable_precommit)
   find_package(PythonInterp 3.5 REQUIRED)
