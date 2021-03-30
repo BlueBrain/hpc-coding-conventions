@@ -47,6 +47,7 @@ endfunction()
 #
 # cpp_cc_git_submodule(source_dir
 #                      [DISABLED]
+#                      [QUIET]
 #                      SUBDIR path
 #                      [BUILD] [<arguments>]
 #                      [PACKAGE] [<arguments>]
@@ -63,6 +64,8 @@ endfunction()
 #
 # If the DISABLED argument is provided, then the default value for the CMake
 # option is OFF.
+#
+# If the QUIET argument is provided then no status message will be printed.
 #
 # If the BUILD argument is provided then the directory is added to the build
 # through the add_subdirectory CMake function. Arguments following the BUILD
@@ -81,7 +84,7 @@ endfunction()
 # If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 function(cpp_cc_git_submodule name)
-  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED" "SUBDIR" "PACKAGE;BUILD;GIT_ARGS")
+  cmake_parse_arguments(PARSE_ARGV 1 opt "DISABLED;QUIET" "SUBDIR" "PACKAGE;BUILD;GIT_ARGS")
   string(MAKE_C_IDENTIFIER "USE_${name}" option_suffix)
   string(TOUPPER "3RDPARTY_${option_suffix}" option_suffix)
   if(opt_DISABLED)
@@ -113,7 +116,9 @@ function(cpp_cc_git_submodule name)
       cpp_cc_init_git_submodule("${submodule_path}")
     endif()
   endif()
-  message(STATUS "3rdparty project: using ${name} from \"${submodule_path}\"")
+  if(NOT opt_QUIET)
+    message(STATUS "3rd party project: using ${name} from \"${submodule_path}\"")
+  endif()
   if(opt_BUILD)
       add_subdirectory(${submodule_path} ${opt_BUILD})
   elseif("BUILD" IN_LIST opt_KEYWORDS_MISSING_VALUES)
