@@ -4,14 +4,14 @@
 
 ### C++ Standard
 
-The minimal C++ standard officially supported at BBP is C++14, to be reviewed annually based on compiler support.
-An open source project may support a standard as low as C++11 if this is a requirement for its community.
+The minimal C++ standard officially supported at BBP is C++17, to be reviewed annually based on compiler support.
+An open source project may support a standard as low as C++14 if this is a requirement for its community.
 
-### Compiler Versions Supporting C++14
+### Compiler Versions Supporting C++17
 
-* GCC 5.4
-* CLang 7
-* Intel 18.0.3
+* GCC 7.4
+* CLang 8
+* Intel 19.1.0
 
 ### Compilation flags
 
