@@ -124,7 +124,7 @@ def collect_submodules(source_dir):
             yield osp.join(source_dir, value)
 
 
-def collect_included_headers(entry, filter_cpp_file):
+def collect_included_headers(cli_args, entry, filter_cpp_file):
     cmd = shlex.split(entry["command"])
     try:
         # remove "-o object_file.o" from command
@@ -134,7 +134,7 @@ def collect_included_headers(entry, filter_cpp_file):
     except ValueError:
         pass
     cmd.insert(1, "-M")
-    output = subprocess.check_output(cmd).decode("utf-8")
+    output = subprocess.check_output(cmd, cwd=cli_args.binary_dir).decode("utf-8")
     lines = output.splitlines()[1:]
     for line in lines:
         if line[-1] == "\\":
@@ -253,33 +253,33 @@ def filter_files_outside_time_range(cli_args, generator):
                 yield file
 
 
-def collect_files(compile_commands, filter_cpp_file):
+def collect_files(cli_args, filter_cpp_file):
     """
     Args:
-        compile_commands: path to compile_commands.json JSON compilation database
+        cli_args: parsed CLI options
         filter_cpp_file: a function returning `True` if the given file should be
         excluded, `False` otherwise.
     Returns:
         Generator of C++ files
     """
     files = set()
-    if not osp.exists(compile_commands):
+    if not osp.exists(cli_args.compile_commands_file):
         msg = (
             'Could not find file %s. Please make sure '
             + 'CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on.'
         )
-        msg = msg % compile_commands
+        msg = msg % cli_args.compile_commands_file
         logging.error(msg)
         raise Exception(msg)
 
-    with open(compile_commands) as istr:
+    with open(cli_args.compile_commands_file) as istr:
         for entry in json.load(istr):
             cpp_file = osp.realpath(osp.join(entry["directory"], entry["file"]))
             if not filter_cpp_file(cpp_file):
                 if cpp_file not in files:
                     yield cpp_file
                     files.add(cpp_file)
-                    for header in collect_included_headers(entry, filter_cpp_file):
+                    for header in collect_included_headers(cli_args, entry, filter_cpp_file):
                         if header not in files:
                             yield header
                             files.add(header)
