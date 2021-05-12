@@ -245,7 +245,7 @@ def main(**kwargs):
             succeeded = action(GitDiffDelta.from_applies_on(args.applies_on), args)
         else:
             for cpp_file in filter_files_outside_time_range(
-                args, collect_files(args.compile_commands_file, filter_cpp_file)
+                args, collect_files(args, filter_cpp_file)
             ):
                 succeeded &= action(cpp_file, args.executable, args.options)
     return succeeded
