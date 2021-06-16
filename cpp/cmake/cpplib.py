@@ -140,6 +140,11 @@ def collect_included_headers(cli_args, entry, filter_cpp_file):
         if line[-1] == "\\":
             line = line[:-1]
         for header in line.split():
+            # We run the compiler in `binary_dir`, so relative paths should be
+            # interpreted relative to there.
+            if not osp.isabs(header):
+                header = osp.join(cli_args.binary_dir, header)
+            header = osp.abspath(header)
             if not filter_cpp_file(header):
                 yield header
 
