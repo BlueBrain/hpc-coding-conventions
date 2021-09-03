@@ -38,11 +38,13 @@ def file_filters_cli_options(args):
     result = ["-S", args.source_dir, "-B", args.binary_dir]
     if args.git_modules:
         result.append('--git-modules')
+    # --files-re A --files-re B would be parsed as [B], not [A, B]
+    # --files-re A B will be parsed [correctly] as [A, B]
     for re_opt, patterns in [
         ("--files-re", args.files_re),
         ("--excludes-re", args.excludes_re),
     ]:
-        result += list(itertools.chain(*list(itertools.product([re_opt], patterns))))
+        result += [re_opt] + patterns
     return result
 
 
