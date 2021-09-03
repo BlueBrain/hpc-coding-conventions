@@ -36,7 +36,7 @@ def main(**kwargs):
             for pattern in DIFF_HEADER_PATTERNS:
                 match = pattern.match(line)
                 if match:
-                    filename = match.group(0)
+                    filename = match.group(1)
                     break
             if filename:
                 file = osp.realpath(osp.join(args.source_dir, filename))

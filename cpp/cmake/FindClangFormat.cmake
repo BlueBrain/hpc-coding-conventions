@@ -103,8 +103,10 @@ if(ClangFormat_EXECUTABLE)
       set(ClangFormat_VERSION_PATCH 0)
     endif()
 
+    get_filename_component(ClangFormat_DIRECTORY "${ClangFormat_EXECUTABLE}" DIRECTORY)
     find_program(ClangFormatDiff_EXECUTABLE
-                 NAMES clang-format-diff-${ClangFormat_VERSION_MAJOR} clang-format-diff
+                 NAMES clang-format-diff-${ClangFormat_VERSION_MAJOR} clang-format-diff clang-format-diff.py
+                 PATHS "${ClangFormat_DIRECTORY}/../share/clang"
                  DOC "clang-format-diff executable")
     mark_as_advanced(ClangFormatDiff_EXECUTABLE)
   endif()
