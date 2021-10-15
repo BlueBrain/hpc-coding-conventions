@@ -46,6 +46,16 @@ thisIsAVeryLongMethodName(thisIsTheFirstArgument,
 ### Clang-Format configuration
 * `AlignAfterOpenBracket: Align`
 
+## Do not align fields in array initialization
+
+### Example
+```cpp
+struct test demo[] = {{56, 23, "hello"}, {-1, 93463, "world"}, {7, 5, "!!"}};
+
+```
+### Clang-Format configuration
+* `AlignArrayOfStructures: None`
+
 ## Do not align consecutive assignments
 
 ### Example
@@ -350,6 +360,19 @@ bool value =
 ### Clang-Format configuration
 * `BreakBeforeBinaryOperators: False`
 
+## New line before C++20 `concept` directive
+
+### Example
+```cpp
+template <typename T>
+concept Hashable = requires(T a) {
+    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+};
+
+```
+### Clang-Format configuration
+* `BreakBeforeConceptDeclarations: True`
+
 ## break before long ternary operators
 
 ### Example
@@ -373,6 +396,28 @@ f(MyMap[{composite, key}]) new int[3]{1, 2, 3};
 ### Clang-Format configuration
 * `Cpp11BracedListStyle: True`
 
+## No line break restriction after access modifiers
+
+### Example
+```cpp
+struct foo {
+  private:
+    int i;
+
+  protected:
+    int j;
+    /* comment */
+  public:
+    foo() {}
+
+  private:
+  protected:
+};
+
+```
+### Clang-Format configuration
+* `EmptyLineBeforeAccessModifier: Leave`
+
 ## Recall namespace when closing it
 
 ### Example
@@ -382,6 +427,34 @@ foo();
 }
 
 ```
+
+## Do no indent preprocesor directives
+
+### Example
+```cpp
+#if FOO
+#if BAR
+#include <foo>
+#endif  // BAR
+#endif  // FOO
+
+```
+### Clang-Format configuration
+* `IndentPPDirectives: None`
+
+## line break before C++20 `requires` directive
+
+### Example
+```cpp
+template <typename It>
+requires Iterator<It>
+void sort(It begin, It end) {
+    //....
+}
+
+```
+### Clang-Format configuration
+* `IndentRequires: False`
 
 ## Use 4 columns for indentation
 
@@ -397,6 +470,19 @@ void f() {
 ```
 ### Clang-Format configuration
 * `IndentWidth: 4`
+
+## Indent lambda body based on the signature of the lambda
+
+### Example
+```cpp
+callingSomeLongLongLongLongLongLongLongLongLongLongMethod(
+    [](SomeReallyLongLambdaSignatureArgument foo, SomeReallyLongLambdaSignatureArgument bar) {
+        return;
+    });
+
+```
+### Clang-Format configuration
+* `LambdaBodyIndentation: Signature`
 
 ## Do not indent when entering a *namespace*
 
