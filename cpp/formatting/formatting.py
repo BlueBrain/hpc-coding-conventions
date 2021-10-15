@@ -40,7 +40,7 @@ class Convention(namedtuple("Convention", CONVENTION_ATTRS)):
             if len(fields) == 1:
                 fields = [fields[0], cf_value(fields[0])]
             else:
-                fields[1] = yaml.load(fields[1])
+                fields[1] = yaml.safe_load(fields[1])
             return dict([fields])
 
         with open(file) as istr:
@@ -82,8 +82,8 @@ class Convention(namedtuple("Convention", CONVENTION_ATTRS)):
 
 
 def load_conventions(path):
-    with open("../.clang-format-9") as istr:
-        clang_format = yaml.load(istr)
+    with open(".clang-format") as istr:
+        clang_format = yaml.safe_load(istr)
     assert osp.isdir(path)
     for file in sorted(glob.glob(path + os.sep + "*.cpp")):
         yield Convention.from_file(clang_format, file)
