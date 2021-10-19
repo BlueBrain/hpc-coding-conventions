@@ -55,18 +55,13 @@ endfunction(cpp_cc_disable_precommit)
 
 function(cpp_cc_enable_clang_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(ClangFormat REQUIRED)
+  if(NOT ${CODING_CONV_PREFIX}_ClangFormat_REQUIRED_VERSION)
+    set(${CODING_CONV_PREFIX}_ClangFormat_REQUIRED_VERSION 7)
+  endif()
+  find_package(ClangFormat ${${CODING_CONV_PREFIX}_ClangFormat_REQUIRED_VERSION} REQUIRED)
   if(NOT ClangFormat_FOUND)
     message(SEND_ERROR "Could not find Clang-Format")
     return()
-  endif()
-  if(ClangFormat_VERSION_MAJOR GREATER 6 AND ClangFormat_VERSION_MAJOR LESS 14)
-    set(${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE clang-format-${ClangFormat_VERSION_MAJOR})
-  else()
-    message(
-      SEND_ERROR
-        "Unsupported Clang-Format version ${ClangFormat_VERSION}. Supported versions are 7 or higher."
-    )
   endif()
 
   set(${CODING_CONV_PREFIX}_ClangFormat_OPTIONS
@@ -137,7 +132,10 @@ endfunction(cpp_cc_enable_clang_formatting)
 
 function(cpp_cc_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(CMakeFormat 0.6 REQUIRED)
+  if(NOT ${CODING_CONV_PREFIX}_CMakeFormat_REQUIRED_VERSION)
+    set(${CODING_CONV_PREFIX}_CMakeFormat_REQUIRED_VERSION 0.6)
+  endif()
+  find_package(CMakeFormat ${${CODING_CONV_PREFIX}_CMakeFormat_REQUIRED_VERSION} REQUIRED)
   cmake_minimum_required(VERSION 3.10)
   if(CMakeFormat_FOUND AND CMakeFormat_VERSION VERSION_GREATER_EQUAL 0.7)
     message(SEND_ERROR "Unsupported cmake-format version.\

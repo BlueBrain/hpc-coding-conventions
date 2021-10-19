@@ -107,6 +107,26 @@ CMake variables:
 * `${PROJECT}_CLANG_FORMAT:BOOL`
 * `${PROJECT}_CMAKE_FORMAT:BOOL`
 
+#### Version deduction
+
+By default, the `PATH` environment variable is used to locate the clang-format
+and cmake-format executables and the most recent version of clang-format
+available will be used. Nevertheless, it is possible to raise an issue during
+the CMake phase if the version found of clang-format or cmake-format is not
+the one supported by your project. To do that, your project has to declare
+the version of clang-format and/or cmake-format it supports before including
+this CMake project. For instance:
+```cmake
+cmake_minimum_required(VERSION 3.10)
+project(HelloWorld VERSION 1.0.0 LANGUAGES CXX)
+# using either the "basic" find_package signature ...
+set(${PROJECT_NAME}_ClangFormat_REQUIRED_VERSION 13;EXACT)
+# ... or the config mode selection with CMake 3.19 or later.
+# see documentation of find_package CMake function for more information 
+set(${PROJECT_NAME}_CMakeFormat_REQUIRED_VERSION 0.6.6...<0.6.13)
+add_subdirectory(hpc-coding-conventions/cpp)
+```
+
 Although it is possible to overwrite the default settings to restrict the scanned
 directories, the formatting applies to the entire repository except git submodules
 by default.
