@@ -63,6 +63,7 @@ function(cpp_cc_enable_clang_formatting)
     message(SEND_ERROR "Could not find Clang-Format")
     return()
   endif()
+  set(${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE clang-format-${ClangFormat_VERSION_MAJOR})
 
   set(${CODING_CONV_PREFIX}_ClangFormat_OPTIONS
       ""
