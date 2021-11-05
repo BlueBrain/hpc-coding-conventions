@@ -401,6 +401,7 @@ def do_merge_yaml(*files, **kwargs):
     """
     import yaml
 
+    succeeded = True
     transformers = kwargs.get("transformers", {})
     out = files[-1]
     ins = files[:-1]
@@ -412,18 +413,26 @@ def do_merge_yaml(*files, **kwargs):
         data = {}
         for file in ins:
             with open(file) as istr:
-                for key, value in yaml.safe_load(istr).items():
+                content = yaml.safe_load(istr)
+                if not isinstance(content, dict):
+                    logging.error("while reading YAML file %s: expected dictionary but got %s",
+                                  file, type(content).__name__)
+                    succeeded = False
+                    continue
+
+                for key, value in content.items():
                     transform_func = transformers.get(key)
                     if transform_func:
                         data[key] = transform_func(data.get(key), value)
                     else:
                         data[key] = value
         logging.info("writing file %s", out)
-        with open(out, 'w') as ostr:
-            yaml.dump(data, ostr, default_flow_style=False)
+        if succeeded:
+            with open(out, 'w') as ostr:
+                yaml.dump(data, ostr, default_flow_style=False)
     else:
         logging.info("file %s is up to date, nothing to do.", out)
-    return True
+    return succeeded
 
 
 def main(args=None):
@@ -449,5 +458,5 @@ def main(args=None):
 
 if __name__ == '__main__':
     level = logging.INFO if 'VERBOSE' in os.environ else logging.WARN
-    logging.basicConfig(level=level, format="%(message)s")
+    logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
     sys.exit(0 if main() else 1)
