@@ -53,20 +53,73 @@ function(cpp_cc_disable_precommit)
   file(REMOVE ${PROJECT_BINARY_DIR}/git-push-message.cmake)
 endfunction(cpp_cc_disable_precommit)
 
+# ~~~
+# Find the most appropriate configuration file of a tool
+# by picking the most recent version available  in the current directory.
+#
+# Looks for a file named ${tool}-${version}
+#
+# Variables:
+# ----------
+# tool:        name of the tool, used for the file prefix
+# version:     major version of the tool, used for the file suffix
+# min_version: minimum version of the config file accepted
+# out_file:    variable where the path to the config file is stored.
+#              Set to "NOTFOUND" if no suitable config file is found.
+# ~~~
+function(cpp_cc_find_closest_config_file tool version min_version out_file)
+  set(${out_file}
+      NOTFOUND
+      PARENT_SCOPE)
+  set(candidate "${CMAKE_CURRENT_SOURCE_DIR}/${tool}-${version}")
+  if(NOT ${version} GREATER_EQUAL ${min_version})
+    message(
+      FATAL_ERROR "Invalid arguments: version (${version}) must be >= min_version (${min_version})")
+    return()
+  endif()
+  if(EXISTS ${candidate})
+    set(${out_file}
+        "${candidate}"
+        PARENT_SCOPE)
+    return()
+  endif()
+  set(test_ver ${version})
+  while(${test_ver} GREATER_EQUAL ${min_version})
+    set(candidate "${CMAKE_CURRENT_SOURCE_DIR}/${tool}-${test_ver}")
+    message(STATUS "candidate: ${candidate}")
+
+    if(EXISTS ${candidate})
+      message(WARNING "Could not find dedicated config file for ${tool} ${version}."
+                      " Will use the one for version ${test_ver} instead.")
+      set(${out_file}
+          "${candidate}"
+          PARENT_SCOPE)
+      return()
+    endif()
+    math(EXPR test_ver "${test_ver} - 1")
+  endwhile()
+
+endfunction(cpp_cc_find_closest_config_file)
+
 function(cpp_cc_enable_clang_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(ClangFormat REQUIRED)
+  set(ClangFormat_MIN_VERSION 7)
+  if(NOT ${CODING_CONV_PREFIX}_ClangFormat_REQUIRED_VERSION)
+    set(${CODING_CONV_PREFIX}_ClangFormat_REQUIRED_VERSION ${ClangFormat_MIN_VERSION})
+  endif()
+  find_package(ClangFormat ${${CODING_CONV_PREFIX}_ClangFormat_REQUIRED_VERSION} REQUIRED)
   if(NOT ClangFormat_FOUND)
     message(SEND_ERROR "Could not find Clang-Format")
     return()
   endif()
-  if(ClangFormat_VERSION_MAJOR GREATER 6 AND ClangFormat_VERSION_MAJOR LESS 14)
-    set(${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE clang-format-${ClangFormat_VERSION_MAJOR})
-  else()
+  cpp_cc_find_closest_config_file(
+    "clang-format" ${ClangFormat_VERSION_MAJOR} ${ClangFormat_MIN_VERSION}
+    ${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE)
+  if(NOT ${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE)
     message(
       SEND_ERROR
-        "Unsupported Clang-Format version ${ClangFormat_VERSION}. Supported versions are 7 or higher."
-    )
+        "Could not find appropriate config file for Clang-Format ${ClangFormat_VERSION_MAJOR}")
+    return()
   endif()
 
   set(${CODING_CONV_PREFIX}_ClangFormat_OPTIONS
@@ -92,9 +145,14 @@ function(cpp_cc_enable_clang_formatting)
   if(NOT is_clang_format_config_tracked EQUAL 0)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
       execute_process(
-        COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
-                "${CMAKE_CURRENT_SOURCE_DIR}/${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
-                "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format")
+        COMMAND
+          ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
+          "${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
+          "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format"
+        RESULT_VARIABLE merge_yaml_status)
+      if(NOT ${merge_yaml_status} EQUAL 0)
+        message(SEND_ERROR "Error occured while merging Clang-Format YAML configurations")
+      endif()
     else()
       configure_file(${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}
                      ${PROJECT_SOURCE_DIR}/.clang-format COPYONLY)
@@ -137,7 +195,10 @@ endfunction(cpp_cc_enable_clang_formatting)
 
 function(cpp_cc_enable_cmake_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(CMakeFormat 0.6 REQUIRED)
+  if(NOT ${CODING_CONV_PREFIX}_CMakeFormat_REQUIRED_VERSION)
+    set(${CODING_CONV_PREFIX}_CMakeFormat_REQUIRED_VERSION 0.6)
+  endif()
+  find_package(CMakeFormat ${${CODING_CONV_PREFIX}_CMakeFormat_REQUIRED_VERSION} REQUIRED)
   cmake_minimum_required(VERSION 3.10)
   if(CMakeFormat_FOUND AND CMakeFormat_VERSION VERSION_GREATER_EQUAL 0.7)
     message(SEND_ERROR "Unsupported cmake-format version.\
