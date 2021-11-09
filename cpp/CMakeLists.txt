@@ -14,6 +14,7 @@ endif(NOT CODING_CONV_PREFIX)
 include(cmake/bob.cmake)
 include(cmake/3rdparty.cmake)
 include(cmake/build-time-copy.cmake)
+include(cmake/bbp-find-python-module.cmake)
 
 function(cpp_cc_enable_precommit)
   find_package(PythonInterp 3.5 REQUIRED)
@@ -144,15 +145,18 @@ function(cpp_cc_enable_clang_formatting)
     ERROR_QUIET)
   if(NOT is_clang_format_config_tracked EQUAL 0)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
-      execute_process(
-        COMMAND
-          ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
-          "${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
-          "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format"
-        RESULT_VARIABLE merge_yaml_status)
-      if(NOT ${merge_yaml_status} EQUAL 0)
-        message(SEND_ERROR "Error occured while merging Clang-Format YAML configurations")
-      endif()
+      cpp_cc_find_python_module(yaml REQUIRED)
+      if(YAML_FOUND)
+          execute_process(
+            COMMAND
+              ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
+              "${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
+              "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format"
+            RESULT_VARIABLE merge_yaml_status)
+          if(NOT ${merge_yaml_status} EQUAL 0)
+            message(SEND_ERROR "Error occured while merging Clang-Format YAML configurations")
+          endif()
+      endif(YAML_FOUND)
     else()
       configure_file(${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}
                      ${PROJECT_SOURCE_DIR}/.clang-format COPYONLY)
@@ -224,12 +228,15 @@ function(cpp_cc_enable_cmake_formatting)
     ERROR_QUIET)
   if(NOT is_cmake_format_config_tracked EQUAL 0)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml)
-      execute_process(
-        COMMAND
-          ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
-          "${CMAKE_CURRENT_SOURCE_DIR}/cmake-format.yaml"
-          "${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml"
-          "${PROJECT_SOURCE_DIR}/.cmake-format.yaml")
+      cpp_cc_find_python_module(yaml REQUIRED)
+      if(YAML_FOUND)
+        execute_process(
+          COMMAND
+            ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake-format.yaml"
+            "${PROJECT_SOURCE_DIR}/.cmake-format.changes.yaml"
+            "${PROJECT_SOURCE_DIR}/.cmake-format.yaml")
+      endif(YAML_FOUND)
     else()
       configure_file(cmake-format.yaml ${PROJECT_SOURCE_DIR}/.cmake-format.yaml COPYONLY)
     endif()
