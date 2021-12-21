@@ -4,21 +4,14 @@ This document describes both C++ development guidelines adopted by
 HPC team, and the tools and processes required to
 ensure they are properly followed over time.
 
-## Contributing
-
-Tristan CAREL (tristan0x) is in charge of this repository activity and well-being but every change is welcome through pull-request.
-
-Should you want to contribute to the naming conventions,
-please refer to the dedicated [contributing document](./formatting/CONTRIBUTING.md) first.
-
 ## Documentation
 
 Development Guidelines are split in the following sections:
-* [Tooling](./Tooling.md)
-* [Development Lifecycle](./DevelopmentLifecycle.md)
-* [Code Formatting](./formatting/README.md)
-* [Naming Conventions](./NamingConventions.md)
-* [Code Documentation](./Documentation.md)
+* [Tooling](./cpp/Tooling.md)
+* [Development Lifecycle](./cpp/DevelopmentLifecycle.md)
+* [Code Formatting](./cpp/formatting/README.md)
+* [Naming Conventions](./cpp/NamingConventions.md)
+* [Code Documentation](./cpp/Documentation.md)
 * Best Practices
 * Python bindings
 
@@ -172,7 +165,7 @@ A list of CMake cache variables can be used to customize the code formatting:
   Default value is `""`.
 * `${PROJECT}_ClangFormat_FILES_RE`: list of regular expressions matching C/C++ filenames
   to format. Despite the recommended extensions of this guidelines are `.cpp`, `.h`, and `.ipp`
-  (see [Naming Conventions](./NamingConventions.md)), files with the following extensions
+  (see [Naming Conventions](./cpp/NamingConventions.md)), files with the following extensions
   will be formatted by default:
   * C++ implementation files: `.cpp`, `.cc`, `.cxx`, `.c`
   * C++ header files: `.h`, `.hh`, `.hpp`, `.hxx`
@@ -476,3 +469,16 @@ This project provides helper functions to deal with these dependencies:
 # If the GIT_ARGS argument is provided, then its value supersedes the default options.
 #
 ````
+
+
+## Contributing
+
+Should you want to contribute to the naming conventions,
+please refer to the dedicated [contributing document](./cpp/formatting/CONTRIBUTING.md) first.
+
+
+## Funding & Acknowledgment
+
+The development of this software was supported by funding to the Blue Brain Project, a research center of the École polytechnique fédérale de Lausanne (EPFL), from the Swiss government's ETH Board of the Swiss Federal Institutes of Technology.
+
+Copyright © 2019-2021 Blue Brain Project/EPFL
