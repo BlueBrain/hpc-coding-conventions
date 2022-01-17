@@ -39,7 +39,8 @@ function(cpp_cc_enable_precommit)
     COMMAND
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
       --commit-checks=${${CODING_CONV_PREFIX}_GIT_COMMIT_HOOKS}
-      --push-checks=${${CODING_CONV_PREFIX}_GIT_PUSH_HOOKS} ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
+      --push-checks=${${CODING_CONV_PREFIX}_GIT_PUSH_HOOKS} ${PROJECT_SOURCE_DIR}
+      ${PROJECT_BINARY_DIR})
   add_custom_target(git-pre-commits ${PreCommit_EXECUTABLE} run --all-files)
 endfunction(cpp_cc_enable_precommit)
 
@@ -47,9 +48,9 @@ function(cpp_cc_disable_precommit)
   if(EXISTS ${PROJECT_SOURCE_DIR}/.pre-commit-config.yaml)
     find_package(PythonInterp 3.5 REQUIRED)
     execute_process(
-      COMMAND ${PYTHON_EXECUTABLE}
-              "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py" --commit-checks=
-              --push-checks= ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
+      COMMAND
+        ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-setup-pre-commit-config.py"
+        --commit-checks= --push-checks= ${PROJECT_SOURCE_DIR} ${PROJECT_BINARY_DIR})
   endif()
   file(REMOVE ${PROJECT_BINARY_DIR}/git-push-message.cmake)
 endfunction(cpp_cc_disable_precommit)
@@ -147,16 +148,18 @@ function(cpp_cc_enable_clang_formatting)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-format.changes)
       cpp_cc_find_python_module(yaml REQUIRED)
       if(YAML_FOUND)
-          execute_process(
-            COMMAND
-              ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
-              "${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
-              "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format"
-            RESULT_VARIABLE merge_yaml_status)
-          if(NOT ${merge_yaml_status} EQUAL 0)
-            message(SEND_ERROR "Error occured while merging Clang-Format YAML configurations")
-          endif()
-      endif(YAML_FOUND)
+        execute_process(
+          COMMAND
+            ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py" merge-yaml
+            "${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}"
+            "${PROJECT_SOURCE_DIR}/.clang-format.changes" "${PROJECT_SOURCE_DIR}/.clang-format"
+          RESULT_VARIABLE merge_yaml_status)
+        if(NOT ${merge_yaml_status} EQUAL 0)
+          message(SEND_ERROR "Error occured while merging Clang-Format YAML configurations")
+        endif()
+      else()
+        message(FATAL_ERROR "Cannot find Python yaml module, which is needed to merge YAML files.")
+      endif()
     else()
       configure_file(${${CODING_CONV_PREFIX}_ClangFormat_CONFIG_FILE}
                      ${PROJECT_SOURCE_DIR}/.clang-format COPYONLY)
@@ -165,27 +168,19 @@ function(cpp_cc_enable_clang_formatting)
   unset(is_clang_format_config_tracked)
 
   set(clang_format_command_prefix
-      ${PYTHON_EXECUTABLE}
-      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
-      -S
-      "${PROJECT_SOURCE_DIR}"
-      -B
-      "${PROJECT_BINARY_DIR}"
-      "--executable=${ClangFormat_EXECUTABLE}"
+      ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py" -S
+      "${PROJECT_SOURCE_DIR}" -B "${PROJECT_BINARY_DIR}" "--executable=${ClangFormat_EXECUTABLE}"
       "--clang-format-diff-executable=${ClangFormatDiff_EXECUTABLE}"
-      "--changes-only=${${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY}"
-      --files-re
+      "--changes-only=${${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY}" --files-re
       ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE}
-      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
-      --excludes-re
-      ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE}
-      -p
+      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules> --excludes-re
+      ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE} -p
       ${PROJECT_BINARY_DIR}/compile_commands.json
       --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
   add_custom_target(clang-format ${clang_format_command_prefix} --action format --
-                    "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+                                 "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   add_custom_target(check-clang-format ${clang_format_command_prefix} --action check --
-                    "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+                                       "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
     add_test(NAME ClangFormat
              COMMAND ${clang_format_command_prefix} --action check --make-unescape-re --
@@ -242,23 +237,16 @@ function(cpp_cc_enable_cmake_formatting)
     endif()
   endif()
   set(cmake_format_command_prefix
-      ${PYTHON_EXECUTABLE}
-      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py"
-      -S
-      "${PROJECT_SOURCE_DIR}"
-      -B
-      "${PROJECT_BINARY_DIR}"
-      "--executable=${CMakeFormat_EXECUTABLE}"
-      --files-re
-      ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE}
-      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
-      --excludes-re
+      ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py" -S
+      "${PROJECT_SOURCE_DIR}" -B "${PROJECT_BINARY_DIR}" "--executable=${CMakeFormat_EXECUTABLE}"
+      --files-re ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE}
+      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules> --excludes-re
       ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE}
       --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
   add_custom_target(cmake-format ${cmake_format_command_prefix} --action format --
-                    "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
+                                 "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
   add_custom_target(check-cmake-format ${cmake_format_command_prefix} --action check --
-                    ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
+                                       ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
     add_test(NAME CMakeFormat
              COMMAND ${cmake_format_command_prefix} --action check --make-unescape-re --
@@ -293,9 +281,10 @@ function(cpp_cc_enable_static_analysis)
   if(NOT is_clang_tidy_config_tracked EQUAL 0)
     if(EXISTS ${PROJECT_SOURCE_DIR}/.clang-tidy.changes)
       execute_process(
-        COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
-                merge-clang-tidy-config "${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy"
-                "${PROJECT_SOURCE_DIR}/.clang-tidy.changes" "${PROJECT_SOURCE_DIR}/.clang-tidy")
+        COMMAND
+          ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpplib.py"
+          merge-clang-tidy-config "${CMAKE_CURRENT_SOURCE_DIR}/.clang-tidy"
+          "${PROJECT_SOURCE_DIR}/.clang-tidy.changes" "${PROJECT_SOURCE_DIR}/.clang-tidy")
     else()
       configure_file(.clang-tidy ${PROJECT_SOURCE_DIR} COPYONLY)
     endif()
@@ -303,24 +292,14 @@ function(cpp_cc_enable_static_analysis)
   unset(is_clang_tidy_config_tracked)
 
   set(clang_tidy_command_prefix
-      ${PYTHON_EXECUTABLE}
-      "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py"
-      -S
-      "${PROJECT_SOURCE_DIR}"
-      -B
-      "${PROJECT_BINARY_DIR}"
-      "--executable=${ClangTidy_EXECUTABLE}"
-      --files-re
-      "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}"
-      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules>
-      --excludes-re
-      ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE}
-      -p
-      ${PROJECT_BINARY_DIR}/compile_commands.json
-      --action
-      check)
+      ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py" -S
+      "${PROJECT_SOURCE_DIR}" -B "${PROJECT_BINARY_DIR}" "--executable=${ClangTidy_EXECUTABLE}"
+      --files-re "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}"
+      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules> --excludes-re
+      ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE} -p ${PROJECT_BINARY_DIR}/compile_commands.json
+      --action check)
   add_custom_target(clang-tidy ${clang_tidy_command_prefix} --
-                    ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
+                               ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
   if(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS)
     add_test(NAME ClangTidy COMMAND ${clang_tidy_command_prefix} --make-unescape-re --
                                     ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})

@@ -59,15 +59,19 @@ macro(cpp_cc_find_python_module module)
       endif()
     endif()
 
-    if(NOT ${module}_FIND_OPTIONAL)
-        if(NOT ${module_upper}_LOCATION)
-            message(FATAL_ERROR "Missing python module \"${module}\"")
-        elseif(NOT _${module_upper}_VERSION_MATCH)
-            message(
-                    FATAL_ERROR
-                    "Found module \"${module}\", but version mismatch. Asked for \"${${module}_FIND_VERSION}\" but found \"${${module_upper}_VERSION_STRING}\""
-            )
-        endif()
+    if(NOT ${module_upper}_LOCATION)
+      if(NOT ${module}_FIND_OPTIONAL)
+        message(FATAL_ERROR "Missing python module \"${module}\"")
+      endif()
+    elseif(NOT _${module_upper}_VERSION_MATCH)
+      if(NOT ${module}_FIND_OPTIONAL)
+        message(
+          FATAL_ERROR
+            "Found module \"${module}\", but version mismatch. Asked for \"${${module}_FIND_VERSION}\" but found \"${${module_upper}_VERSION_STRING}\""
+        )
+      endif()
+    else()
+      set(${module_upper}_FOUND TRUE)
     endif()
     mark_as_advanced(${module_upper}_LOCATION)
   endif(NOT ${module_upper}_FOUND)
