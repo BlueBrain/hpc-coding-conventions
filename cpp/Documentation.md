@@ -155,16 +155,17 @@ in the desired format, in HTML for instance.
 There are many Sphinx extensions to emit reStructuredText from other sources. Here is a
 non-exhaustive list of recommended extensions:
 
-#### m2r
+#### myst_parser
 
-This extension provides a reStructuredText command named `mdinclude` to import a Markdown document.
+MyST-Parser is a Docutils bridge to markdown-it-py, a Python package for parsing the CommonMark Markdown flavor.
 For instance you can have a `readme.rst` file that reads the top-level README.md of your project that looks like:
 
 ```rst
 Introduction
 ============
 
-.. mdinclude:: ../README.md
+.. include:: ../README.md
+   :parser: myst_parser.sphinx_
 ```
 
 #### breathe
