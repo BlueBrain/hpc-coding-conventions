@@ -196,10 +196,14 @@ class GitDiffDelta(namedtuple("GitDiffDelta", ["from_", "to", "staged"])):
             git_rev = cls.fork_point(git_ref)
             return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
         elif applies_on == 'base-branch':
-            git_ref = os.environ.get('CHANGE_BRANCH')
+            for var in ["CI_MERGE_REQUEST_TARGET_BRANCH_NAME", "CHANGE_BRANCH"]:
+                git_ref = os.environ.get(var)
+                if git_ref is not None:
+                    break
             if git_ref is None:
-                msg = 'Expecting environment variable CHANGE_BRANCH. '
-                msg += 'This command may be executed within Jenkins'
+                msg = 'Expecting environment variable '
+                msg += 'CI_MERGE_REQUEST_TARGET_BRANCH_NAME or CHANGE_BRANCH. '
+                msg += 'This command may be executed within GitLab CI/CD or Jenkins'
                 logging.error(msg)
                 raise Exception(msg)
             git_rev = cls.fork_point(git_ref)

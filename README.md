@@ -138,9 +138,9 @@ since the given ref. For instance `since-ref:origin/master` is equivalent to:
    fork_point=`git merge-base --fork-point origin/master HEAD`
    git diff --name-status $fork_point | grep '^[AM]'
    ```
-* `base-branch`: an alias for `since-ref:$CHANGE_TARGET`. `CHANGE_TARGET` is a Jenkins
-environment variable that contains the target or base branch to which the change
-could be merged.
+* `base-branch`: an alias for `since-ref:$CI_MERGE_REQUEST_TARGET_BRANCH_NAME` if
+  the environment variable is defined, `since-ref:$CHANGE_TARGET` otherwise. These
+  are variables defined in GitLab CI/CD and Jenkins.
 * `since-rev:GIT_REV`. For instance `since-ref:fcfc8b6a`
 
 By default, a C++ file is entirely formatted.  To only reformat the lines touches
