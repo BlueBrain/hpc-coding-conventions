@@ -25,11 +25,10 @@ class PreCommitConfig:
         if osp.exists(file):
             with open(file) as istr:
                 self._config = yaml.load(istr, Loader=Loader) or {}
-            self._previous_config = copy.deepcopy(self._config)
         else:
             self._config = {}
-            self._previous_config = {}
         self._bbp_repo = self._initialize_bbp_repo()
+        self._previous_config = copy.deepcopy(self._config)
 
     def _initialize_bbp_repo(self):
         repos = self.config.setdefault("repos", [])
