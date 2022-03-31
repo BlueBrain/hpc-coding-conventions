@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 
-from cpplib import collect_files, log_command, make_cpp_file_filter, parse_cli
+from cpplib import collect_files, log_command, make_file_filter, parse_cli
 
 
 def do_check(executable, compile_commands_file, options, cpp_file):
@@ -28,7 +28,7 @@ def main(**kwargs):
     args = parse_cli(choices=["check"], **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
-    filter_cpp_file = make_cpp_file_filter(excludes_re, files_re)
+    filter_cpp_file = make_file_filter(excludes_re, files_re)
     action = getattr(sys.modules[__name__], "do_" + args.action)
     workers = multiprocessing.Pool(processes=max(1, multiprocessing.cpu_count() - 2))
     action = functools.partial(

@@ -17,7 +17,7 @@ from cpplib import (
     filter_files_outside_time_range,
     GitDiffDelta,
     log_command,
-    make_cpp_file_filter,
+    make_file_filter,
     parse_cli,
     pipe_processes,
     pushd,
@@ -236,7 +236,7 @@ def main(**kwargs):
     args = parse_cli(parser_args=parser_args, **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
-    filter_cpp_file = make_cpp_file_filter(excludes_re, files_re)
+    filter_cpp_file = make_file_filter(excludes_re, files_re)
     with build_action_func(args) as action:
         succeeded = True
         if args.changes_only and args.applies_on != 'all':

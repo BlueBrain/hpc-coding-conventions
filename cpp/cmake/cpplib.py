@@ -60,7 +60,7 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
-def make_cpp_file_filter(excludes_re, files_re):
+def make_file_filter(excludes_re, files_re):
     """
     Returns:
         a Python function used to filter the C++ files that needs to
