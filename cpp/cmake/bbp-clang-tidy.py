@@ -38,7 +38,7 @@ def main(**kwargs):
     )
     succeeded = True
     for ok in workers.imap_unordered(
-        action, collect_files(args, filter_cpp_file)
+        action, collect_files(filter_cpp_file)
     ):
         succeeded &= ok
     workers.close()

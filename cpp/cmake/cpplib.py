@@ -4,7 +4,6 @@ import configparser
 import contextlib
 from fnmatch import fnmatch
 import functools
-import json
 import logging
 import os
 import os.path as osp
@@ -36,25 +35,6 @@ def pipe_processes(*commands, **kwargs):
         prev_process.stdout.close()
         prev_process = process
     return subprocess.Popen(commands[-1], stdin=prev_process.stdout, **kwargs)
-
-
-@contextlib.contextmanager
-def mkstemp(*args, **kwargs):
-    """
-    Create a temporary file within a Python context.
-    File is removed when leaving the context
-
-    Args:
-        kwargs: additional argument given to `tempfile.mkstemp`
-    Returns:
-        path to create file
-    """
-    fd, path = tempfile.mkstemp(*args, **kwargs)
-    os.close(fd)
-    try:
-        yield path
-    finally:
-        os.remove(path)
 
 
 @contextlib.contextmanager
@@ -122,31 +102,6 @@ def collect_submodules(source_dir):
         value = cfg.get(section, "path", fallback=None)
         if value:
             yield osp.join(source_dir, value)
-
-
-def collect_included_headers(cli_args, entry, filter_cpp_file):
-    cmd = shlex.split(entry["command"])
-    try:
-        # remove "-o object_file.o" from command
-        opos = cmd.index("-o")
-        cmd.pop(opos)
-        cmd.pop(opos)
-    except ValueError:
-        pass
-    cmd.insert(1, "-M")
-    output = subprocess.check_output(cmd, cwd=cli_args.binary_dir).decode("utf-8")
-    lines = output.splitlines()[1:]
-    for line in lines:
-        if line[-1] == "\\":
-            line = line[:-1]
-        for header in line.split():
-            # We run the compiler in `binary_dir`, so relative paths should be
-            # interpreted relative to there.
-            if not osp.isabs(header):
-                header = osp.join(cli_args.binary_dir, header)
-            header = osp.abspath(header)
-            if not filter_cpp_file(header):
-                yield header
 
 
 class GitDiffDelta(namedtuple("GitDiffDelta", ["from_", "to", "staged"])):
@@ -258,36 +213,21 @@ def filter_files_outside_time_range(cli_args, generator):
                 yield file
 
 
-def collect_files(cli_args, filter_cpp_file):
+def collect_files(filter_file):
     """
     Args:
         cli_args: parsed CLI options
-        filter_cpp_file: a function returning `True` if the given file should be
+        filter_file: a function returning `True` if the given file should be
         excluded, `False` otherwise.
     Returns:
         Generator of C++ files
     """
-    files = set()
-    if not osp.exists(cli_args.compile_commands_file):
-        msg = (
-            'Could not find file %s. Please make sure '
-            + 'CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on.'
-        )
-        msg = msg % cli_args.compile_commands_file
-        logging.error(msg)
-        raise Exception(msg)
 
-    with open(cli_args.compile_commands_file) as istr:
-        for entry in json.load(istr):
-            cpp_file = osp.realpath(osp.join(entry["directory"], entry["file"]))
-            if not filter_cpp_file(cpp_file):
-                if cpp_file not in files:
-                    yield cpp_file
-                    files.add(cpp_file)
-                    for header in collect_included_headers(cli_args, entry, filter_cpp_file):
-                        if header not in files:
-                            yield header
-                            files.add(header)
+    cmd = ["git", "ls-tree", "-r", "-z", "--name-only", "HEAD"]
+    log_command(cmd)
+    files = subprocess.check_output(cmd).decode('utf-8').split('\0')
+
+    return [x for x in files if not filter_file(x)]
 
 
 def parse_cli(
