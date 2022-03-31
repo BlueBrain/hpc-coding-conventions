@@ -4,7 +4,7 @@ according to regular expressions passed in CLI.
 
 For instance:
 
-  git diff -U0 --no-color HEAD^ | bbp-diff-filter --git-modules --files-re ".*\\.h"
+  git diff -U0 --no-color HEAD^ | bbp-diff-filter --files-re ".*\\.h"
 """
 import logging
 import os
@@ -26,9 +26,7 @@ def main(**kwargs):
     args = parse_cli(description=description, **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re or []]
     files_re = [re.compile(r) for r in args.files_re or []]
-    filter_cpp_file = make_cpp_file_filter(
-        args.source_dir, args.binary_dir, excludes_re, files_re
-    )
+    filter_cpp_file = make_cpp_file_filter(excludes_re, files_re)
     try:
         line = input()
         while True:

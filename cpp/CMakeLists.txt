@@ -172,8 +172,7 @@ function(cpp_cc_enable_clang_formatting)
       "${PROJECT_SOURCE_DIR}" -B "${PROJECT_BINARY_DIR}" "--executable=${ClangFormat_EXECUTABLE}"
       "--clang-format-diff-executable=${ClangFormatDiff_EXECUTABLE}"
       "--changes-only=${${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY}" --files-re
-      ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE}
-      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules> --excludes-re
+      ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE} --excludes-re
       ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE} -p
       ${PROJECT_BINARY_DIR}/compile_commands.json
       --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
@@ -239,8 +238,7 @@ function(cpp_cc_enable_cmake_formatting)
   set(cmake_format_command_prefix
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py" -S
       "${PROJECT_SOURCE_DIR}" -B "${PROJECT_BINARY_DIR}" "--executable=${CMakeFormat_EXECUTABLE}"
-      --files-re ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE}
-      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules> --excludes-re
+      --files-re ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE} --excludes-re
       ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE}
       --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
   add_custom_target(cmake-format ${cmake_format_command_prefix} --action format --
@@ -294,8 +292,7 @@ function(cpp_cc_enable_static_analysis)
   set(clang_tidy_command_prefix
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py" -S
       "${PROJECT_SOURCE_DIR}" -B "${PROJECT_BINARY_DIR}" "--executable=${ClangTidy_EXECUTABLE}"
-      --files-re "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}"
-      $<$<BOOL:${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES>:--git-modules> --excludes-re
+      --files-re "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}" --excludes-re
       ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE} -p ${PROJECT_BINARY_DIR}/compile_commands.json
       --action check)
   add_custom_target(clang-tidy ${clang_tidy_command_prefix} --

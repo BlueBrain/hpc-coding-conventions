@@ -36,8 +36,6 @@ def file_filters_cli_options(args):
       list of raw CLI options
     """
     result = ["-S", args.source_dir, "-B", args.binary_dir]
-    if args.git_modules:
-        result.append('--git-modules')
     # --files-re A --files-re B would be parsed as [B], not [A, B]
     # --files-re A B will be parsed [correctly] as [A, B]
     for re_opt, patterns in [
@@ -238,16 +236,14 @@ def main(**kwargs):
     args = parse_cli(parser_args=parser_args, **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
-    filter_cpp_file = make_cpp_file_filter(
-        args.source_dir, args.binary_dir, excludes_re, files_re
-    )
+    filter_cpp_file = make_cpp_file_filter(excludes_re, files_re)
     with build_action_func(args) as action:
         succeeded = True
         if args.changes_only and args.applies_on != 'all':
             succeeded = action(GitDiffDelta.from_applies_on(args.applies_on), args)
         else:
             for cpp_file in filter_files_outside_time_range(
-                args, collect_files(args, filter_cpp_file)
+                args.source_dir, args.applies_on, collect_files(args.source_dir, filter_cpp_file)
             ):
                 succeeded &= action(cpp_file, args.executable, args.options)
     return succeeded

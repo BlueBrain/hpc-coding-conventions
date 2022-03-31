@@ -132,7 +132,7 @@ def main(**kwargs):
     with build_action_func(args) as action:
         succeeded = True
         for cmake_file in filter_files_outside_time_range(
-            args, collect_files(args.source_dir, args.binary_dir, excludes_re, files_re)
+            args.source_dir, args.applies_on, collect_files(args.source_dir, args.binary_dir, excludes_re, files_re)
         ):
             succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded

@@ -28,9 +28,7 @@ def main(**kwargs):
     args = parse_cli(choices=["check"], **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
-    filter_cpp_file = make_cpp_file_filter(
-        args.source_dir, args.binary_dir, excludes_re, files_re
-    )
+    filter_cpp_file = make_cpp_file_filter(excludes_re, files_re)
     action = getattr(sys.modules[__name__], "do_" + args.action)
     workers = multiprocessing.Pool(processes=max(1, multiprocessing.cpu_count() - 2))
     action = functools.partial(
@@ -38,7 +36,7 @@ def main(**kwargs):
     )
     succeeded = True
     for ok in workers.imap_unordered(
-        action, collect_files(args, filter_cpp_file)
+        action, collect_files(args.source_dir, filter_cpp_file)
     ):
         succeeded &= ok
     workers.close()
