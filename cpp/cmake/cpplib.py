@@ -1,6 +1,4 @@
 import argparse
-from collections import namedtuple
-import configparser
 import contextlib
 from fnmatch import fnmatch
 import functools
@@ -10,7 +8,6 @@ import os.path as osp
 import shlex
 import subprocess
 import sys
-import tempfile
 
 
 def pipe_processes(*commands, **kwargs):
@@ -79,122 +76,6 @@ def make_file_filter(excludes_re, files_re):
     return _func
 
 
-def collect_submodules(source_dir):
-    """Obtain a list of paths from `.gitmodules`
-
-    Args:
-        source_dir: The directory potentially containing `.gitmodules`
-    Returns:
-        A generator yielding the submodule paths
-    """
-    fn = osp.join(source_dir, ".gitmodules")
-    cfg = configparser.ConfigParser()
-    cfg.read(fn)
-    for section in cfg.sections():
-        value = cfg.get(section, "path", fallback=None)
-        if value:
-            yield osp.join(source_dir, value)
-
-
-class GitDiffDelta(namedtuple("GitDiffDelta", ["from_", "to", "staged"])):
-    """
-    A set of changes, either:
-    - the working area
-    - the staging area
-    - a range of revisions
-    """
-
-    def __str__(self):
-        if self.from_ is None and self.to is None:
-            if self.staged:
-                return "git staging area"
-            return "git working area"
-        else:
-            return "{}:{}".format(self.from_ or "", self.to or "")
-
-    @classmethod
-    def fork_point(cls, ref):
-        fork_point_cmd = ['git', 'merge-base', '--fork-point', ref, 'HEAD']
-        log_command(fork_point_cmd)
-        return subprocess.check_output(fork_point_cmd).decode('utf-8').strip()
-
-    @classmethod
-    def from_applies_on(cls, applies_on):
-        if applies_on == 'working':
-            return GitDiffDelta(from_=None, to=None, staged=False)
-        if applies_on == 'staging':
-            return GitDiffDelta(from_=None, to=None, staged=True)
-        elif applies_on.startswith('since-rev'):
-            git_rev = applies_on[len('since-rev:') :]
-            return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
-        elif applies_on.startswith('since-ref:'):
-            git_ref = applies_on[len('since-ref:') :]
-            git_rev = cls.fork_point(git_ref)
-            return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
-        elif applies_on == 'base-branch':
-            git_ref = os.environ.get('CHANGE_BRANCH')
-            if git_ref is None:
-                msg = 'Expecting environment variable CHANGE_BRANCH. '
-                msg += 'This command may be executed within Jenkins'
-                logging.error(msg)
-                raise Exception(msg)
-            git_rev = cls.fork_point(git_ref)
-            return GitDiffDelta(from_=git_rev, to='HEAD', staged=False)
-        elif applies_on == 'all':
-            raise Exception('GitDiffDelta does not apply to option applies-on=all')
-        else:
-            msg = 'Unknown applies-on argument: ' + applies_on
-            logging.error(msg)
-            raise Exception(msg)
-
-    def diff_name_status(self):
-        """A generator providing the list of added and modified files
-
-        Args:
-            git_dir: root repository directory (containing .git/)
-            delta(GitDiffDelta): interval of changes to look into
-            git: path to git executable (look into PATH if `None`)
-        """
-        git_diff_cmd = ['git', 'diff', '--name-status']
-        if self.staged:
-            git_diff_cmd.append('--cached')
-        if self.from_:
-            git_diff_cmd.append(self.from_)
-        if self.to:
-            git_diff_cmd.append(self.to)
-        log_command(git_diff_cmd)
-        for line in subprocess.check_output(git_diff_cmd).decode('utf-8').splitlines():
-            status, file = line.split('\t', 1)
-            if status[0] in ['A', 'M']:
-                yield osp.abspath(file.lstrip('\t'))
-
-
-def filter_files_outside_time_range(source_dir, applies_on, generator):
-    """
-    Generator that reads files from input generator, and exclude those
-    that were not modified during the time interval specified in option
-    `applies-on` CLI option.
-
-    Args:
-        source_dir: the source directory
-        applies_on: where to apply the change
-        generator: generator returning a list of files
-
-    Returns:
-        String generator
-    """
-    if applies_on == 'all':
-        for file in generator:
-            yield file
-    else:
-        with pushd(source_dir):
-            delta = GitDiffDelta.from_applies_on(applies_on)
-            modified_files = set(delta.diff_name_status())
-        for file in generator:
-            if osp.realpath(file) in modified_files:
-                yield file
-
-
 def collect_files(source_dir, filter_file):
     """
     Args:
@@ -208,9 +89,8 @@ def collect_files(source_dir, filter_file):
     cmd = ["git", "ls-tree", "-r", "-z", "--name-only", "--full-name", "HEAD", source_dir]
     log_command(cmd)
     files = subprocess.check_output(cmd).decode('utf-8').split('\0')
-
-    files = [osp.join(source_dir, x) for x in files]
     files = [x for x in files if not filter_file(x)]
+    files = [osp.join(source_dir, x) for x in files]
     return files
 
 

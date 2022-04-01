@@ -11,7 +11,6 @@ import tempfile
 
 from cpplib import (
     collect_files,
-    filter_files_outside_time_range,
     log_command,
     make_file_filter,
     parse_cli,
@@ -74,9 +73,7 @@ def main(**kwargs):
     filter_cpp_file = make_file_filter(excludes_re, files_re)
     with build_action_func(args.action) as action:
         succeeded = True
-        for cpp_file in filter_files_outside_time_range(
-            args.source_dir, args.applies_on, collect_files(args.source_dir, filter_cpp_file)
-        ):
+        for cpp_file in collect_files(args.source_dir, filter_cpp_file):
             succeeded &= action(cpp_file, args.executable, args.options)
     return succeeded
 

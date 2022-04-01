@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 
-from cpplib import collect_files, make_file_filter, filter_files_outside_time_range, log_command, parse_cli
+from cpplib import collect_files, make_file_filter, log_command, parse_cli
 
 
 def _build_excluded_dirs():
@@ -88,9 +88,7 @@ def main(**kwargs):
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
         succeeded = True
-        for cmake_file in filter_files_outside_time_range(
-            args.source_dir, args.applies_on, collect_files(args.source_dir, make_file_filter(excludes_re, files_re))
-        ):
+        for cmake_file in collect_files(args.source_dir, make_file_filter(excludes_re, files_re)):
             succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded
 
