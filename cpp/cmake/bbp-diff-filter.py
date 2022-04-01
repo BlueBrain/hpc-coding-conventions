@@ -4,7 +4,7 @@ according to regular expressions passed in CLI.
 
 For instance:
 
-  git diff -U0 --no-color HEAD^ | bbp-diff-filter --files-re ".*\\.h"
+  git diff -U0 --no-color HEAD^ | bbp-diff-filter -S . --files-re ".*\\.h"
 """
 import logging
 import os

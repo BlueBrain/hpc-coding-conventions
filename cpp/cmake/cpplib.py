@@ -112,17 +112,6 @@ class GitDiffDelta(namedtuple("GitDiffDelta", ["from_", "to", "staged"])):
         else:
             return "{}:{}".format(self.from_ or "", self.to or "")
 
-    @property
-    def diff_command(self):
-        cmd = ["git", "diff", '--unified=0', "--no-color"]
-        if self.staged:
-            cmd.append("--cached")
-        if self.from_:
-            cmd.append(self.from_)
-        if self.to:
-            cmd.append(self.to)
-        return cmd
-
     @classmethod
     def fork_point(cls, ref):
         fork_point_cmd = ['git', 'merge-base', '--fork-point', ref, 'HEAD']
@@ -234,9 +223,6 @@ def parse_cli(
     )
     parser.add_argument(
         "-S", dest="source_dir", metavar="PATH", help="Path to CMake source directory"
-    )
-    parser.add_argument(
-        "-B", dest="binary_dir", metavar="PATH", help="Path to CMake binary directory"
     )
     parser.add_argument("--executable", help="Path to executable to run")
     parser.add_argument(

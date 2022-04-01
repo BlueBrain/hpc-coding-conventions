@@ -5,7 +5,6 @@ import filecmp
 import functools
 import logging
 import os
-import os.path as osp
 import re
 import subprocess
 import sys
