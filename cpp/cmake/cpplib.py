@@ -122,9 +122,6 @@ def parse_cli(
     parser.add_argument(
         "--git-executable", default='git', help="Path to git executable"
     )
-    parser.add_argument(
-        '--applies-on', help="Specify changeset where formatting applies"
-    )
 
     for name, kwargs in parser_args or []:
         parser.add_argument(name, **kwargs)
@@ -146,8 +143,6 @@ def parse_cli(
 
         result.files_re = make_unescape_res(result.files_re)
         result.excludes_re = make_unescape_res(result.excludes_re)
-    if result.applies_on:
-        result.applies_on = result.applies_on.lower()
     result.options = [opt for opt in result.options if opt]
     return result
 

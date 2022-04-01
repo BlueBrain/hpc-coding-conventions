@@ -170,8 +170,7 @@ function(cpp_cc_enable_clang_formatting)
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
       -S "${PROJECT_SOURCE_DIR}" "--executable=${ClangFormat_EXECUTABLE}"
       --files-re ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE}
-      --excludes-re ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE}
-      --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
+      --excludes-re ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE})
   add_custom_target(clang-format ${clang_format_command_prefix} --action format --
                                  "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   add_custom_target(check-clang-format ${clang_format_command_prefix} --action check --
@@ -235,8 +234,7 @@ function(cpp_cc_enable_cmake_formatting)
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py" -S
       "${PROJECT_SOURCE_DIR}" "--executable=${CMakeFormat_EXECUTABLE}"
       --files-re ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE} --excludes-re
-      ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE}
-      --applies-on=${${CODING_CONV_PREFIX}_FORMATTING_ON})
+      ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE})
   add_custom_target(cmake-format ${cmake_format_command_prefix} --action format --
                                  "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
   add_custom_target(check-cmake-format ${cmake_format_command_prefix} --action check --
