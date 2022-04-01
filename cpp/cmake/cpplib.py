@@ -95,7 +95,7 @@ def collect_files(source_dir, filter_file):
 
 
 def parse_cli(
-    compile_commands=True, choices=None, description=None, parser_args=None, args=None
+    choices=None, description=None, parser_args=None, args=None
 ):
     choices = choices or ["check", "format"]
     parser = argparse.ArgumentParser(
@@ -125,8 +125,6 @@ def parse_cli(
 
     for name, kwargs in parser_args or []:
         parser.add_argument(name, **kwargs)
-    if compile_commands:
-        parser.add_argument("-p", dest="compile_commands_file", type=str)
     parser.add_argument("--action", choices=choices)
     parser.add_argument("options", nargs="*", help="Options given to executable")
     result = parser.parse_args(args=args)

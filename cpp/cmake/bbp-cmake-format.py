@@ -83,7 +83,7 @@ def build_action_func(args):
 
 
 def main(**kwargs):
-    args = parse_cli(compile_commands=False, **kwargs)
+    args = parse_cli(**kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
