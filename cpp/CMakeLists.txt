@@ -303,13 +303,7 @@ endfunction(cpp_cc_enable_static_analysis)
 
 bob_option(${CODING_CONV_PREFIX}_FORMATTING
            "Enable helpers to keep CMake and C++ code properly formatted" OFF)
-bob_input(${CODING_CONV_PREFIX}_FORMATTING_ON "all" STRING
-          "Specify changeset where formatting applies (see documentation for detailed information)")
-bob_option(${CODING_CONV_PREFIX}_FORMATTING_CPP_CHANGES_ONLY
-           "Only format the modified chunks, not the entire files" OFF)
 bob_option(${CODING_CONV_PREFIX}_TEST_FORMATTING "Add CTest formatting test" OFF)
-bob_option(${CODING_CONV_PREFIX}_FORMATTING_NO_SUBMODULES "Exclude git submodules from formatting"
-           ON)
 bob_option(${CODING_CONV_PREFIX}_CLANG_FORMAT "Enable helper to keep C++ code properly formatted"
            OFF)
 bob_option(${CODING_CONV_PREFIX}_CMAKE_FORMAT "Enable helper to keep CMake code properly formatted"
