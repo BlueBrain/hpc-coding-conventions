@@ -14,7 +14,6 @@ from cpplib import (
     log_command,
     make_file_filter,
     parse_cli,
-    str2bool,
 )
 
 

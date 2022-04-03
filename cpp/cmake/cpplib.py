@@ -1,5 +1,4 @@
 import argparse
-import contextlib
 from fnmatch import fnmatch
 import functools
 import logging
@@ -8,53 +7,6 @@ import os.path as osp
 import shlex
 import subprocess
 import sys
-
-
-def pipe_processes(*commands, **kwargs):
-    """
-    Execute given shell commands such that
-    standard output of command N is given to standard input of command N + 1
-
-    Args:
-       commands: list of commands pipe and execute
-        kwargs: additional options given to the `subprocess.Popen` constructor
-                of the last process downstream.
-
-    Returns:
-        subprocess.Popen instance of the process downstream
-    """
-    log_command(*commands)
-    prev_process = subprocess.Popen(commands[0], stdout=subprocess.PIPE)
-    for cmd in commands[1:-1]:
-        process = subprocess.Popen(
-            cmd, stdin=prev_process.stdout, stdout=subprocess.PIPE
-        )
-        prev_process.stdout.close()
-        prev_process = process
-    return subprocess.Popen(commands[-1], stdin=prev_process.stdout, **kwargs)
-
-
-@contextlib.contextmanager
-def pushd(dir):
-    """Change working directory within a Python context"""
-    cwd = os.getcwd()
-    try:
-        os.chdir(dir)
-        yield dir
-    finally:
-        os.chdir(cwd)
-
-
-def str2bool(v):
-    """
-    Convert a string meaning "yes" or "no" into a bool
-    """
-    if v.lower() in ("yes", "true", "t", "y", "1", "on"):
-        return True
-    elif v.lower() in ("no", "false", "f", "n", "0", "off"):
-        return False
-    else:
-        raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
 def make_file_filter(excludes_re, files_re):
