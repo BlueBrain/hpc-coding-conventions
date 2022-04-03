@@ -51,17 +51,17 @@ def do_check(cpp_file, clang_format, options, tempfile=None):
 
 
 @contextlib.contextmanager
-def build_action_func(action):
+def build_action_func(action_name):
     # action can be 'check' or 'format'
-    action = getattr(sys.modules[__name__], "do_" + action)
+    action = getattr(sys.modules[__name__], "do_" + action_name)
     try:
-        if action == "check":
+        if action_name == "check":
             fd, path = tempfile.mkstemp()
             os.close(fd)
             action = functools.partial(action, tempfile=path)
         yield action
     finally:
-        if action == "check":
+        if action_name == "check":
             os.remove(path)
 
 
