@@ -8,7 +8,6 @@ For instance:
 """
 import logging
 import os
-import os.path as osp
 import re
 import sys
 
@@ -37,7 +36,7 @@ def main(**kwargs):
                     filename = match.group(1)
                     break
             if filename:
-                file = osp.realpath(osp.join(args.source_dir, filename))
+                file = os.path.realpath(os.path.join(args.source_dir, filename))
                 if not filter_cpp_file(file):
                     print(line)
                     logging.info(line)

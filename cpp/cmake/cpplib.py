@@ -3,7 +3,6 @@ from fnmatch import fnmatch
 import functools
 import logging
 import os
-import os.path as osp
 import shlex
 import subprocess
 import sys
@@ -42,7 +41,7 @@ def collect_files(source_dir, filter_file):
     log_command(cmd)
     files = subprocess.check_output(cmd).decode('utf-8').split('\0')
     files = [x for x in files if not filter_file(x)]
-    files = [osp.join(source_dir, x) for x in files]
+    files = [os.path.join(source_dir, x) for x in files]
     return files
 
 
@@ -145,8 +144,8 @@ def do_merge_yaml(*files, **kwargs):
     out = files[-1]
     ins = files[:-1]
 
-    outdated = not osp.exists(out) or osp.getmtime(out) < max(
-        (osp.getmtime(f) for f in ins)
+    outdated = not os.path.exists(out) or os.path.getmtime(out) < max(
+        (os.path.getmtime(f) for f in ins)
     )
     if outdated:
         data = {}
