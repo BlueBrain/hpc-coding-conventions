@@ -5,13 +5,12 @@ import filecmp
 import functools
 import logging
 import os
-import os.path as osp
 import re
 import subprocess
 import sys
 import tempfile
 
-from cpplib import filter_files_outside_time_range, log_command, parse_cli
+from cpplib import collect_files, make_file_filter, log_command, parse_cli
 
 
 def _build_excluded_dirs():
@@ -40,48 +39,6 @@ EXCLUDED_FILES = set(
 )
 
 LOGGER = logging.Logger("bbp-cmake-format")
-
-
-def collect_files(cmake_source_dir, cmake_binary_dir, excludes_re, cmake_files_re):
-    cmake_source_dir = osp.realpath(cmake_source_dir)
-    cmake_binary_dir = osp.realpath(cmake_binary_dir)
-    queue = [cmake_source_dir]
-    while queue:
-        d = queue.pop()
-        for f in os.listdir(d):
-            p = osp.realpath(osp.join(d, f))
-            rp = p[len(cmake_source_dir) :]
-            if p == cmake_binary_dir:
-                continue
-            for regex in excludes_re:
-                if regex.match(p):
-                    break
-            else:
-                if osp.isdir(p):
-                    if f in EXCLUDED_DIRS:
-                        continue
-                    elif osp.isfile(osp.join(p, "CMakeCache.txt")):
-                        continue
-                    queue.append(p)
-                else:
-                    if f in EXCLUDED_FILES:
-                        continue
-                    coupled_suffixes = ["Config.cmake", "ConfigVersion.cmake"]
-                    for i in range(len(coupled_suffixes)):
-                        if f.endswith(coupled_suffixes[i]):
-                            base = f[: -len(coupled_suffixes[i])]
-                            if osp.isfile(
-                                osp.join(
-                                    d,
-                                    base
-                                    + coupled_suffixes[(i + 1) % len(coupled_suffixes)],
-                                )
-                            ):
-                                break
-                    else:
-                        for regexp in cmake_files_re:
-                            if regexp.match(rp):
-                                yield p
 
 
 def do_format(cmake_file, cmake_format, options):
@@ -126,14 +83,12 @@ def build_action_func(args):
 
 
 def main(**kwargs):
-    args = parse_cli(compile_commands=False, **kwargs)
+    args = parse_cli(**kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
         succeeded = True
-        for cmake_file in filter_files_outside_time_range(
-            args, collect_files(args.source_dir, args.binary_dir, excludes_re, files_re)
-        ):
+        for cmake_file in collect_files(args.source_dir, make_file_filter(excludes_re, files_re)):
             succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded
 

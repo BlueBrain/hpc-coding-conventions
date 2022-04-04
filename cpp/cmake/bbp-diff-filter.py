@@ -4,15 +4,14 @@ according to regular expressions passed in CLI.
 
 For instance:
 
-  git diff -U0 --no-color HEAD^ | bbp-diff-filter --git-modules --files-re ".*\\.h"
+  git diff -U0 --no-color HEAD^ | bbp-diff-filter -S . --files-re ".*\\.h"
 """
 import logging
 import os
-import os.path as osp
 import re
 import sys
 
-from cpplib import parse_cli, make_cpp_file_filter
+from cpplib import parse_cli, make_file_filter
 
 
 DIFF_HEADER_PATTERNS = [
@@ -26,9 +25,7 @@ def main(**kwargs):
     args = parse_cli(description=description, **kwargs)
     excludes_re = [re.compile(r) for r in args.excludes_re or []]
     files_re = [re.compile(r) for r in args.files_re or []]
-    filter_cpp_file = make_cpp_file_filter(
-        args.source_dir, args.binary_dir, excludes_re, files_re
-    )
+    filter_cpp_file = make_file_filter(excludes_re, files_re)
     try:
         line = input()
         while True:
@@ -39,7 +36,7 @@ def main(**kwargs):
                     filename = match.group(1)
                     break
             if filename:
-                file = osp.realpath(osp.join(args.source_dir, filename))
+                file = os.path.realpath(os.path.join(args.source_dir, filename))
                 if not filter_cpp_file(file):
                     print(line)
                     logging.info(line)

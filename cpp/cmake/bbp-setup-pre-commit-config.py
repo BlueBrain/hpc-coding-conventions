@@ -3,7 +3,6 @@ from collections import namedtuple
 import copy
 import logging
 import os
-import os.path as osp
 import sys
 
 import yaml
@@ -22,7 +21,7 @@ DEFAULT_HPC_PRE_COMMIT_REPO = dict(
 class PreCommitConfig:
     def __init__(self, file):
         self._file = file
-        if osp.exists(file):
+        if os.path.exists(file):
             with open(file) as istr:
                 self._config = yaml.load(istr, Loader=Loader) or {}
         else:
@@ -130,7 +129,7 @@ def _parse_cli(args=None):
 
 
 def fix_hook_file(hook):
-    if not osp.exists(hook):
+    if not os.path.exists(hook):
         return
     with open(hook) as istr:
         lines = istr.readlines()
@@ -144,13 +143,13 @@ def fix_hook_file(hook):
 
 def main(**kwargs):
     args = _parse_cli(**kwargs)
-    PRE_COMMIT_CONFIG = osp.join(args.source_dir, ".pre-commit-config.yaml")
+    PRE_COMMIT_CONFIG = os.path.join(args.source_dir, ".pre-commit-config.yaml")
     ALL_HOOKS = [
         CMakeTargetHook(args.build_dir, "check-clang-format"),
         CMakeTargetHook(args.build_dir, "check-cmake-format"),
         CMakeTargetHook(args.build_dir, "clang-tidy"),
         CMakeScriptHook(
-            "courtesy-msg", osp.join(args.build_dir, "git-push-message.cmake")
+            "courtesy-msg", os.path.join(args.build_dir, "git-push-message.cmake")
         ),
     ]
 
@@ -185,8 +184,8 @@ def main(**kwargs):
 
     config.save()
 
-    fix_hook_file(osp.join(args.source_dir, ".git", "hooks", "pre-commit"))
-    fix_hook_file(osp.join(args.source_dir, ".git", "hooks", "pre-push"))
+    fix_hook_file(os.path.join(args.source_dir, ".git", "hooks", "pre-commit"))
+    fix_hook_file(os.path.join(args.source_dir, ".git", "hooks", "pre-push"))
 
 
 if __name__ == "__main__":
