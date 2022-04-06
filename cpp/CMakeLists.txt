@@ -130,7 +130,7 @@ function(cpp_cc_enable_clang_formatting)
       "^.*\\\\.cc?$$" "^.*\\\\.hh?$$" "^.*\\\\.[it]cc$$" "^.*\\\\.[chit]pp$$" "^.*\\\\.[chit]xx$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
   set(${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE
-      ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
+      "third[-_]parties/.*$$" "third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
   set(${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES
       ""
@@ -205,7 +205,7 @@ function(cpp_cc_enable_cmake_formatting)
       "^.*\\\\.cmake$$" "^.*CMakeLists.txt$$"
       CACHE STRING "List of regular expressions matching CMake files")
   set(${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE
-      ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
+      "third[-_]parties/.*$$" "third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude CMake files from formatting")
   mark_as_advanced(
     ${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS ${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE
@@ -258,7 +258,7 @@ function(cpp_cc_enable_static_analysis)
       "^.*\\\\.cc$$" "^.*\\\\.cpp$$" "^.*\\\\.cxx$$"
       CACHE STRING "List of regular expressions matching C/C++ filenames")
   set(${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE
-      ".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"
+      "third[-_]parties/.*$$" "third[-_]party/.*$$"
       CACHE STRING "list of regular expressions to exclude C/C++ files from formatting")
   set(${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES
       ""
