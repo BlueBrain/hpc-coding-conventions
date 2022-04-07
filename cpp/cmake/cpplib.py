@@ -34,12 +34,12 @@ def collect_files(source_dir, filter_file):
         filter_file: a function returning `True` if the given file should be
         excluded, `False` otherwise.
     Returns:
-        Generator of C++ files
+        Generator of path to files in source_dir
     """
 
-    cmd = ["git", "ls-tree", "-r", "-z", "--name-only", "--full-name", "HEAD", source_dir]
+    cmd = ["git", "ls-tree", "-r", "-z", "--name-only", "--full-name", "HEAD"]
     log_command(cmd)
-    files = subprocess.check_output(cmd).decode('utf-8').split('\0')
+    files = subprocess.check_output(cmd, cwd=source_dir).decode('utf-8').split('\0')
     files = [x for x in files if not filter_file(x)]
     files = [os.path.join(source_dir, x) for x in files]
     return files
