@@ -71,7 +71,6 @@ def main(**kwargs):
     if not args.executable:
         args.executable = "clang-format"
 
-
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
     filter_cpp_file = make_file_filter(excludes_re, files_re)
