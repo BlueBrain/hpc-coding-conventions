@@ -63,7 +63,10 @@ def parse_cli(
         help="list of regular expressions of files to exclude",
     )
     parser.add_argument(
-        "--files-re", nargs="*", help="List of regular expressions of files to include"
+        "--files-re", nargs="*", default=[], help="List of regular expressions of files to include"
+    )
+    parser.add_argument(
+        "--files-by-suffix", nargs="*", help="List of suffixes of the files to include"
     )
     parser.add_argument(
         "--make-unescape-re",
@@ -92,6 +95,10 @@ def parse_cli(
 
         result.files_re = make_unescape_res(result.files_re)
         result.excludes_re = make_unescape_res(result.excludes_re)
+
+    if result.files_by_suffix:
+        result.files_re += [f".*\.{suffix}$" for suffix in result.files_by_suffix]
+
     result.options = [opt for opt in result.options if opt]
     return result
 
