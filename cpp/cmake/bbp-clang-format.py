@@ -1,4 +1,4 @@
-#! usr/bin/env python
+#! usr/bin/env python3
 import contextlib
 import filecmp
 import functools
@@ -66,10 +66,7 @@ def build_action_func(action_name):
 
 
 def main(**kwargs):
-    args = parse_cli(**kwargs)
-
-    if not args.executable:
-        args.executable = "clang-format"
+    args = parse_cli(choices=["format", "check"], **kwargs)
 
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]

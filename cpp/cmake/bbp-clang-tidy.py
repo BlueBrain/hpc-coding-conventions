@@ -29,7 +29,6 @@ def main(**kwargs):
         ("-p", dict(dest="compile_commands_file", type=str))
     ]
     args = parse_cli(parser_args=parser_args, choices=["check"], **kwargs)
-    args.executable = "clang-tidy" if not args.executable else args.executable
 
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
