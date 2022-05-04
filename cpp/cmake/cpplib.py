@@ -33,11 +33,12 @@ def source_dir(git="git"):
     """
     def git_rev_parse(*args, **kwargs):
         cmd = list((git, "rev-parse") + args)
+        log_command(cmd)
         output = subprocess.check_output(cmd, **kwargs).decode("utf-8").strip()
         return os.path.realpath(output)
 
     git_dir = git_rev_parse("--git-dir", cwd=THIS_SCRIPT_DIR)
-    if git_dir not in THIS_SCRIPT_DIR:
+    if os.path.dirname(git_dir) not in THIS_SCRIPT_DIR:
         # This project is used as a git module
         module_dir = git_rev_parse("--show-toplevel", cwd=THIS_SCRIPT_DIR)
         git_dir = git_rev_parse("--git-dir", cwd=os.path.dirname(module_dir))
