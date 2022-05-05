@@ -3,9 +3,13 @@
 import argparse
 from contextlib import contextmanager
 from collections import namedtuple
+import copy
+import functools
+import glob
 import logging
 import os
-import os.path as osp
+import os.path
+from pathlib import Path
 import re
 import shutil
 import subprocess
@@ -85,6 +89,72 @@ def pushd(path):
         os.chdir(old_cwd)
 
 
+class SpackDevBuild:
+    def __init__(self, spec, **kwargs):
+        self._spec = spec
+        self._command = SpackDevBuild.get_command(spec, **kwargs)
+        self._call()
+        self._env = self._extract_environ()
+
+    def _call(self):
+        timestamp_file = Path(".spack-dev-build.ts")
+        timestamp_file.touch()
+        _check_call(*self._command)
+        self._path = None
+        for d in glob.glob("spack-build-*"):
+            if os.path.isdir(d) and os.path.getmtime(d) > os.path.getmtime(
+                timestamp_file
+            ):
+                self._path = d
+                break
+        timestamp_file.unlink()
+        if not self._path:
+            raise RuntimeError("Could not deduce spack dev-build directory")
+
+    def _extract_environ(self):
+        cmd = "source spack-build-env.txt; unset PYTHONHOME; $SPACK_PYTHON -c "
+        cmd += "'import os; print(repr(dict(os.environ)))'"
+        return eval(check_output(cmd, shell=True).decode("utf-8"))
+
+    @classmethod
+    def get_command(cls, spec, test=None, overwrite=True, until=None):
+        cmd = ["spack", "dev-build"]
+        if overwrite:
+            cmd.append("--overwrite")
+        if until:
+            cmd += ["--until", until]
+        if test:
+            cmd += [f"--test={test}"]
+        cmd.append(spec)
+        return cmd
+
+    @property
+    def spec(self):
+        return self._spec
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def command(self):
+        return self._command
+
+    def __enter__(self):
+        self.__prev_cwd = os.getcwd()
+        self.__prev_environ = copy.deepcopy(os.environ)
+        os.chdir(self.path)
+        os.environ.clear()
+        os.environ.update(self._env)
+        return self.path
+
+    def __exit__(self, type, value, traceback):
+        os.chdir(self.__prev_cwd)
+        os.environ = self.__prev_environ
+        del self.__prev_cwd
+        del self.__prev_environ
+
+
 class Repository(
     namedtuple(
         "Repository",
@@ -95,6 +165,7 @@ class Repository(
             "cmake_project_name",
             "default_branch",
             "spack_spec",
+            "spack_until",
             "patch",
         ],
     )
@@ -105,14 +176,17 @@ class Repository(
         kwargs.setdefault("location", "hpc-coding-conventions")
         kwargs.setdefault("default_branch", "master")
         kwargs.setdefault("spack_spec", None)
+        kwargs.setdefault("spack_until", "cmake")
         if "patch" in kwargs:
-            kwargs["patch"] = osp.abspath(kwargs["patch"])
+            kwargs["patch"] = os.path.abspath(kwargs["patch"])
         else:
             kwargs["patch"] = None
         if "github.com" in url:
             repo = GitHubRepository(**kwargs)
         elif "bbpcode.epfl.ch" in url:
             repo = GerritRepository(**kwargs)
+        elif "bbpgitlab.epfl.ch" in url:
+            repo = GitLabRepository(**kwargs)
         else:
             raise Exception("Unsupported git server")
         repo.log = LOGGER.getChild(repo.name)
@@ -180,8 +254,8 @@ class Repository(
             branch,
             "{}/{}".format(self.remote, self.default_branch),
         )
-        if not osp.exists(self.location):
-            with pushd(osp.dirname(self.location)):
+        if not os.path.exists(self.location):
+            with pushd(os.path.dirname(self.location)):
                 _check_call("git", "submodule", "add", "--force", HPC_CC_HTTP_REMOTE)
         _check_call("git", "submodule", "update", "--recursive", "--init")
         return True
@@ -219,13 +293,14 @@ class Repository(
         return True
 
     def commit(self, revision):
-        _check_call(
-            "git",
-            "commit",
-            "-m",
-            "Bump hpc-coding-conventions submodule to {}".format(revision[:8]),
-        )
+        _check_call("git", "commit", "-m", self.commit_message(revision))
         return True
+
+    def commit_message(self, revision):
+        return f"Bump {self.location} submodule to {revision[:8]}"
+
+    def merge_request_title(self, revision):
+        return self.commit_message(revision)
 
     @property
     def is_dirty(self):
@@ -235,38 +310,49 @@ class Repository(
         )
 
     def test(self):
-        self._test_cmake()
-        self._test_formatting_targets()
-        self._test_static_analysis()
+        with self._test_cmake():
+            self._test_formatting_targets()
+            self._test_static_analysis()
         self._test_precommit()
         return True
 
+    @property
+    def cmake_base_cmd(self):
+        cmd = ["cmake"]
+        var_prefix = "-D" + self.cmake_project_name + "_"
+        for feature, value in self.features.items():
+            if value:
+                cmd.append(var_prefix + feature.upper() + ":BOOL=ON")
+        return cmd
+
     def _test_cmake(self):
-        if osp.isdir("_build"):
+        if self.spack_spec:
+            dev_build = SpackDevBuild(self.spack_spec, until=self.spack_until)
+            with dev_build:
+                # recall CMake to set proper variables
+                _check_call(*self.cmake_base_cmd, ".")
+            return dev_build
+
+        if os.path.isdir("_build"):
             shutil.rmtree("_build")
         os.makedirs("_build")
         with pushd("_build"):
-            cmd = ["cmake"]
-            var_prefix = "-D" + self.cmake_project_name + "_"
-            for feature, value in self.features.items():
-                if value:
-                    cmd.append(var_prefix + feature.upper() + ":BOOL=ON")
+            cmd = copy.copy(self.cmake_base_cmd)
             python = check_output(["which", "python"]).decode("utf-8").rstrip()
             cmd.append("-DPYTHON_EXECUTABLE=" + python)
             cmd.append("..")
             _check_call(*cmd)
+        return functools.partial(pushd, "_build")
 
     def _test_formatting_targets(self):
-        with pushd("_build"):
-            if self.features.get("formatting") or self.features.get("clang_format"):
-                _check_call("make", "clang-format")
-            if self.features.get("formatting") or self.features.get("cmake_format"):
-                _check_call("make", "cmake-format")
+        if self.features.get("formatting") or self.features.get("clang_format"):
+            _check_call("make", "clang-format")
+        if self.features.get("formatting") or self.features.get("cmake_format"):
+            _check_call("make", "cmake-format")
 
     def _test_static_analysis(self):
-        with pushd("_build"):
-            if self.features.get("static_analysis"):
-                _check_call("make", "clang-tidy")
+        if self.features.get("static_analysis"):
+            _check_call("make", "clang-tidy")
 
     def _test_precommit(self):
         if self.features.get("precommit"):
@@ -278,8 +364,8 @@ class Repository(
         for branch in self.branches:
             if branch.startswith(self.remote):
                 _check_call("git", "branch", "-D", branch)
-        precommit_hook = osp.join(".git", "hooks", "pre-commit")
-        if osp.exists(precommit_hook):
+        precommit_hook = os.path.join(".git", "hooks", "pre-commit")
+        if os.path.exists(precommit_hook):
             os.remove(precommit_hook)
 
 
@@ -290,7 +376,7 @@ class GitHubRepository(Repository):
             "hub",
             "pull-request",
             "-m",
-            "Bump hpc-coding-conventions submodule to {}".format(revision[:8]),
+            self.commit_message(revision),
         )
         return True
 
@@ -301,9 +387,24 @@ class GerritRepository(Repository):
         return True
 
 
+class GitLabRepository(Repository):
+    def submit(self, revision):
+        _check_call(
+            "git",
+            "push",
+            self.remote,
+            "HEAD",
+            "merge_request.create",
+            "merge_request.title=" + self.merge_request_title(revision),
+        )
+        return True
+
+
 def repositories(file):
     with open(file) as istr:
-        return [Repository.create(**repo) for repo in yaml.load(istr)["repositories"]]
+        return [
+            Repository.create(**repo) for repo in yaml.safe_load(istr)["repositories"]
+        ]
 
 
 class IntegrationRepository:
@@ -312,14 +413,14 @@ class IntegrationRepository:
         self._ignored = set()
         self.top_repository = top_repository
 
-        if not osp.isdir(self.top_repository):
+        if not os.path.isdir(self.top_repository):
             _check_call("git", "init", self.top_repository)
             with pushd(self.top_repository):
                 with open("test", "w") as ostr:
                     ostr.write("test")
                 _check_call("git", "add", "test")
                 _check_call("git", "commit", "-n", "-m", "add test")
-        if not osp.isdir(osp.join(self.top_repository, ".git")):
+        if not os.path.isdir(os.path.join(self.top_repository, ".git")):
             raise Exception("Could not find .git directory in " + self.top_repository)
 
     @property
@@ -355,7 +456,7 @@ class IntegrationRepository:
         for repo in self.repos:
             if repo.bump_branch_exists(revision):
                 repo.log.info(
-                    'ignore because branch "%s" already exists.',
+                    'ignored because branch "%s" already exists.',
                     repo._bump_branch(revision),
                 )
                 self._ignored.add(repo.name)
@@ -378,13 +479,7 @@ class IntegrationRepository:
     def _test(self):
         succeeded = True
         for repo in self.repos:
-            if repo.spack_spec:
-                with spack_build_env(repo.spack_spec):
-                    subprocess.check_call(["spack", "setup", repo.spack_spec])
-                    os.remove("spconfig.py")
-                    succeeded &= repo.test()
-            else:
-                succeeded &= repo.test()
+            succeeded &= repo.test()
         if not succeeded:
             raise Exception("Test operation failed")
 
@@ -398,11 +493,7 @@ class IntegrationRepository:
     def _commit(self, revision):
         succeeded = True
         for repo in self.repos:
-            if repo.spack_spec:
-                with spack_build_env(repo.spack_spec):
-                    succeeded &= repo.commit(revision)
-            else:
-                succeeded &= repo.commit(revision)
+            succeeded &= repo.commit(revision)
         if not succeeded:
             raise Exception("Commit operation failed")
 
@@ -442,7 +533,7 @@ def main(**kwargs):
     parser.add_argument(
         "--repo",
         help="Collective git repository [default: %(default)s]",
-        default=osp.join(tempfile.gettempdir(), "hpc-cc-projects"),
+        default=os.path.join(tempfile.gettempdir(), "hpc-cc-projects"),
     )
     parser.add_argument(
         "-p", "--project", nargs="+", help="Filter repositories by CMake project name"
