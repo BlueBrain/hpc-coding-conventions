@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import contextlib
 import filecmp
@@ -84,9 +84,6 @@ def build_action_func(args):
 
 def main(**kwargs):
     args = parse_cli(**kwargs)
-
-    if not args.executable:
-        args.executable = "cmake-format"
 
     excludes_re = [re.compile(r) for r in args.excludes_re]
     files_re = [re.compile(r) for r in args.files_re]
