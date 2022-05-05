@@ -160,7 +160,12 @@ endfunction(cpp_cc_enable_cmake_formatting)
 
 function(cpp_cc_enable_static_analysis)
   find_package(PythonInterp 3.5 REQUIRED)
-  find_package(ClangTidy 7 EXACT REQUIRED)
+  set(ClangTidy_MIN_VERSION 7)
+  if(NOT ${CODING_CONV_PREFIX}_ClangTidy_REQUIRED_VERSION)
+    set(${CODING_CONV_PREFIX}_ClangTidy_REQUIRED_VERSION ${ClangTidy_MIN_VERSION})
+  endif()
+
+  find_package(ClangTidy ${${CODING_CONV_PREFIX}_ClangTidy_REQUIRED_VERSION} REQUIRED)
   set(${CODING_CONV_PREFIX}_ClangTidy_OPTIONS
       -extra-arg=-Wno-unknown-warning-option
       CACHE STRING "clang-tidy command options")

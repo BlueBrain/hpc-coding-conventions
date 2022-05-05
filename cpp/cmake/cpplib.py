@@ -235,9 +235,10 @@ class Tool:
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                               check=True, encoding="utf-8")
         output = proc.stdout.strip()
-        match = re.search(".*([0-9]+\\.[0-9]+\\.[0-9]+).*", output)
+        match = re.search("([0-9]+\\.[0-9]+\\.[0-9]+)", output)
         if match:
-            return match.group(1)
+            ver = match.group(1)
+            return ver
         raise RuntimeError(f"Could not extract {self.name} version from output: '{output}'")
 
     @cached_property
@@ -271,7 +272,7 @@ class Tool:
         if not is_file_tracked(self.config, git=git, cwd=source_dir) or not os.path.exists(config):
             custom_config = os.path.join(source_dir, self.custom_config)
             if os.path.exists(custom_config):
-                logging.info(f"Merging custom {self.tool} YAML changes ")
+                logging.info(f"Merging custom {self} YAML changes ")
                 self.config_key("merge_yaml_func")(self.bbp_config, custom_config, config)
             else:
                 bbp_config = self.bbp_config
