@@ -89,12 +89,14 @@ def main(**kwargs):
     files_re = [re.compile(r) for r in args.files_re]
     with build_action_func(args) as action:
         succeeded = True
-        for cmake_file in collect_files(args.source_dir, make_file_filter(excludes_re, files_re)):
+        for cmake_file in collect_files(
+            args.source_dir, make_file_filter(excludes_re, files_re)
+        ):
             succeeded &= action(cmake_file, args.executable, args.options)
     return succeeded
 
 
 if __name__ == "__main__":
-    level = logging.INFO if 'VERBOSE' in os.environ else logging.WARN
+    level = logging.INFO if "VERBOSE" in os.environ else logging.WARN
     logging.basicConfig(level=level, format="%(message)s")
     sys.exit(0 if main() else 1)

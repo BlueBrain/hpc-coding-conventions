@@ -4,3 +4,6 @@ Pipfile.lock
 __pycache__/
 *.py[cod]
 *$py.class
+
+build
+.cmake-format.yaml

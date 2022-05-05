@@ -25,9 +25,7 @@ def do_check(executable, compile_commands_file, options, cpp_file):
 
 
 def main(**kwargs):
-    parser_args = [
-        ("-p", dict(dest="compile_commands_file", type=str))
-    ]
+    parser_args = [("-p", dict(dest="compile_commands_file", type=str))]
     args = parse_cli(parser_args=parser_args, choices=["check"], **kwargs)
 
     excludes_re = [re.compile(r) for r in args.excludes_re]
@@ -37,8 +35,8 @@ def main(**kwargs):
     workers = multiprocessing.Pool(processes=max(1, multiprocessing.cpu_count() - 2))
     if not os.path.exists(args.compile_commands_file):
         msg = (
-            'Could not find file %s. Please make sure '
-            + 'CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on.'
+            "Could not find file %s. Please make sure "
+            + "CMAKE_EXPORT_COMPILE_COMMANDS CMake variable is on."
         )
         msg = msg % args.compile_commands_file
         logging.error(msg)
@@ -58,6 +56,6 @@ def main(**kwargs):
 
 
 if __name__ == "__main__":
-    level = logging.INFO if 'VERBOSE' in os.environ else logging.WARN
+    level = logging.INFO if "VERBOSE" in os.environ else logging.WARN
     logging.basicConfig(level=level, format="%(message)s")
     sys.exit(0 if main() else 1)

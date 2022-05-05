@@ -31,6 +31,7 @@ def source_dir(git="git"):
     Alternative to "git rev-parse --show-superproject-working-tree"
     but this solution requires git 2.13 or higher
     """
+
     def git_rev_parse(*args, **kwargs):
         cmd = list((git, "rev-parse") + args)
         log_command(cmd)
@@ -73,20 +74,23 @@ def is_file_tracked(file, git="git", cwd=None):
     Returns:
         true if the given file is tracked by a git repository, false otherwise
     """
-    ret = subprocess.call([git, "ls-files", "--error-unmatch", file],
-                          stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL,
-                          cwd=cwd)
+    ret = subprocess.call(
+        [git, "ls-files", "--error-unmatch", file],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        cwd=cwd,
+    )
     return ret == 0
 
 
 def do_merge_yaml(*files, **kwargs):
-    """Merge YAML files. The last argument is the destination file
-    """
+    """Merge YAML files. The last argument is the destination file"""
     try:
         import yaml
     except ImportError:
-        logging.error("Cannot find Python yaml module, which is needed to merge YAML files.")
+        logging.error(
+            "Cannot find Python yaml module, which is needed to merge YAML files."
+        )
         sys.exit(1)
 
     succeeded = True
@@ -103,8 +107,11 @@ def do_merge_yaml(*files, **kwargs):
             with open(file) as istr:
                 content = yaml.safe_load(istr)
                 if not isinstance(content, dict):
-                    logging.error("while reading YAML file %s: expected dictionary but got %s",
-                                  file, type(content).__name__)
+                    logging.error(
+                        "while reading YAML file %s: expected dictionary but got %s",
+                        file,
+                        type(content).__name__,
+                    )
                     succeeded = False
                     continue
 
@@ -116,7 +123,7 @@ def do_merge_yaml(*files, **kwargs):
                         data[key] = value
         logging.info("writing file %s", out)
         if succeeded:
-            with open(out, 'w') as ostr:
+            with open(out, "w") as ostr:
                 yaml.dump(data, ostr, default_flow_style=False)
     else:
         logging.info("file %s is up to date, nothing to do.", out)
@@ -137,7 +144,8 @@ def merge_clang_tidy_checks(orig_checks, new_checks):
             orig_checks = list(
                 check for check in orig_checks if not fnmatch(check, name)
             )
-            # remove check when check=-google-runtime-references to_=-google-* (simplification)
+            # remove check when check=-google-runtime-references
+            # to_=-google-* (simplification)
             orig_checks = list(
                 check for check in orig_checks if not fnmatch(check, new_check)
             )
@@ -146,7 +154,8 @@ def merge_clang_tidy_checks(orig_checks, new_checks):
             orig_checks = list(
                 check for check in orig_checks if not fnmatch(check, "-" + new_check)
             )
-            # remove check when check=google-runtime-references to_=google-* (simplification)
+            # remove check when check=google-runtime-references
+            # to_=google-* (simplification)
             orig_checks = list(
                 check for check in orig_checks if not fnmatch(check, new_check)
             )
@@ -163,26 +172,26 @@ class Tool:
     """Wrapper class for the tools supported by this project
     i.e clang-format cmake-format, and clang-tidy
     """
+
     def __init__(self, name_or_path):
         """
         Args:
-            name_or_path: clang-format, clang-format-13, or /path/to/llvm/bin/clang-format-13
+            name_or_path: clang-format, clang-format-13,
+            or /path/to/llvm/bin/clang-format-13
         """
         self._name_or_path = name_or_path
 
     DEFAULT_TOOL_CONFIG = dict(
         config=".{self}",
         custom_config="{self.config}.changes",
-        merge_yaml_func=do_merge_yaml
+        merge_yaml_func=do_merge_yaml,
     )
     TOOL_CONFIG = {
         "cmake-format": dict(
             config=".{self}.yaml",
             custom_config=".{self}.changes.yaml",
         ),
-        "clang-tidy": dict(
-            merge_yaml_func=do_merge_clang_tidy_yaml
-        )
+        "clang-tidy": dict(merge_yaml_func=do_merge_clang_tidy_yaml),
     }
 
     def config_key(self, key):
@@ -232,20 +241,28 @@ class Tool:
         """
         cmd = [self._name_or_path, "--version"]
         log_command(cmd)
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                              check=True, encoding="utf-8")
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=True,
+            encoding="utf-8",
+        )
         output = proc.stdout.strip()
         match = re.search("([0-9]+\\.[0-9]+\\.[0-9]+)", output)
         if match:
             ver = match.group(1)
             return ver
-        raise RuntimeError(f"Could not extract {self.name} version from output: '{output}'")
+        raise RuntimeError(
+            f"Could not extract {self.name} version from output: '{output}'"
+        )
 
     @cached_property
     def bbp_config(self):
         """
         Returns:
-            absolute path to the proper config file in the hpc-coding-conventions project
+            absolute path to the proper config file
+            in the hpc-coding-conventions project
         """
         version = self.version
         major_ver, _ = self.version.split(".", 1)
@@ -259,7 +276,9 @@ class Tool:
         candidate = os.path.join(config_lib_dir, self.config[1:])
         if os.path.exists(candidate):
             return candidate
-        raise RuntimeError(f"Could not find appropriate config file for {self} {version}")
+        raise RuntimeError(
+            f"Could not find appropriate config file for {self} {version}"
+        )
 
     def setup_config(self, source_dir, git="git"):
         """
@@ -269,19 +288,29 @@ class Tool:
             source_dir: project top directory where the config file should be written
         """
         config = os.path.join(source_dir, self.config)
-        if not is_file_tracked(self.config, git=git, cwd=source_dir) or not os.path.exists(config):
+        if not is_file_tracked(
+            self.config, git=git, cwd=source_dir
+        ) or not os.path.exists(config):
             custom_config = os.path.join(source_dir, self.custom_config)
             if os.path.exists(custom_config):
                 logging.info(f"Merging custom {self} YAML changes ")
-                self.config_key("merge_yaml_func")(self.bbp_config, custom_config, config)
+                self.config_key("merge_yaml_func")(
+                    self.bbp_config, custom_config, config
+                )
             else:
                 bbp_config = self.bbp_config
                 bbp_config_base = os.path.basename(bbp_config)
-                if not os.path.exists(config) or os.path.getmtime(config) < os.path.getmtime(bbp_config):
-                    logging.info(f"Copying BBP config {bbp_config_base} to {source_dir}")
+                if not os.path.exists(config) or os.path.getmtime(
+                    config
+                ) < os.path.getmtime(bbp_config):
+                    logging.info(
+                        f"Copying BBP config {bbp_config_base} to {source_dir}"
+                    )
                     shutil.copy(bbp_config, config)
                 else:
-                    logging.info(f"{self} config is up to date with BBP {bbp_config_base} config.")
+                    logging.info(
+                        f"{self} config is up to date with BBP {bbp_config_base} config"
+                    )
         else:
             logging.info(f"{self} config is tracked by git, nothing to do.")
 
@@ -317,13 +346,15 @@ def collect_files(source_dir, filter_file):
 
     cmd = ["git", "ls-tree", "-r", "-z", "--name-only", "--full-name", "HEAD"]
     log_command(cmd)
-    files = subprocess.check_output(cmd, cwd=source_dir).decode('utf-8').split('\0')
+    files = subprocess.check_output(cmd, cwd=source_dir).decode("utf-8").split("\0")
     files = [x for x in files if not filter_file(x)]
     files = [os.path.join(source_dir, x) for x in files]
     return files
 
 
-def parse_cli(choices=None, description=None, parser_args=None, args=None, executable=None):
+def parse_cli(
+    choices=None, description=None, parser_args=None, args=None, executable=None
+):
     """Common CLI parser for all tool wrapper scripts bbp-{tool}.py"""
     if executable is None:
         # deduce tool name from the Python script name i.e
@@ -339,9 +370,14 @@ def parse_cli(choices=None, description=None, parser_args=None, args=None, execu
         description=description or "Wrapper for checker utility"
     )
     parser.add_argument(
-        "-S", dest="source_dir", metavar="PATH",
-        help="Path to CMake source directory, default is the parent repository root")
-    parser.add_argument("--executable", help="Path to executable to run", default=executable)
+        "-S",
+        dest="source_dir",
+        metavar="PATH",
+        help="Path to CMake source directory, default is the parent repository root",
+    )
+    parser.add_argument(
+        "--executable", help="Path to executable to run", default=executable
+    )
     parser.add_argument(
         "--excludes-re",
         nargs="*",
@@ -349,7 +385,10 @@ def parse_cli(choices=None, description=None, parser_args=None, args=None, execu
         help="list of regular expressions of files to exclude",
     )
     parser.add_argument(
-        "--files-re", nargs="*", default=[], help="List of regular expressions of files to include"
+        "--files-re",
+        nargs="*",
+        default=[],
+        help="List of regular expressions of files to include",
     )
     parser.add_argument(
         "--files-by-suffix", nargs="*", help="List of suffixes of the files to include"
@@ -360,7 +399,9 @@ def parse_cli(choices=None, description=None, parser_args=None, args=None, execu
         help="Unescape make-escaped regular-expression arguments",
     )
     parser.add_argument(
-        "--git-executable", default='git', help="Path to git executable [default is %(default)s]"
+        "--git-executable",
+        default="git",
+        help="Path to git executable [default is %(default)s]",
     )
 
     for name, kwargs in parser_args or []:
@@ -373,9 +414,9 @@ def parse_cli(choices=None, description=None, parser_args=None, args=None, execu
     if result.make_unescape_re:
 
         def make_unescape_re(pattern):
-            if pattern.endswith('$$'):
+            if pattern.endswith("$$"):
                 pattern = pattern[:-1]
-            pattern = pattern.replace('\\\\', '\\')
+            pattern = pattern.replace("\\\\", "\\")
             return pattern
 
         def make_unescape_res(patterns):
@@ -398,22 +439,22 @@ def parse_cli(choices=None, description=None, parser_args=None, args=None, execu
 
 def main(args=None):
     parser = argparse.ArgumentParser(description="Utility program")
-    subparsers = parser.add_subparsers(help='sub-command help')
-    merge_yaml = subparsers.add_parser('merge-yaml', help='Merge yaml files')
-    merge_yaml.add_argument("files", nargs='+', help="input files then output file")
+    subparsers = parser.add_subparsers(help="sub-command help")
+    merge_yaml = subparsers.add_parser("merge-yaml", help="Merge yaml files")
+    merge_yaml.add_argument("files", nargs="+", help="input files then output file")
     merge_yaml.set_defaults(func=do_merge_yaml)
 
     merge_yaml = subparsers.add_parser(
-        'merge-clang-tidy-config', help='Merge ClangTidy configuration files'
+        "merge-clang-tidy-config", help="Merge ClangTidy configuration files"
     )
-    merge_yaml.add_argument("files", nargs='+', help="input files then output file")
+    merge_yaml.add_argument("files", nargs="+", help="input files then output file")
     merge_yaml.set_defaults(func=do_merge_clang_tidy_yaml)
 
     result = parser.parse_args(args=args)
     return result.func(*result.files)
 
 
-if __name__ == '__main__':
-    level = logging.INFO if 'VERBOSE' in os.environ else logging.WARN
+if __name__ == "__main__":
+    level = logging.INFO if "VERBOSE" in os.environ else logging.WARN
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
     sys.exit(0 if main() else 1)

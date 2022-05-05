@@ -56,12 +56,8 @@ function(cpp_cc_disable_precommit)
 endfunction(cpp_cc_disable_precommit)
 
 function(cpp_cc_setup_tool_config name path)
-  execute_process(
-      COMMAND
-        ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-${name}.py
-        --executable ${path} config
-      RESULT_VARIABLE ${name}_config
-  )
+  execute_process(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-${name}.py
+                          --executable ${path} config RESULT_VARIABLE ${name}_config)
   if(NOT ${name}_config EQUAL 0)
     message(SEND_ERROR "Could not set up ${name} configuration")
   endif()
@@ -97,18 +93,17 @@ function(cpp_cc_enable_clang_formatting)
 
   cpp_cc_setup_tool_config(clang-format ${ClangFormat_EXECUTABLE})
   set(clang_format_command_prefix
-      ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py"
-      -S "${PROJECT_SOURCE_DIR}" "--executable=${ClangFormat_EXECUTABLE}"
-      --files-re ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE}
-      --excludes-re ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE} --)
+      ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-format.py" -S
+      "${PROJECT_SOURCE_DIR}" "--executable=${ClangFormat_EXECUTABLE}" --files-re
+      ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE} --excludes-re
+      ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE} --)
   add_custom_target(clang-format ${clang_format_command_prefix} format --
                                  "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   add_custom_target(check-clang-format ${clang_format_command_prefix} check --
                                        "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
-    add_test(NAME ClangFormat
-             COMMAND ${clang_format_command_prefix} --make-unescape-re check --
-                     "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+    add_test(NAME ClangFormat COMMAND ${clang_format_command_prefix} --make-unescape-re check --
+                                      "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   endif()
   if(${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES)
     add_dependencies(clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
@@ -143,17 +138,16 @@ function(cpp_cc_enable_cmake_formatting)
   cpp_cc_setup_tool_config(cmake-format ${CMakeFormat_EXECUTABLE})
   set(cmake_format_command_prefix
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-cmake-format.py" -S
-      "${PROJECT_SOURCE_DIR}" "--executable=${CMakeFormat_EXECUTABLE}"
-      --files-re ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE} --excludes-re
+      "${PROJECT_SOURCE_DIR}" "--executable=${CMakeFormat_EXECUTABLE}" --files-re
+      ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE} --excludes-re
       ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE} --)
   add_custom_target(cmake-format ${cmake_format_command_prefix} format --
                                  "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
   add_custom_target(check-cmake-format ${cmake_format_command_prefix} check --
                                        ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
-    add_test(NAME CMakeFormat
-             COMMAND ${cmake_format_command_prefix} --make-unescape-re check --
-                     ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
+    add_test(NAME CMakeFormat COMMAND ${cmake_format_command_prefix} --make-unescape-re check --
+                                      ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   endif()
 
 endfunction(cpp_cc_enable_cmake_formatting)
@@ -184,8 +178,8 @@ function(cpp_cc_enable_static_analysis)
   cpp_cc_setup_tool_config(clang-tidy ${ClangTidy_EXECUTABLE})
   set(clang_tidy_command_prefix
       ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/bbp-clang-tidy.py" -S
-      "${PROJECT_SOURCE_DIR}" "--executable=${ClangTidy_EXECUTABLE}"
-      --files-re "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}" --excludes-re
+      "${PROJECT_SOURCE_DIR}" "--executable=${ClangTidy_EXECUTABLE}" --files-re
+      "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}" --excludes-re
       ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE} -p ${PROJECT_BINARY_DIR}/compile_commands.json
       check)
   add_custom_target(clang-tidy ${clang_tidy_command_prefix} --

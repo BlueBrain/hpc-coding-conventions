@@ -14,16 +14,14 @@ find_program(CMakeFormat_EXECUTABLE cmake-format DOC "Path to cmake formatter ex
 mark_as_advanced(CMakeFormat_EXECUTABLE)
 
 if(CMakeFormat_EXECUTABLE)
-  execute_process(COMMAND ${CMakeFormat_EXECUTABLE} --version
-                  OUTPUT_VARIABLE CMakeFormat_VERSION
-                  ERROR_VARIABLE CMakeFormat_VERSION
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND ${CMakeFormat_EXECUTABLE} --version
+    OUTPUT_VARIABLE CMakeFormat_VERSION
+    ERROR_VARIABLE CMakeFormat_VERSION
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
 
   # Extract version components
-  string(REPLACE "."
-                 ";"
-                 list_versions
-                 "${CMakeFormat_VERSION}")
+  string(REPLACE "." ";" list_versions "${CMakeFormat_VERSION}")
   list(GET list_versions 0 CMakeFormat_VERSION_MAJOR)
   list(GET list_versions 1 CMakeFormat_VERSION_MINOR)
   list(GET list_versions 2 CMakeFormat_VERSION_PATCH)
@@ -32,10 +30,8 @@ if(CMakeFormat_EXECUTABLE)
 endif()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(CMakeFormat
-                                  FOUND_VAR
-                                  CMakeFormat_FOUND
-                                  REQUIRED_VARS
-                                  CMakeFormat_EXECUTABLE
-                                  VERSION_VAR
-                                  CMakeFormat_VERSION)
+find_package_handle_standard_args(
+  CMakeFormat
+  FOUND_VAR CMakeFormat_FOUND
+  REQUIRED_VARS CMakeFormat_EXECUTABLE
+  VERSION_VAR CMakeFormat_VERSION)
