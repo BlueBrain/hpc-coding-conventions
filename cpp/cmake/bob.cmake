@@ -2,17 +2,25 @@ function(bob_always_full_rpath)
   # CMake RPATH "always full" configuration, see:
   # https://cmake.org/Wiki/CMake_RPATH_handling#Always_full_RPATH use, i.e. don't skip the full
   # RPATH for the build tree
-  set(CMAKE_SKIP_BUILD_RPATH False PARENT_SCOPE)
+  set(CMAKE_SKIP_BUILD_RPATH
+      False
+      PARENT_SCOPE)
   # when building, don't use the install RPATH already (but later on when installing)
-  set(CMAKE_BUILD_WITH_INSTALL_RPATH False PARENT_SCOPE)
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH
+      False
+      PARENT_SCOPE)
   # the RPATH to be used when installing, but only if it's not a system directory
   list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
   if("${isSystemDir}" STREQUAL "-1")
-    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" PARENT_SCOPE)
+    set(CMAKE_INSTALL_RPATH
+        "${CMAKE_INSTALL_PREFIX}/lib"
+        PARENT_SCOPE)
   endif()
   # add the automatically determined parts of the RPATH which point to directories outside the build
   # tree to the install RPATH
-  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH True PARENT_SCOPE)
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH
+      True
+      PARENT_SCOPE)
 endfunction(bob_always_full_rpath)
 
 function(bob_cmake_arg2 var type default)
@@ -24,8 +32,7 @@ function(bob_cmake_arg2 var type default)
     endif()
     set(${CODING_CONV_PREFIX}_CMAKE_ARGS
         "${${CODING_CONV_PREFIX}_CMAKE_ARGS}${sep}-D${var}:${type}=\"${${var}}\""
-        CACHE STRING "CMake arguments that would replicate this configuration"
-        FORCE)
+        CACHE STRING "CMake arguments that would replicate this configuration" FORCE)
   endif()
 endfunction()
 
@@ -40,14 +47,16 @@ function(bob_option var desc default)
 endfunction()
 
 function(bob_input var default type desc)
-  set(${var} "${default}" CACHE ${type} "${desc}")
+  set(${var}
+      "${default}"
+      CACHE ${type} "${desc}")
   bob_cmake_arg(${var} ${type} "${default}")
 endfunction()
 
 macro(bob_begin_package)
-  set(${CODING_CONV_PREFIX}_CMAKE_ARGS ""
-      CACHE STRING "CMake arguments that would replicate this configuration"
-      FORCE)
+  set(${CODING_CONV_PREFIX}_CMAKE_ARGS
+      ""
+      CACHE STRING "CMake arguments that would replicate this configuration" FORCE)
   message(STATUS "CMAKE_VERSION: ${CMAKE_VERSION}")
   if(${CODING_CONV_PREFIX}_VERSION)
     message(STATUS "${CODING_CONV_PREFIX}_VERSION: ${${CODING_CONV_PREFIX}_VERSION}")
@@ -56,7 +65,9 @@ macro(bob_begin_package)
   bob_cmake_arg(USE_XSDK_DEFAULTS BOOL OFF)
   if(NOT MEMORYCHECK_COMMAND)
     # try to force BUILD_TESTING to be OFF by default if memory check is not activated
-    set(BUILD_TESTING OFF CACHE BOOL "Build and run tests")
+    set(BUILD_TESTING
+        OFF
+        CACHE BOOL "Build and run tests")
   endif()
   include(CTest)
   enable_testing()
@@ -81,35 +92,40 @@ macro(bob_begin_package)
 endmacro(bob_begin_package)
 
 function(bob_get_commit)
-  execute_process(COMMAND git rev-parse HEAD
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                  RESULT_VARIABLE NO_SHA1
-                  OUTPUT_VARIABLE SHA1
-                  ERROR_VARIABLE SHA1_ERROR
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND git rev-parse HEAD
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    RESULT_VARIABLE NO_SHA1
+    OUTPUT_VARIABLE SHA1
+    ERROR_VARIABLE SHA1_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NO_SHA1)
     message(WARNING "bob_get_commit: no Git hash!\n" ${SHA1_ERROR})
   else()
-    set(${CODING_CONV_PREFIX}_COMMIT "${SHA1}" PARENT_SCOPE)
+    set(${CODING_CONV_PREFIX}_COMMIT
+        "${SHA1}"
+        PARENT_SCOPE)
   endif()
 endfunction(bob_get_commit)
 
 function(bob_get_semver)
-  execute_process(COMMAND git describe --exact-match HEAD
-                  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                  RESULT_VARIABLE NOT_TAG
-                  OUTPUT_VARIABLE TAG_NAME
-                  ERROR_VARIABLE TAG_ERROR
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  execute_process(
+    COMMAND git describe --exact-match HEAD
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    RESULT_VARIABLE NOT_TAG
+    OUTPUT_VARIABLE TAG_NAME
+    ERROR_VARIABLE TAG_ERROR
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
   if(NOT_TAG)
     if(${CODING_CONV_PREFIX}_VERSION)
       set(SEMVER ${${CODING_CONV_PREFIX}_VERSION})
-      execute_process(COMMAND git log -1 --format=%h
-                      WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-                      RESULT_VARIABLE NO_SHA1
-                      OUTPUT_VARIABLE SHORT_SHA1
-                      ERROR_VARIABLE SHA1_ERROR
-                      OUTPUT_STRIP_TRAILING_WHITESPACE)
+      execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        RESULT_VARIABLE NO_SHA1
+        OUTPUT_VARIABLE SHORT_SHA1
+        ERROR_VARIABLE SHA1_ERROR
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
       if(NO_SHA1)
         message(WARNING "bob_get_semver no Git hash!\n" ${SHA1_ERROR})
       else()
@@ -121,15 +137,13 @@ function(bob_get_semver)
     endif()
   else()
     if(TAG_NAME MATCHES "^v([0-9]+[.])?([0-9]+[.])?([0-9]+)$")
-      string(SUBSTRING "${TAG_NAME}"
-                       1
-                       -1
-                       SEMVER)
-      if(${CODING_CONV_PREFIX}_VERSION AND (NOT (SEMVER VERSION_EQUAL ${CODING_CONV_PREFIX}_VERSION)))
+      string(SUBSTRING "${TAG_NAME}" 1 -1 SEMVER)
+      if(${CODING_CONV_PREFIX}_VERSION AND (NOT (SEMVER VERSION_EQUAL ${CODING_CONV_PREFIX}_VERSION)
+                                           ))
         message(
           FATAL_ERROR
             "bob_get_semver: tag is ${TAG_NAME} but ${CODING_CONV_PREFIX}_VERSION=${${CODING_CONV_PREFIX}_VERSION} !"
-          )
+        )
       endif()
     else()
       if(${CODING_CONV_PREFIX}_VERSION)
@@ -137,7 +151,8 @@ function(bob_get_semver)
       else()
         message(
           FATAL_ERROR
-            "bob_get_semver needs either ${CODING_CONV_PREFIX}_VERSION or a Git tag of the form v1.2.3")
+            "bob_get_semver needs either ${CODING_CONV_PREFIX}_VERSION or a Git tag of the form v1.2.3"
+        )
       endif()
     endif()
   endif()
@@ -151,7 +166,9 @@ function(bob_get_semver)
       endif()
     endforeach()
   endif()
-  set(${CODING_CONV_PREFIX}_SEMVER "${SEMVER}" PARENT_SCOPE)
+  set(${CODING_CONV_PREFIX}_SEMVER
+      "${SEMVER}"
+      PARENT_SCOPE)
   message(STATUS "${CODING_CONV_PREFIX}_SEMVER = ${SEMVER}")
 endfunction(bob_get_semver)
 
@@ -208,8 +225,7 @@ function(bob_cxx_pedantic_flags)
       set(flags "${flags} -Wrestrict")
     endif()
     if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "8.0")
-      # set(flags "${flags} -Wclass-memaccess")
-      # set(flags "${flags} -Wstringop-truncation")
+      # set(flags "${flags} -Wclass-memaccess") set(flags "${flags} -Wstringop-truncation")
     endif()
   elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
 
@@ -218,15 +234,21 @@ function(bob_cxx_pedantic_flags)
   endif()
 
   if(ARGC EQUAL 0)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flags}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} ${flags}"
+        PARENT_SCOPE)
   else()
-    set(${ARGV0} "${${ARGV0}} ${flags}" PARENT_SCOPE)
+    set(${ARGV0}
+        "${${ARGV0}} ${flags}"
+        PARENT_SCOPE)
   endif()
 endfunction(bob_cxx_pedantic_flags)
 
 function(bob_begin_cxx_flags)
   if(${CODING_CONV_PREFIX}_NORMAL_CXX_FLAGS)
-    set(BOB_CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+    set(BOB_CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS}"
+        PARENT_SCOPE)
     bob_cmake_arg2(CMAKE_CXX_FLAGS STRING "")
   else()
     string(STRIP "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE)
@@ -238,7 +260,9 @@ function(bob_begin_cxx_flags)
     option(${CODING_CONV_PREFIX}_CXX_WARNINGS "Compile C++ with warnings" ON)
     bob_cmake_arg(${CODING_CONV_PREFIX}_CXX_OPTIMIZE BOOL ON)
     bob_cmake_arg(${CODING_CONV_PREFIX}_CXX_SYMBOLS BOOL ON)
-    set(${CODING_CONV_PREFIX}_ARCH "" CACHE STRING "Argument to -march or -arch")
+    set(${CODING_CONV_PREFIX}_ARCH
+        ""
+        CACHE STRING "Argument to -march or -arch")
     bob_cmake_arg(${CODING_CONV_PREFIX}_ARCH STRING "native")
     # CDash's simple output parser interprets the variable name WARNINGS as a warning...
     message(STATUS "${CODING_CONV_PREFIX}_CXX_W**NINGS: ${${CODING_CONV_PREFIX}_CXX_WARNINGS}")
@@ -263,20 +287,29 @@ function(bob_begin_cxx_flags)
     if(${CODING_CONV_PREFIX}_CXX_WARNINGS)
       bob_cxx_pedantic_flags(FLAGS)
     endif()
-    set(BOB_CMAKE_CXX_FLAGS "${FLAGS}" PARENT_SCOPE)
+    set(BOB_CMAKE_CXX_FLAGS
+        "${FLAGS}"
+        PARENT_SCOPE)
   endif()
 endfunction(bob_begin_cxx_flags)
 
 macro(bob_cxx_standard_flags standard)
   if(NOT standard VERSION_EQUAL 98 AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     if(${CODING_CONV_PREFIX}_CXX_WARNINGS)
-      set(BOB_CMAKE_CXX_FLAGS "${BOB_CMAKE_CXX_FLAGS} -Wno-c++98-compat-pedantic -Wno-c++98-compat"
+      set(BOB_CMAKE_CXX_FLAGS
+          "${BOB_CMAKE_CXX_FLAGS} -Wno-c++98-compat-pedantic -Wno-c++98-compat"
           PARENT_SCOPE)
     endif()
   endif()
-  set(CMAKE_CXX_STANDARD "${standard}" PARENT_SCOPE)
-  set(CXX_STANDARD_REQUIRED "TRUE" PARENT_SCOPE)
-  set(CMAKE_CXX_EXTENSIONS "NO" PARENT_SCOPE)
+  set(CMAKE_CXX_STANDARD
+      "${standard}"
+      PARENT_SCOPE)
+  set(CXX_STANDARD_REQUIRED
+      "TRUE"
+      PARENT_SCOPE)
+  set(CMAKE_CXX_EXTENSIONS
+      "NO"
+      PARENT_SCOPE)
 endmacro(bob_cxx_standard_flags standard)
 
 function(bob_cxx11_flags)
@@ -298,19 +331,28 @@ endfunction(bob_cxx20_flags)
 function(bob_end_cxx_flags)
   if(${CODING_CONV_PREFIX}_NORMAL_CXX_FLAGS)
     message(STATUS "CMAKE_CXX_FLAGS: ${BOB_CMAKE_CXX_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${BOB_CMAKE_CXX_FLAGS}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS
+        "${BOB_CMAKE_CXX_FLAGS}"
+        PARENT_SCOPE)
   else()
-    set(${CODING_CONV_PREFIX}_CXX_FLAGS "" CACHE STRING "Override all C++ compiler flags")
+    set(${CODING_CONV_PREFIX}_CXX_FLAGS
+        ""
+        CACHE STRING "Override all C++ compiler flags")
     bob_cmake_arg(${CODING_CONV_PREFIX}_CXX_FLAGS STRING "")
-    set(${CODING_CONV_PREFIX}_EXTRA_CXX_FLAGS "" CACHE STRING "Extra C++ compiler flags")
+    set(${CODING_CONV_PREFIX}_EXTRA_CXX_FLAGS
+        ""
+        CACHE STRING "Extra C++ compiler flags")
     bob_cmake_arg(${CODING_CONV_PREFIX}_EXTRA_CXX_FLAGS STRING "")
     if(${CODING_CONV_PREFIX}_CXX_FLAGS)
       set(FLAGS "${${CODING_CONV_PREFIX}_CXX_FLAGS}")
     else()
-      set(FLAGS "${CMAKE_CXX_FLAGS} ${BOB_CMAKE_CXX_FLAGS} ${${CODING_CONV_PREFIX}_EXTRA_CXX_FLAGS}")
+      set(FLAGS
+          "${CMAKE_CXX_FLAGS} ${BOB_CMAKE_CXX_FLAGS} ${${CODING_CONV_PREFIX}_EXTRA_CXX_FLAGS}")
     endif()
     message(STATUS "CMAKE_CXX_FLAGS: ${FLAGS}")
-    set(CMAKE_CXX_FLAGS "${FLAGS}" PARENT_SCOPE)
+    set(CMAKE_CXX_FLAGS
+        "${FLAGS}"
+        PARENT_SCOPE)
   endif()
 endfunction(bob_end_cxx_flags)
 
@@ -334,9 +376,13 @@ macro(bob_add_dependency)
     bob_cmake_arg(TPL_ENABLE_${ARG_NAME} BOOL "${${CODING_CONV_PREFIX}_USE_${ARG_NAME}_DEFAULT}")
     set(${CODING_CONV_PREFIX}_USE_${ARG_NAME} "${TPL_ENABLE_${ARG_NAME}}")
     if(TPL_ENABLE_${ARG_NAME})
-      set(TPL_${ARG_NAME}_LIBRARIES "" CACHE STRING "${ARG_NAME} libraries")
+      set(TPL_${ARG_NAME}_LIBRARIES
+          ""
+          CACHE STRING "${ARG_NAME} libraries")
       bob_cmake_arg(TPL_${ARG_NAME}_LIBRARIES STRING "")
-      set(TPL_${ARG_NAME}_INCLUDE_DIRS "" CACHE STRING "${ARG_NAME} include directories")
+      set(TPL_${ARG_NAME}_INCLUDE_DIRS
+          ""
+          CACHE STRING "${ARG_NAME} include directories")
       bob_cmake_arg(TPL_${ARG_NAME}_INCLUDE_DIRS STRING "")
       set(tgt "${CODING_CONV_PREFIX}-${ARG_NAME}")
       add_library(${tgt} INTERFACE)
@@ -346,9 +392,11 @@ macro(bob_add_dependency)
   else()
     option(${CODING_CONV_PREFIX}_USE_${ARG_NAME} "Whether to use ${ARG_NAME}"
            ${${CODING_CONV_PREFIX}_USE_${ARG_NAME}_DEFAULT})
-    bob_cmake_arg(${CODING_CONV_PREFIX}_USE_${ARG_NAME} BOOL "${${CODING_CONV_PREFIX}_USE_${ARG_NAME}_DEFAULT}")
+    bob_cmake_arg(${CODING_CONV_PREFIX}_USE_${ARG_NAME} BOOL
+                  "${${CODING_CONV_PREFIX}_USE_${ARG_NAME}_DEFAULT}")
     if(${CODING_CONV_PREFIX}_USE_${ARG_NAME})
-      set(${ARG_NAME}_PREFIX "${${ARG_NAME}_PREFIX_DEFAULT}"
+      set(${ARG_NAME}_PREFIX
+          "${${ARG_NAME}_PREFIX_DEFAULT}"
           CACHE PATH "${ARG_NAME} install directory")
       bob_cmake_arg(${ARG_NAME}_PREFIX PATH "${${ARG_NAME}_PREFIX_DEFAULT}")
       if(${ARG_NAME}_PREFIX)
@@ -358,10 +406,8 @@ macro(bob_add_dependency)
         # allow CMake to search other prefixes if ${ARG_NAME}_PREFIX is not set
         set(ARG_PREFIX)
       endif()
-      set(${ARG_NAME}_find_package_args
-          "${${ARG_NAME}_REQUIRED_VERSION}"
-          ${ARG_COMPONENTS}
-          ${ARG_PREFIX})
+      set(${ARG_NAME}_find_package_args "${${ARG_NAME}_REQUIRED_VERSION}" ${ARG_COMPONENTS}
+                                        ${ARG_PREFIX})
       find_package(${ARG_NAME} ${${ARG_NAME}_find_package_args} REQUIRED)
       if(${ARG_NAME}_CONFIG)
         message(STATUS "${ARG_NAME}_CONFIG: ${${ARG_NAME}_CONFIG}")
@@ -387,11 +433,12 @@ macro(bob_add_dependency)
           endforeach()
         endforeach()
       endif()
-      install(TARGETS ${tgt}
-              EXPORT ${tgt}-target
-              RUNTIME DESTINATION bin
-              ARCHIVE DESTINATION lib
-              RUNTIME DESTINATION lib)
+      install(
+        TARGETS ${tgt}
+        EXPORT ${tgt}-target
+        RUNTIME DESTINATION bin
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION lib)
       install(EXPORT ${tgt}-target DESTINATION lib/cmake/${CODING_CONV_PREFIX})
       set(${CODING_CONV_PREFIX}_EXPORTED_TARGETS ${${CODING_CONV_PREFIX}_EXPORTED_TARGETS} ${tgt})
       if(ARG_PUBLIC)
@@ -436,32 +483,39 @@ function(bob_export_target tgt_name)
     if(USE_XSDK_DEFAULTS)
       install(TARGETS ${tgt_name} DESTINATION lib)
     else()
-      install(TARGETS ${tgt_name} EXPORT ${tgt_name}-target DESTINATION lib)
-      install(EXPORT ${tgt_name}-target
-              NAMESPACE ${CODING_CONV_PREFIX}::
-              DESTINATION lib/cmake/${CODING_CONV_PREFIX})
+      install(
+        TARGETS ${tgt_name}
+        EXPORT ${tgt_name}-target
+        DESTINATION lib)
+      install(
+        EXPORT ${tgt_name}-target
+        NAMESPACE ${CODING_CONV_PREFIX}::
+        DESTINATION lib/cmake/${CODING_CONV_PREFIX})
       set(${CODING_CONV_PREFIX}_EXPORTED_TARGETS
-          ${${CODING_CONV_PREFIX}_EXPORTED_TARGETS}
-          ${tgt_name}
+          ${${CODING_CONV_PREFIX}_EXPORTED_TARGETS} ${tgt_name}
           PARENT_SCOPE)
     endif()
   endif()
 endfunction(bob_export_target)
 
 macro(bob_end_subdir)
-  set(${CODING_CONV_PREFIX}_EXPORTED_TARGETS ${${CODING_CONV_PREFIX}_EXPORTED_TARGETS} PARENT_SCOPE)
-  set(${CODING_CONV_PREFIX}_DEPS ${${CODING_CONV_PREFIX}_DEPS} PARENT_SCOPE)
-  set(${CODING_CONV_PREFIX}_DEP_PREFIXES ${${CODING_CONV_PREFIX}_DEP_PREFIXES} PARENT_SCOPE)
+  set(${CODING_CONV_PREFIX}_EXPORTED_TARGETS
+      ${${CODING_CONV_PREFIX}_EXPORTED_TARGETS}
+      PARENT_SCOPE)
+  set(${CODING_CONV_PREFIX}_DEPS
+      ${${CODING_CONV_PREFIX}_DEPS}
+      PARENT_SCOPE)
+  set(${CODING_CONV_PREFIX}_DEP_PREFIXES
+      ${${CODING_CONV_PREFIX}_DEP_PREFIXES}
+      PARENT_SCOPE)
 endmacro(bob_end_subdir)
 
 function(bob_config_header HEADER_PATH)
   get_filename_component(HEADER_NAME "${HEADER_PATH}" NAME)
-  string(REPLACE "."
-                 "_"
-                 INCLUDE_GUARD
-                 "${HEADER_NAME}")
+  string(REPLACE "." "_" INCLUDE_GUARD "${HEADER_NAME}")
   string(TOUPPER "${INCLUDE_GUARD}" INCLUDE_GUARD)
-  set(HEADER_CONTENT "#ifndef ${INCLUDE_GUARD}
+  set(HEADER_CONTENT
+      "#ifndef ${INCLUDE_GUARD}
 #define ${INCLUDE_GUARD}
 ")
   if(${CODING_CONV_PREFIX}_KEY_BOOLS)
@@ -485,20 +539,15 @@ function(bob_config_header HEADER_PATH)
       string(TOUPPER "${KEY_STRING}" MACRO_NAME)
       set(val "${${KEY_STRING}}")
       # escape escapes
-      string(REPLACE "\\"
-                     "\\\\"
-                     val
-                     "${val}")
+      string(REPLACE "\\" "\\\\" val "${val}")
       # escape quotes
-      string(REPLACE "\""
-                     "\\\""
-                     val
-                     "${val}")
+      string(REPLACE "\"" "\\\"" val "${val}")
       set(HEADER_CONTENT "${HEADER_CONTENT}
 #define ${MACRO_NAME} \"${val}\"")
     endforeach()
   endif()
-  set(HEADER_CONTENT "${HEADER_CONTENT}
+  set(HEADER_CONTENT
+      "${HEADER_CONTENT}
 
 #endif
 ")
@@ -547,12 +596,14 @@ function(bob_get_link_libs tgt var)
     list(REMOVE_DUPLICATES link_libs)
     list(REVERSE link_libs)
   endif()
-  set(${var} ${link_libs} PARENT_SCOPE)
+  set(${var}
+      ${link_libs}
+      PARENT_SCOPE)
 endfunction()
 
 function(bob_install_provenance)
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}_cmake_args.txt
-             "${${CODING_CONV_PREFIX}_CMAKE_ARGS}")
+       "${${CODING_CONV_PREFIX}_CMAKE_ARGS}")
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}_cmake_args.txt
           DESTINATION lib/cmake/${CODING_CONV_PREFIX})
   get_property(languages GLOBAL PROPERTY ENABLED_LANGUAGES)
@@ -560,10 +611,8 @@ function(bob_install_provenance)
   string(TOUPPER "${CMAKE_BUILD_TYPE}" build_type_upper)
   foreach(lang IN LISTS languages)
     file(
-      WRITE
-        ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}_${lang}_compile_line.txt
-        "${CMAKE_${lang}_COMPILER} ${CMAKE_${lang}_FLAGS} ${CMAKE_${lang}_FLAGS_${build_type_upper}}"
-      )
+      WRITE ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}_${lang}_compile_line.txt
+      "${CMAKE_${lang}_COMPILER} ${CMAKE_${lang}_FLAGS} ${CMAKE_${lang}_FLAGS_${build_type_upper}}")
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}_${lang}_compile_line.txt
             DESTINATION lib/cmake/${CODING_CONV_PREFIX})
   endforeach()
@@ -582,9 +631,8 @@ function(bob_end_package)
   include(CMakePackageConfigHelpers)
   set(INCLUDE_INSTALL_DIR include)
   set(LIB_INSTALL_DIR lib)
-  set(
-    LATEST_FIND_DEPENDENCY
-    "#The definition of this macro is really inconvenient prior to CMake
+  set(LATEST_FIND_DEPENDENCY
+      "#The definition of this macro is really inconvenient prior to CMake
 #commit ab358d6a859d8b7e257ed1e06ca000e097a32ef6
 #we'll just copy the latest code into our Config.cmake file
 macro(latest_find_dependency dep)
@@ -623,14 +671,12 @@ macro(latest_find_dependency dep)
 endmacro(latest_find_dependency)")
   set(FIND_DEPS_CONTENT)
   foreach(dep IN LISTS ${CODING_CONV_PREFIX}_DEPS)
-    string(REPLACE ";"
-                   " "
-                   FIND_DEP_ARGS
-                   "${${dep}_find_package_args}")
+    string(REPLACE ";" " " FIND_DEP_ARGS "${${dep}_find_package_args}")
     set(FIND_DEPS_CONTENT "${FIND_DEPS_CONTENT}
 latest_find_dependency(${dep} ${FIND_DEP_ARGS})")
   endforeach()
-  set(CONFIG_CONTENT "set(${CODING_CONV_PREFIX}_VERSION ${${CODING_CONV_PREFIX}_VERSION})
+  set(CONFIG_CONTENT
+      "set(${CODING_CONV_PREFIX}_VERSION ${${CODING_CONV_PREFIX}_VERSION})
 ${LATEST_FIND_DEPENDENCY}
 ${FIND_DEPS_CONTENT}
 set(${CODING_CONV_PREFIX}_EXPORTED_TARGETS \"${${CODING_CONV_PREFIX}_EXPORTED_TARGETS}\")
@@ -642,15 +688,9 @@ endforeach()")
       foreach(KEY_${TYPE} IN LISTS ${CODING_CONV_PREFIX}_KEY_${TYPE}S)
         set(val "${${KEY_${TYPE}}}")
         # escape escapes
-        string(REPLACE "\\"
-                       "\\\\"
-                       val
-                       "${val}")
+        string(REPLACE "\\" "\\\\" val "${val}")
         # escape quotes
-        string(REPLACE "\""
-                       "\\\""
-                       val
-                       "${val}")
+        string(REPLACE "\"" "\\\"" val "${val}")
         set(CONFIG_CONTENT "${CONFIG_CONTENT}
 set(${KEY_${TYPE}} \"${val}\")")
       endforeach()
@@ -662,9 +702,10 @@ set(${KEY_${TYPE}} \"${val}\")")
           DESTINATION lib/cmake/${CODING_CONV_PREFIX})
   if(PROJECT_VERSION)
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}Config.cmake "${CONFIG_CONTENT}")
-    write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}ConfigVersion.cmake
-                                     VERSION ${PROJECT_VERSION}
-                                     COMPATIBILITY SameMajorVersion)
+    write_basic_package_version_file(
+      ${CMAKE_CURRENT_BINARY_DIR}/${CODING_CONV_PREFIX}ConfigVersion.cmake
+      VERSION ${PROJECT_VERSION}
+      COMPATIBILITY SameMajorVersion)
     install(FILES "${PROJECT_BINARY_DIR}/${CODING_CONV_PREFIX}ConfigVersion.cmake"
             DESTINATION lib/cmake/${CODING_CONV_PREFIX})
   endif()

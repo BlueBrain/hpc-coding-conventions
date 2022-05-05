@@ -51,7 +51,7 @@ def main(**kwargs):
     return True
 
 
-if __name__ == '__main__':
-    level = logging.INFO if 'VERBOSE' in os.environ else logging.WARN
+if __name__ == "__main__":
+    level = logging.INFO if "VERBOSE" in os.environ else logging.WARN
     logging.basicConfig(level=level, format="%(message)s")
     sys.exit(0 if main() else 1)

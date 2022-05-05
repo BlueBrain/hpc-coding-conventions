@@ -29,14 +29,13 @@ IGNORED_CONFIG_FILES = {
 
 @contextmanager
 def spack_build_env(spec):
-    """Execute a Python context within a `spack build-env` environment
-    """
+    """Execute a Python context within a `spack build-env` environment"""
     cur_environ = os.environ.copy()
-    cmd = ['spack', 'build-env', spec, 'bash', '--norc', '-c', 'env']
-    output = check_output(cmd).decode('utf-8')
-    VAR_RE = re.compile('^[a-zA-Z][a-zA-Z0-9_]*=.*')
+    cmd = ["spack", "build-env", spec, "bash", "--norc", "-c", "env"]
+    output = check_output(cmd).decode("utf-8")
+    VAR_RE = re.compile("^[a-zA-Z][a-zA-Z0-9_]*=.*")
     environ = {
-        tuple(var.split('=', 1)) for var in output.splitlines() if VAR_RE.match(var)
+        tuple(var.split("=", 1)) for var in output.splitlines() if VAR_RE.match(var)
     }
     try:
         os.environ.clear()
@@ -106,16 +105,16 @@ class Repository(
         kwargs.setdefault("location", "hpc-coding-conventions")
         kwargs.setdefault("default_branch", "master")
         kwargs.setdefault("spack_spec", None)
-        if 'patch' in kwargs:
-            kwargs['patch'] = osp.abspath(kwargs['patch'])
+        if "patch" in kwargs:
+            kwargs["patch"] = osp.abspath(kwargs["patch"])
         else:
-            kwargs['patch'] = None
+            kwargs["patch"] = None
         if "github.com" in url:
             repo = GitHubRepository(**kwargs)
         elif "bbpcode.epfl.ch" in url:
             repo = GerritRepository(**kwargs)
         else:
-            raise Exception('Unsupported git server')
+            raise Exception("Unsupported git server")
         repo.log = LOGGER.getChild(repo.name)
         return repo
 
@@ -252,16 +251,16 @@ class Repository(
             for feature, value in self.features.items():
                 if value:
                     cmd.append(var_prefix + feature.upper() + ":BOOL=ON")
-            python = check_output(['which', 'python']).decode('utf-8').rstrip()
-            cmd.append('-DPYTHON_EXECUTABLE=' + python)
+            python = check_output(["which", "python"]).decode("utf-8").rstrip()
+            cmd.append("-DPYTHON_EXECUTABLE=" + python)
             cmd.append("..")
             _check_call(*cmd)
 
     def _test_formatting_targets(self):
         with pushd("_build"):
-            if self.features.get("formatting") or self.features.get('clang_format'):
+            if self.features.get("formatting") or self.features.get("clang_format"):
                 _check_call("make", "clang-format")
-            if self.features.get("formatting") or self.features.get('cmake_format'):
+            if self.features.get("formatting") or self.features.get("cmake_format"):
                 _check_call("make", "cmake-format")
 
     def _test_static_analysis(self):
@@ -279,7 +278,7 @@ class Repository(
         for branch in self.branches:
             if branch.startswith(self.remote):
                 _check_call("git", "branch", "-D", branch)
-        precommit_hook = osp.join('.git', 'hooks', 'pre-commit')
+        precommit_hook = osp.join(".git", "hooks", "pre-commit")
         if osp.exists(precommit_hook):
             os.remove(precommit_hook)
 
@@ -381,8 +380,8 @@ class IntegrationRepository:
         for repo in self.repos:
             if repo.spack_spec:
                 with spack_build_env(repo.spack_spec):
-                    subprocess.check_call(['spack', 'setup', repo.spack_spec])
-                    os.remove('spconfig.py')
+                    subprocess.check_call(["spack", "setup", repo.spack_spec])
+                    os.remove("spconfig.py")
                     succeeded &= repo.test()
             else:
                 succeeded &= repo.test()
