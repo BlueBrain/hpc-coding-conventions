@@ -63,6 +63,15 @@ function(cpp_cc_setup_tool_config name path)
   endif()
 endfunction()
 
+function(cpp_cc_add_tool_target name)
+  add_custom_target(${name}-${PROJECT_NAME} ${ARGN})
+  if(TARGET ${name})
+    add_dependencies(${name} ${name}-${PROJECT_NAME})
+  else()
+    add_custom_target(${name} DEPENDS ${name}-${PROJECT_NAME})
+  endif()
+endfunction()
+
 function(cpp_cc_enable_clang_formatting)
   find_package(PythonInterp 3.5 REQUIRED)
   set(ClangFormat_MIN_VERSION 7)
@@ -97,17 +106,19 @@ function(cpp_cc_enable_clang_formatting)
       "${PROJECT_SOURCE_DIR}" "--executable=${ClangFormat_EXECUTABLE}" --files-re
       ${${CODING_CONV_PREFIX}_ClangFormat_FILES_RE} --excludes-re
       ${${CODING_CONV_PREFIX}_ClangFormat_EXCLUDES_RE} --)
-  add_custom_target(clang-format ${clang_format_command_prefix} format --
-                                 "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
-  add_custom_target(check-clang-format ${clang_format_command_prefix} check --
-                                       "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+  cpp_cc_add_tool_target(clang-format ${clang_format_command_prefix} format --
+                         "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+  cpp_cc_add_tool_target(check-clang-format ${clang_format_command_prefix} check --
+                         "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
-    add_test(NAME ClangFormat COMMAND ${clang_format_command_prefix} --make-unescape-re check --
-                                      "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
+    add_test(NAME ClangFormat_${PROJECT_NAME}
+             COMMAND ${clang_format_command_prefix} --make-unescape-re check --
+                     "${${CODING_CONV_PREFIX}_ClangFormat_OPTIONS}")
   endif()
   if(${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES)
-    add_dependencies(clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
-    add_dependencies(check-clang-format ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
+    add_dependencies(clang-format-${PROJECT_NAME} ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
+    add_dependencies(check-clang-format-${PROJECT_NAME}
+                     ${${CODING_CONV_PREFIX}_ClangFormat_DEPENDENCIES})
   endif()
 endfunction(cpp_cc_enable_clang_formatting)
 
@@ -141,13 +152,14 @@ function(cpp_cc_enable_cmake_formatting)
       "${PROJECT_SOURCE_DIR}" "--executable=${CMakeFormat_EXECUTABLE}" --files-re
       ${${CODING_CONV_PREFIX}_CMakeFormat_FILES_RE} --excludes-re
       ${${CODING_CONV_PREFIX}_CMakeFormat_EXCLUDES_RE} --)
-  add_custom_target(cmake-format ${cmake_format_command_prefix} format --
-                                 "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
-  add_custom_target(check-cmake-format ${cmake_format_command_prefix} check --
-                                       ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
+  cpp_cc_add_tool_target(cmake-format ${cmake_format_command_prefix} format --
+                         "${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS}")
+  cpp_cc_add_tool_target(check-cmake-format ${cmake_format_command_prefix} check --
+                         ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
-    add_test(NAME CMakeFormat COMMAND ${cmake_format_command_prefix} --make-unescape-re check --
-                                      ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
+    add_test(NAME CMakeFormat_${PROJECT_NAME}
+             COMMAND ${cmake_format_command_prefix} --make-unescape-re check --
+                     ${${CODING_CONV_PREFIX}_CMakeFormat_OPTIONS})
   endif()
 
 endfunction(cpp_cc_enable_cmake_formatting)
@@ -182,14 +194,14 @@ function(cpp_cc_enable_static_analysis)
       "${${CODING_CONV_PREFIX}_ClangTidy_FILES_RE}" --excludes-re
       ${${CODING_CONV_PREFIX}_ClangTidy_EXCLUDES_RE} -p ${PROJECT_BINARY_DIR}/compile_commands.json
       check)
-  add_custom_target(clang-tidy ${clang_tidy_command_prefix} --
-                               ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
+  cpp_cc_add_tool_target(clang-tidy ${clang_tidy_command_prefix} --
+                         ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
   if(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS)
-    add_test(NAME ClangTidy COMMAND ${clang_tidy_command_prefix} --make-unescape-re --
-                                    ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
+    add_test(NAME ClangTidy_${PROJECT_NAME} COMMAND ${clang_tidy_command_prefix} --make-unescape-re
+                                                    -- ${${CODING_CONV_PREFIX}_ClangTidy_OPTIONS})
   endif()
   if(${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES)
-    add_dependencies(clang-tidy ${${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES})
+    add_dependencies(clang-tidy_${PROJECT_NAME} ${${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES})
   endif()
 
 endfunction(cpp_cc_enable_static_analysis)
