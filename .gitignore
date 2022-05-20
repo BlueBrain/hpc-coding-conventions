@@ -7,3 +7,4 @@ __pycache__/
 
 build
 .cmake-format.yaml
+cpp/formatting/.clang-format
