@@ -14,5 +14,5 @@ set +u  # ignore errors in virtualenv's activate
 source "$VENV/bin/activate"
 set -u
 
-black $@ cpp/cmake dev/bump cpp/formatting
+black $@ cpp dev/bump
 

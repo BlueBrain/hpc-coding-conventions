@@ -86,97 +86,62 @@ add_subdirectory(hpc-coding-conventions/cpp)
 
 #### Code Formatting
 
-To activate code formatting of both C/C++ and CMake files,
-enable CMake variable `${PROJECT}_FORMATTING` where `${PROJECT}` is the name given
-to the CMake `project` function.
+Create file `.bbp-project.yaml` at the root of your project and enable the formatting tools,
+you want to enable, for instance:
 
-For instance, given a project `foo`:
+```yaml
+tools:
+  ClangFormat:
+    enable: True
+  CMakeFormat:
+    enable: True
+```
 
-`cmake -Dfoo_FORMATTING:BOOL=ON <path>`
-
-To individually enable the formatting of C/C++ code or CMake files, use the following
-CMake variables:
-
-* `${PROJECT}_CLANG_FORMAT:BOOL`
-* `${PROJECT}_CMAKE_FORMAT:BOOL`
+You can then use the `bin/format` utility.
 
 #### Version deduction
 
-By default, the `PATH` environment variable is used to locate the clang-format
-and cmake-format executables and the most recent version of clang-format
-available will be used. Nevertheless, it is possible to raise an issue during
-the CMake phase if the version found of clang-format or cmake-format is not
-the one supported by your project. To do that, your project has to declare
-the version of clang-format and/or cmake-format it supports before including
-this CMake project. For instance:
-```cmake
-cmake_minimum_required(VERSION 3.10)
-project(HelloWorld VERSION 1.0.0 LANGUAGES CXX)
-# using either the "basic" find_package signature ...
-set(${PROJECT_NAME}_ClangFormat_REQUIRED_VERSION 13;EXACT)
-# ... or the config mode selection with CMake 3.19 or later.
-# see documentation of find_package CMake function for more information 
-set(${PROJECT_NAME}_CMakeFormat_REQUIRED_VERSION 0.6.6...<0.6.13)
-add_subdirectory(hpc-coding-conventions/cpp)
+`bin/format` relies on `PATH` environment variable to locate the proper tools.
+You can override the default required versions specified in `bbp-project.yaml`:
+
+```yaml
+tools:
+  ClangFormat:
+    enable: True
+    version: ~=15.0.0
 ```
 
-Although it is possible to overwrite the default settings to restrict the scanned
-directories, the formatting applies to the entire repository except git submodules.
+It is also possible to override the path to a tool in the YAML config file:
+```yaml
+tools:
+  CMakeFormat:
+    path: /path/to/bin/cmake-format
+```
 
 ##### Usage
 
-This will add the following *make* targets:
+* To format the entire codebase: `/path/to/hpc-coding-conventions/bin/format`
+* To check the formatting: `/path/to/hpc-coding-conventions/bin/format -n`
+* To format the CMake files only: `/path/to/hpc-coding-conventions/bin/format --lang CMake`
+* To check the formatting of C++ files in a specific locations:
+    `/path/to/hpc-coding-conventions/bin/format -n --lang c++ src/path1/ /src/path2/foo.cpp`
 
-* `clang-format`: to format C/C++ code.
-* `check-clang-format`: the target fails if at least one C/C++ file has improper format.
-* `cmake-format`: to format CMake files.
-* `check-cmake-format`: the target fails it at least one CMake file has improper format.
 
 ##### Advanced configuration
 
-A list of CMake cache variables can be used to customize the code formatting:
+You can override the default file filters of a tool, for instance:
 
-* `${PROJECT}_ClangFormat_OPTIONS`: additional options given to `clang-format` command.
-  Default value is `""`.
-* `${PROJECT}_ClangFormat_FILES_RE`: list of regular expressions matching C/C++ filenames
-  to format. Despite the recommended extensions of this guidelines are `.cpp`, `.h`, and `.ipp`
-  (see [Naming Conventions](./cpp/NamingConventions.md)), files with the following extensions
-  will be formatted by default:
-  * C++ implementation files: `.cpp`, `.cc`, `.cxx`, `.c`
-  * C++ header files: `.h`, `.hh`, `.hpp`, `.hxx`
-  * C++ files with template methods definitions: `.tpp`, `.txx`, `.tcc`, `.ipp`, `.ixx`, `.icc`
-
-* `${PROJECT}_ClangFormat_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
-  from formatting. Default value is:<br/>
-  `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
-
-  Regular expressions are tested against the **full file path**.
-* `${PROJECT}_ClangFormat_DEPENDENCIES`: list of CMake targets to build before
-  formatting C/C++ code. Default value is `""`
-
-Unlike `${PROJECT}_FORMATTING` which is supposed to be defined by the user,
-These variables are already defined and may be overridden inside your CMake project,
-**before including this CMake project**.
-They are CMake _CACHE_ variables whose value must be forced.
-
-For instance, to ignore code of third-parties located in `ext/` subdirectory
-(`third[-_]part(y|ies)` regular expression by default), add this to your CMake project:
-
-```diff
-+set(
-+  foo_ClangFormat_EXCLUDES_RE "${PROJECT_SOURCE_DIR}/ext/.*$$"
-+  CACHE STRING "list of regular expressions to exclude C/C++ files from formatting"
-+  FORCE)
- add_subdirectory(hpc-coding-conventions/cpp)
-```
-
-Default C++ file extensions are .cpp and .h. To also take .cxx and .tcc into account
-during code formatting:
-```diff
-+set(foo_ClangFormat_FILES_RE
-+    "^.*\\\\.[ch]$$" "^.*\\\\.[chi]pp$$" "^.*\\\\.tcc$$" "^.*\\\\.cxx$$"
-+    CACHE STRING "List of regular expressions matching C/C++ filenames" FORCE)
- add_subdirectory(deps/hpc-coding-conventions/cpp)
+```yaml
+tools:
+  ClangFormat:
+    include:
+      match: &cpp_patterns
+      - src/steps/.*\.((h)|(cpp)|(hpp))
+      - test/unit/.*\.((h)|(cpp)|(hpp))
+    path: /foo/bin/clang-format
+  ClangTidy:
+    include:
+      match: *cpp_patterns
 ```
 
 ##### Custom ClangFormat configuration
@@ -228,13 +193,14 @@ the `test` make target.
 
 #### Static Analysis
 
-To activate static analysis of C++ files with clang-tidy, enable
+To activate static analysis of C++ files with clang-tidy within CMake, enable
 the CMake variable `${PROJECT}_STATIC_ANALYSIS` where `${PROJECT}` is the name
 given to the CMake `project` function.
-
 For instance, given a project `foo`:
-
 `cmake -DFoo_STATIC_ANALYSIS:BOOL=ON <path>`
+Whenever a C++ file is compiled by CMake, clang-tidy will be called.
+
+You can also use utility: `bin/clang-tidy`
 
 ##### Usage
 
@@ -248,14 +214,6 @@ It will also activate static analysis report during the compilation phase.
 The following CMake cache variables can be used to customize the static analysis
 of the code:
 
-* `${PROJECT}_ClangTidy_OPTIONS`: additional options given to `clang-tidy` command.
-  Default value is `""`.
-* `${PROJECT}_ClangTidy_FILES_RE`: list of regular expressions matching C/C++ filenames
-  to check. Default is:<br/>
-  `"^.*\\\\.cc$$" "^.*\\\\.cpp$$" "^.*\\\\.cxx$$"`
-* `${PROJECT}_ClangTidy_EXCLUDES_RE`: list of regular expressions to exclude C/C++ files
-  from static analysis. Default value is:<br/>
-  `".*/third[-_]parties/.*$$" ".*/third[-_]party/.*$$"`
 * `${PROJECT}_ClangTidy_DEPENDENCIES`: list of CMake targets to build before
   check C/C++ code. Default value is `""`
 
@@ -279,11 +237,6 @@ in two ways:
 1. Create a `.clang-tidy.changes` containing only the required modifications.
 1. Add `.clang-tidy` to the git repository. This project will never try
 to modify it.
-
-##### Continuous Integration
-
-Define `${PROJECT}_TEST_STATIC_ANALYSIS:BOOL` CMake variable to enforce formatting during
-the `test` make target.
 
 #### Pre-Commit utility
 

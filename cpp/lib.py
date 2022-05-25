@@ -1,0 +1,1217 @@
+import abc
+import argparse
+import collections
+import copy
+from fnmatch import fnmatch
+import functools
+import glob
+import logging
+import operator
+import os.path
+import pkg_resources
+import re
+import shlex
+import shutil
+import sys
+import subprocess
+import venv
+
+THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+
+@functools.lru_cache()
+def source_dir():
+    """
+    Returns:
+        absolute path to the root of a git repository.
+        The parent repository if hpc-coding-conventions is used
+        as a git module, this repository otherwise.
+
+    Implementation note:
+        alternative is to use
+        "git rev-parse --show-superproject-working-tree"
+        but this solution requires git 2.13 or higher
+    """
+
+    def git_rev_parse(*args, **kwargs):
+        cmd = list((which("git"), "rev-parse") + args)
+        log_command(cmd, level=logging.DEBUG)
+        output = subprocess.check_output(cmd, **kwargs).decode("utf-8").strip()
+        return os.path.realpath(output)
+
+    git_dir = git_rev_parse("--git-dir", cwd=THIS_SCRIPT_DIR)
+    if os.path.dirname(git_dir) not in THIS_SCRIPT_DIR:
+        # This project is used as a git module
+        module_dir = git_rev_parse("--show-toplevel", cwd=THIS_SCRIPT_DIR)
+        git_dir = git_rev_parse("--git-dir", cwd=os.path.dirname(module_dir))
+    return os.path.dirname(git_dir)
+
+
+def merge_yaml_files(self, *files, **kwargs):
+    """Merge YAML files. The last argument is the destination file"""
+    try:
+        import yaml
+    except ImportError:
+        logging.error(
+            "Cannot find Python yaml module, which is needed to merge YAML files."
+        )
+        sys.exit(1)
+
+    succeeded = True
+    transformers = kwargs.get("transformers", {})
+    out = files[-1]
+    ins = files[:-1]
+
+    outdated = not os.path.exists(out) or os.path.getmtime(out) < max(
+        (os.path.getmtime(f) for f in ins)
+    )
+    if outdated:
+        data = {}
+        for file in ins:
+            with open(file) as istr:
+                content = yaml.safe_load(istr)
+                if not isinstance(content, dict):
+                    logging.error(
+                        "while reading YAML file %s: expected dictionary but got %s",
+                        file,
+                        type(content).__name__,
+                    )
+                    succeeded = False
+                    continue
+
+                for key, value in content.items():
+                    transform_func = transformers.get(key)
+                    if transform_func:
+                        data[key] = transform_func(data.get(key), value)
+                    else:
+                        data[key] = value
+        logging.info("writing file %s", out)
+        if succeeded:
+            with open(out, "w") as ostr:
+                yaml.dump(data, ostr, default_flow_style=False)
+    else:
+        logging.info("file %s is up to date, nothing to do.", out)
+    return succeeded
+
+
+def is_file_tracked(file, cwd=None):
+    """
+    Args:
+        file: relative path to file within a git repository
+        cwd: optional path to change before executing the command
+
+    Returns:
+        true if the given file is tracked by a git repository, false otherwise
+    """
+    ret = subprocess.call(
+        [which("git"), "ls-files", "--error-unmatch", file],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        cwd=cwd,
+    )
+    return ret == 0
+
+
+def chunkify(seq, chunk_size=1):
+    """
+    Split a sequence of elements into chunks of a given size
+
+    Args:
+        seq: sequence of elements
+        chunk_size: maximum chunk size
+
+    Returns:
+        a generator of sequence
+    """
+    for chunk_start_idx in range(0, len(seq), chunk_size):
+        yield seq[chunk_start_idx : chunk_start_idx + chunk_size]
+
+
+def log_command(*commands, logger=None, level=logging.DEBUG):
+    """
+    Utility function to report to the logger a shell command about to be executed.
+    """
+    if len(commands) == 1:
+        message = " ".join([shlex.quote(e) for e in commands[0]])
+    else:
+        message = "    " + " |\n    ".join([" ".join(cmd) for cmd in commands])
+    logger = logging if logger is None else logger
+    logger.log(level, message)
+
+
+class cached_property(object):
+    """
+    A property that is only computed once per instance and then replaces itself
+    with an ordinary attribute. Deleting the attribute resets the property.
+    Source: https://github.com/bottlepy/bottle/commit/fa7733e075da0d790d809aa3d2f53071897e6f76
+    """  # noqa
+
+    def __init__(self, func):
+        self.__doc__ = getattr(func, "__doc__")
+        self.func = func
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
+
+
+@functools.lru_cache()
+def which(program, paths=None):
+    """
+    Find the first location of a program in PATH environment variable.
+
+    Args:
+        program: program to look for i.e "clang-format"
+        paths: optional list of paths where to look for the program.
+               default is the PATH environment variable.
+    """
+    env_variable = re.sub("[^0-9a-zA-Z_]", "_", program).upper()
+
+    program = os.environ.get(env_variable, program)
+    if os.path.isabs(program):
+        return program
+
+    paths = paths or os.getenv("PATH").split(os.path.pathsep)
+    for path in paths:
+        abs_path = os.path.join(path, program)
+        if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
+            return abs_path
+
+
+def where(program, glob_patterns=None, paths=None):
+    """
+    Find all the locations of a program in PATH environment variable.
+
+    Args:
+        program: program to look for i.e "clang-format"
+        glob_patterns: optional patterns for alternative program names
+                       i.e ["clang-format-*"]
+        paths: optional list of paths where to look for the program.
+               default is the PATH environment variable.
+    """
+    env_variable = re.sub("[^0-9a-zA-Z_]", "_", program).upper()
+
+    program = os.environ.get(env_variable, program)
+    if os.path.isabs(program):
+        yield program
+
+    paths = paths or os.getenv("PATH").split(os.path.pathsep)
+    for path in paths:
+        abs_path = os.path.join(path, program)
+        if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
+            yield abs_path
+        if glob_patterns:
+            for pattern in glob_patterns:
+                for file in glob.glob(os.path.join(path, pattern)):
+                    if os.access(file, os.X_OK):
+                        yield abs_path
+
+
+class BBPVEnv:
+    """
+    Wrapper for the Python virtual environment used by this module.
+    """
+
+    def __init__(self, path):
+        """
+        Args:
+            path: path to virtualenvironment
+        """
+        self._path = path
+
+    @property
+    def path(self):
+        return self._path
+
+    @property
+    def bin_dir(self):
+        return os.path.join(self.path, "bin")
+
+    @property
+    def interpreter(self):
+        return os.path.join(self.bin_dir, "python")
+
+    @property
+    def pip(self):
+        return os.path.join(self.bin_dir, "pip")
+
+    def pip_install(self, requirement, upgrade=False):
+        """
+        Args:
+            requirement: list of (str or Requirement) to install. Possible inputs:
+                - pkg_resources.Requirement.parse("foo==1.0")
+                - "foo==1.0"
+                - [pkg_resources.Requirement.parse("foo==1.0"), "bar==1.0"]
+        """
+        cmd = [self.pip, "install"]
+        if logging.getLogger() != logging.DEBUG:
+            cmd += ["-q"]
+        if upgrade:
+            cmd += ["--upgrade"]
+        if not isinstance(requirement, list):
+            requirement = [requirement]
+        requirement = [str(req) for req in requirement]
+        cmd += requirement
+        log_command(cmd)
+        subprocess.check_call(cmd)
+
+    @property
+    def in_venv(self):
+        """
+        Return:
+            True if the current process is run by the Python interpreter
+            of this virtual environment, False otherwise.
+        """
+        venv_abs_path = os.path.abspath(self.path)
+        venv_python_interpreter_pattern = os.path.join(venv_abs_path, "bin", "python*")
+        return fnmatch(sys.executable, venv_python_interpreter_pattern)
+
+    def restart_in_venv(self, reason=""):
+        """
+        Replace the current process by the execution of the same command but with
+        the Python interpreter of this virtual environment.
+
+        This function doesn't return since the process is entirely replaced.
+
+        Args:
+            reason: optional log message
+        """
+        if not self.in_venv:
+            if not os.path.isdir(self.path):
+                builder = venv.EnvBuilder(symlinks=True, with_pip=True)
+                logging.debug(f"Creating virtual environment {self.path}")
+                builder.create(self.path)
+                self.pip_install("pip", upgrade=True)
+        logging.debug("Restarting process within own Python virtualenv" + reason)
+        os.execv(self.interpreter, [self.interpreter] + sys.argv)
+
+    @classmethod
+    def is_requirement_met(cls, requirement):
+        """
+        Args:
+            requirement: str of pkg_resources.Requirement
+
+        Return:
+            True if the current Python environment fulfills the given requirement,
+            False otherwise
+        """
+        try:
+            pkg_resources.require(str(requirement))
+            return True
+        except (pkg_resources.VersionConflict, pkg_resources.DistributionNotFound):
+            return False
+
+    def ensure_requirement(self, requirement, restart=True):
+        """
+        Ensure the Python script is running in an environment fulfilling
+        the given requirement.
+
+        If requirement already met
+        Then do nothing.
+        Else
+            If not running in the virtual environment
+            Then
+                Create the virtual environment If it doesn't exist
+                Rerun the Python script within the virtual environment
+            Else
+                If requirement is not met
+                Then
+                    install the package
+                    Return the Python script only if "restart" is True
+
+        Args:
+            requirement: str of pkg_resources.Requirement
+        """
+        if not BBPVEnv.is_requirement_met(requirement):
+            if self.in_venv:
+                self.pip_install(requirement)
+                if restart:
+                    self.restart_in_venv(
+                        f" to take into account installed requirement {requirement}"
+                    )
+            else:
+                self.restart_in_venv(f" because requirement {requirement} is not met")
+
+
+class Tool(metaclass=abc.ABCMeta):
+    """
+    Wrapper class over a third-party tool like clang-format or pre-commit
+    """
+
+    LOG_JOBS = True
+
+    def __init__(self, config, user_config):
+        """
+        Args:
+            config: describes how to tool works internally
+            user_config: describes how to use it
+        """
+        self._config = config
+        self._user_config = user_config
+
+    @cached_property
+    def job_logger(self):
+        logger = logging.getLogger("job")
+        logger.propagate = False
+        logger.setLevel(logging.INFO if Tool.LOG_JOBS else logging.WARN)
+        handler = logging.StreamHandler(sys.stdout)
+        formatter = logging.Formatter("%(message)s")
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+        return logger
+
+    @property
+    def name(self):
+        return self._config["name"]
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def config(self):
+        return self._config
+
+    @property
+    def user_config(self):
+        return self._user_config
+
+    @property
+    def path(self):
+        """
+        Return:
+            absolute path to the tool
+        """
+        path = self._user_config.get("path")
+        if path is None:
+            path = getattr(self, "_path", None)
+            if path is None:
+                raise RuntimeError(
+                    f"{self.__class__}.configure should be called before"
+                )
+        return path
+
+    @cached_property
+    def requirement(self):
+        return pkg_resources.Requirement.parse(f"{self} {self.user_config['version']}")
+
+    @abc.abstractmethod
+    def configure(self):
+        """
+        Find the tool on the system and setup its configuration
+        """
+        pass
+
+    @classmethod
+    def cli_options(cls, task, parser):
+        """
+        Hook function to add options to the CLI parser of a task
+
+        Args:
+            task: task name
+            parser: instance of `argparse.ArgumentParser`
+        """
+        pass
+
+    def cmd_opts(self, task, dry_run=False, **kwargs):
+        """
+        Args:
+            task: task name
+            dry_run: whether the tool should actually not perform the task
+            kwargs: additional options given in CLI
+
+        Return:
+            The command line options to pass to the tool
+        """
+        task_config = self.config["provides"][task]
+        if dry_run:
+            try:
+                return task_config["dry_run_cmd_opts"]
+            except KeyError:
+                raise Exception(f"{self}: error: dry-run: unsupported option")
+        else:
+            return task_config["cmd_opts"]
+
+    @cached_property
+    def bbp_config_file(self):
+        """
+        Returns:
+            absolute path to the proper config file
+            in the hpc-coding-conventions project.
+            It depends on the version of the tool
+        """
+        version = self._version
+        major_ver, _ = self._version.split(".", 1)
+        config_lib_dir = THIS_SCRIPT_DIR
+        test_ver = int(major_ver)
+        while test_ver >= 0:
+            candidate = os.path.join(config_lib_dir, f"{self}-{test_ver}")
+            if os.path.exists(candidate):
+                return candidate
+            test_ver -= 1
+        candidate = os.path.join(
+            config_lib_dir, self.config["config_file"].format(self=self)[1:]
+        )
+        if os.path.exists(candidate):
+            return candidate
+        raise RuntimeError(
+            f"Could not find appropriate config file for {self} {version}"
+        )
+
+    def prepare_config(self, project):
+        """
+        Setup the configuration file of the tool. For instance this function
+        will create the proper ".clang-format" file at the root of a C++ project.
+        """
+        assert isinstance(project, BBPProject)
+        config_fname = self.config["config_file"].format(self=self)
+        config_f = os.path.join(source_dir(), config_fname)
+        if not is_file_tracked(config_fname, cwd=source_dir()) or not os.path.exists(
+            config_f
+        ):
+            custom_config_f = os.path.join(
+                source_dir(), self.config["custom_config_file"].format(self=self)
+            )
+            if os.path.exists(custom_config_f):
+                logging.info(f"Merging custom {self} YAML changes ")
+                merge_yaml_files(
+                    self.bbp_config_file,
+                    custom_config_f,
+                    config_f,
+                    transformers=self.config.get("config_yaml_transformers"),
+                )
+            else:
+                bbp_config_f = self.bbp_config_file
+                bbp_config_base = os.path.basename(bbp_config_f)
+                if not os.path.exists(config_f) or os.path.getmtime(
+                    config_f
+                ) < os.path.getmtime(bbp_config_f):
+                    logging.info(
+                        f"Copying BBP config {bbp_config_base} to {source_dir()}"
+                    )
+                    shutil.copy(bbp_config_f, config_f)
+                else:
+                    logging.info(
+                        f"{self} config is up to date with BBP {bbp_config_base} config"
+                    )
+        else:
+            logging.info(f"{self} config is tracked by git, nothing to do.")
+
+    def run(self, task, *files, dry_run=False, **kwargs):
+        """
+        Execute a task on a set of files
+
+        Args:
+            task: task name
+            files: list of files on which to execute the task
+            dry_run: if True, the tool should not actually perform the task,
+                     just report issues.
+            kwargs: additional task options
+
+        Return:
+            number of failed tasks
+        """
+        max_num_files = self.config["capabilities"].cli_max_num_files
+        num_errors = 0
+        for files_chunk in chunkify(files, max_num_files):
+            num_errors += self._run_chunk(task, *files_chunk, dry_run=dry_run, **kwargs)
+        return num_errors
+
+    def _run_chunk(self, task, *files, cwd=None, **kwargs):
+        cmd = [self.path]
+        user_option = self.user_config.get("option") or []
+        if isinstance(user_option, str):
+            user_option = [user_option]
+        cmd += user_option
+
+        dry_run = kwargs.get("dry_run", False)
+
+        task_config = self.config["provides"][task]
+        if dry_run:
+            cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
+            log_command(cmd, logger=self.job_logger, level=logging.INFO)
+            status = subprocess.call(cmd, stderr=subprocess.DEVNULL)
+            if status != 0:
+                lang_str = ", ".join(task_config["languages"])
+                logging.error(
+                    "\033[1;31merror:\033[0;0m"
+                    f"improper {lang_str} file formatting: "
+                    "\033[;1m%s\033[0;0m",
+                    " ".join(files),
+                )
+        else:
+            cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
+            log_command(cmd, logger=self.job_logger, level=logging.INFO)
+            status = subprocess.call(cmd, cwd=cwd)
+        return 1 if status != 0 else 0
+
+    def accepts_file(self, file):
+        """
+        Args:
+            file: path to file
+
+        Return:
+            True if the tool accepts the file, False otherwise
+        """
+        for regexp in self.user_config.get("exclude", {}).get("match", []):
+            if regexp.match(file):
+                return False
+        for regexp in self.user_config.get("include", {}).get("match", []):
+            if regexp.match(file):
+                return True
+        return False
+
+
+class ExecutableTool(Tool):
+    """
+    Specialization of `Tool` for utilities that can be called from the command line
+    """
+
+    def configure(self):
+        if self.user_config.get("path") is None:
+            # path is not provided by the user conf
+            # let's find it!
+            try:
+                self._path, self._version = self.find_tool_in_path()
+            except FileNotFoundError as e:
+                pip_pkg = self.config["capabilities"].pip_pkg
+                if pip_pkg is None:
+                    raise e
+                BBPProject.virtualenv().ensure_requirement(self.requirement)
+                self._path, self._version = self.find_tool_in_path(
+                    [BBPProject.virtualenv().bin_dir]
+                )
+            logging.info(
+                f"{self}: found version {self._version}: {self._path}"
+                + f" matching the requirement {self.requirement}"
+            )
+        else:
+            self._version = self.find_version(self.path)
+
+    def find_tool_in_path(self, search_paths=None):
+        paths = list(where(self.name, self.names_glob_patterns, search_paths))
+        if not paths:
+            raise FileNotFoundError(f"Could not find tool {self}")
+        all_paths = [(p, self.find_version(p)) for p in paths]
+        paths = list(filter(lambda tpl: tpl[1] in self.requirement, all_paths))
+        paths = list(sorted(paths, key=lambda tup: tup[1]))  # sort by version
+        if not paths:
+            raise FileNotFoundError(
+                f"Could not find a version of {self} "
+                + f"matching the requirement {self.requirement}\nCandidates are:\n"
+                + "\n".join(f"{tpl[1]}: {tpl[0]}" for tpl in all_paths)
+            )
+        return paths[-1]
+
+    @property
+    def names_glob_patterns(self):
+        return self.config.get("names_glob_patterns")
+
+    def find_version(self, path):
+        """
+        Returns:
+            extract version of given utility, i.e "13.0.0"
+        """
+        cmd = [path] + self._config["version_opt"]
+        log_command(cmd)
+        proc = subprocess.run(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            check=False,
+            encoding="utf-8",
+        )
+        output = proc.stdout.strip()
+        match = re.search(self._config["version_re"], output)
+        if match:
+            ver = match.group(1)
+            return ver
+        raise RuntimeError(
+            f"Could not extract version of program {path} from output: '{output}'"
+        )
+
+
+class ClangTidy(ExecutableTool):
+    @classmethod
+    def cli_options(cls, task, parser):
+        parser.add_argument(
+            "-p",
+            metavar="build-path",
+            dest="compile_commands_file",
+            type=str,
+            help="a Clang compile command database",
+        )
+
+    def cmd_opts(self, task, compile_commands_file=None, **kwargs):
+        compile_commands_file = compile_commands_file or self.user_config.get(
+            "compile_commands_file"
+        )
+        if compile_commands_file:
+            return ["-p", compile_commands_file]
+        return []
+
+    @classmethod
+    def merge_clang_tidy_checks(cls, orig_checks, new_checks):
+        """Merge 2 'Checks' ClangTidy configuration key values"""
+        if orig_checks is None:
+            return new_checks
+        orig_checks = [check.strip() for check in orig_checks.split(",")]
+        new_checks = [check.strip() for check in new_checks.split(",")]
+
+        for new_check in new_checks:
+            if new_check.startswith("-"):
+                name = new_check[1:]
+                # remove check when check=google-runtime-references to_=-google-*
+                orig_checks = list(
+                    check for check in orig_checks if not fnmatch(check, name)
+                )
+                # remove check when check=-google-runtime-references
+                # to_=-google-* (simplification)
+                orig_checks = list(
+                    check for check in orig_checks if not fnmatch(check, new_check)
+                )
+            else:
+                # remove check when check=-google-runtime-references to_=google-*
+                orig_checks = list(
+                    check
+                    for check in orig_checks
+                    if not fnmatch(check, "-" + new_check)
+                )
+                # remove check when check=google-runtime-references
+                # to_=google-* (simplification)
+                orig_checks = list(
+                    check for check in orig_checks if not fnmatch(check, new_check)
+                )
+            orig_checks.append(new_check)
+        return ",".join(orig_checks)
+
+
+class TaskDescription(
+    collections.namedtuple(
+        "TaskDescription", ["on_codebase", "modify_files", "description"]
+    )
+):
+    """
+    Attributes:
+        on_codebase: True if the tool accepts files in parameter (like clang-format),
+                     False otherwise (like pre-commit)
+        modify_files: True if the tool can modify files, False otherwise.
+        description: Tool short description
+    """
+
+
+class ToolCapabilities(
+    collections.namedtuple(
+        "ToolCapabilities",
+        ["cli_accept_dir", "cli_max_num_files", "pip_pkg"],
+    )
+):
+    """
+    Attributes:
+        cli_accept_dir: should directories be passed directly to the tool (like black)
+                        or should the files be listed and then passed to the tool
+                        (like clang-format)
+        cli_max_num_files: number of files that can be passed at once to the tool in CLI
+        pip_pkg: Python package name to install the tool if applicable, None otherwise
+    """
+
+
+class BBPProject:
+    CONFIG_FILE = "bbp-project.yaml"
+    USER_CONFIG_FILE = ".bbp-project.yaml"
+    TASKS_DESCRIPTION = {
+        "format": TaskDescription(
+            on_codebase=True,
+            modify_files=True,
+            description="Code formatter utility",
+        ),
+        "static-analysis": TaskDescription(
+            on_codebase=True,
+            modify_files=False,
+            description="Code static analyzer",
+        ),
+        "clang-tidy": TaskDescription(
+            on_codebase=True,
+            modify_files=False,
+            description="C++ code static analyzer",
+        ),
+    }
+    TOOLS_DESCRIPTION = dict(
+        ClangFormat=dict(
+            cls=ExecutableTool,
+            name="clang-format",
+            names_glob=["clang-format-*"],
+            version_opt=["--version"],
+            version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+            capabilities=ToolCapabilities(
+                cli_accept_dir=False,
+                cli_max_num_files=30,
+                pip_pkg="clang-format",
+            ),
+            provides=dict(
+                format=dict(
+                    languages=["C++"],
+                    cmd_opts=["-i"],
+                    dry_run_cmd_opts=["--dry-run", "--ferror-limit", "1", "--Werror"],
+                )
+            ),
+            config_file=".{self}",
+            custom_config_file=".{self}.changes",
+        ),
+        CMakeFormat=dict(
+            cls=ExecutableTool,
+            name="cmake-format",
+            version_opt=["--version"],
+            version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+            provides=dict(
+                format=dict(
+                    languages=["CMake"],
+                    cmd_opts=["-i"],
+                    dry_run_cmd_opts=["--check"],
+                )
+            ),
+            capabilities=ToolCapabilities(
+                cli_accept_dir=False,
+                cli_max_num_files=30,
+                pip_pkg="cmake-format[YAML]",
+            ),
+            config_file=".{self}.yaml",
+            custom_config_file=".{self}.changes.yaml",
+        ),
+        ClangTidy=dict(
+            cls=ClangTidy,
+            name="clang-tidy",
+            names_glob="clang-tidy-*",
+            version_opt=["--version"],
+            version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+            provides={
+                "static-analysis": dict(languages=["C++"]),
+                "clang-tidy": dict(
+                    languages=["C++"],
+                ),
+            },
+            capabilities=ToolCapabilities(
+                cli_accept_dir=False, cli_max_num_files=30, pip_pkg=None
+            ),
+            config_file=".{self}",
+            custom_config_file=".{self}.changes.yaml",
+            config_yaml_transformers=ClangTidy.merge_clang_tidy_checks,
+        ),
+        # Will come later
+        # PreCommit=dict(
+        #     cls=ExecutableTool,
+        #     name="pre-commit",
+        #     version_opt=["--version"],
+        #     version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+        #     provides={"setup": dict()},
+        #     capabilities=ToolCapabilities(
+        #         pip_pkg="pre-commit",
+        #     ),
+        # ),
+    )
+
+    @classmethod
+    @functools.lru_cache()
+    def virtualenv(cls):
+        return BBPVEnv(os.path.join(source_dir(), ".bbp-project-venv"))
+
+    @classmethod
+    def task_cli(cls, task):
+        """
+        Construct the `argparse.ArgumentParser` for the given `task`
+
+        Args:
+            task: task name to execute
+
+        Return:
+            instance of argparse.ArgumentParser
+        """
+        task_config = cls.TASKS_DESCRIPTION[task]
+        parser = argparse.ArgumentParser(description=task_config.description)
+        ns = argparse.Namespace()
+        if task_config.modify_files:
+            parser.add_argument(
+                "-n",
+                "--dry-run",
+                action="store_true",
+                help="do not update the files, simply report formatting issues",
+            )
+
+        if task_config.on_codebase:
+            supported_languages = cls.supported_languages(task)
+            if not supported_languages:
+                raise RuntimeError(f"No tool supports task named '{task}'")
+            if len(supported_languages) > 1:
+                parser.add_argument(
+                    "--lang",
+                    action="store",
+                    dest="languages",
+                    help="only format the specified languages, "
+                    "default is: '%(default)s'",
+                    default=",".join(map(str.lower, supported_languages)),
+                )
+            else:
+                ns.languages = next(iter(supported_languages))
+            parser.add_argument(
+                "sources",
+                metavar="SRC",
+                nargs="*",
+                help="Files or directories. Default is the entire codebase.",
+            )
+
+        for tool in cls.TOOLS_DESCRIPTION.values():
+            task_info = tool["provides"].get(task)
+            if task_info is not None:
+                tool["cls"].cli_options(task, parser)
+
+        parser.add_argument(
+            "-v",
+            "--verbose",
+            action="count",
+            default=0,
+            help="Give more output. Option is additive, "
+            "and can be used up to 2 times.",
+        )
+        parser.add_argument(
+            "-q",
+            "--quiet",
+            action="store_true",
+            help="Do not write the executed commands " "to standard output",
+        )
+
+        parser.parse_args = functools.partial(parser.parse_args, namespace=ns)
+        return parser
+
+    @classmethod
+    def run_task(cls, task, args=None):
+        """
+        Execute a task
+
+        Args:
+            task: task name to execute
+            args: list of CLI arguments, default is `sys.argv`
+
+        Return:
+            Number of failed jobs
+        """
+        task_config = cls.TASKS_DESCRIPTION[task]
+        parser = cls.task_cli(task)
+        options = parser.parse_args(args=args)
+        if options.verbose == 0:
+            level = logging.WARN
+        elif options.verbose == 1:
+            level = logging.INFO
+        else:
+            level = logging.DEBUG
+        logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
+        Tool.LOG_JOBS = not options.quiet
+
+        project = BBPProject.from_config_files()
+        num_errors = 0
+        if task_config.on_codebase:
+            options.languages = map(str.strip, options.languages.split(","))
+            options.languages = map(str.lower, options.languages)
+            options.languages = list(options.languages)
+
+            num_errors = project.run_task_on_codebase(task, **vars(options))
+        else:
+            num_errors = project.run_global_task(**vars(options))
+        if num_errors != 0:
+            logging.error(f"{num_errors} jobs failed")
+        return num_errors
+
+    def run_global_task(self, task, **kwargs):
+        """
+        Execute a task that do not take files from codebase in argument
+
+        Args:
+            task: task name to execute
+            kwargs: CLI arguments
+
+        Return:
+            Number of failed jobs
+        """
+        tools = list(self.tools_for_task(task, kwargs["languages"]))
+        [tool.configure() for tool in tools]
+        [tool.prepare_config(self) for tool in tools]
+        num_errors = 0
+        for tool in tools:
+            num_errors += tool.run(task, **kwargs)
+        return num_errors
+
+    def run_task_on_codebase(self, task, languages=None, sources=None, **kwargs):
+        """
+        Execute a task working on files of the codebase
+
+        Args:
+            task: task name to execute
+            languages: list of desired languages to apply the task
+            sources: subset of files or dirs to apply the task
+            kwargs: CLI arguments
+
+        Return:
+            Number of failed jobs
+        """
+        tools = list(self.tools_for_task(task, languages))
+        [tool.configure() for tool in tools]
+        [tool.prepare_config(self) for tool in tools]
+
+        if not tools:
+            logging.warn(
+                f"No tool enabled for task {task}. "
+                f"Consider editing file {self.USER_CONFIG_FILE}"
+                " at the root of your project"
+            )
+            return
+
+        src_dirs = []
+        src_others = []
+        for src in sources or []:
+            if os.path.isdir(src):
+                src_dirs.append(src)
+            else:
+                src_others.append(src)
+
+        if not sources:
+            git_ls_tree_required = True
+        elif src_dirs:
+            git_ls_tree_required = not functools.reduce(
+                operator.and_,
+                (tool.config["capabilities"].cli_accept_dir for tool in tools),
+            )
+        else:
+            git_ls_tree_required = False
+
+        src_others = [os.path.join(os.getcwd(), f) for f in src_others]
+
+        if git_ls_tree_required:
+            cmd = [
+                which("git"),
+                "ls-tree",
+                "-r",
+                "-z",
+                "--name-only",
+                "--full-name",
+                "HEAD",
+            ]
+            cmd += src_dirs
+            log_command(cmd)
+            if not sources or src_dirs:
+                git_ls_tree = subprocess.check_output(cmd).decode("utf-8").split("\0")
+        else:
+            git_ls_tree = []
+
+        num_errors = 0
+        for tool in tools:
+            accept_dir = tool.config["capabilities"].cli_accept_dir
+            files = copy.copy(src_others)
+            if not sources or (src_dirs and not accept_dir):
+                files += git_ls_tree
+
+            tasks = collections.defaultdict(set)
+            for file in files:
+                # build the task list per tool
+                for tool in tools:
+                    if tool.accepts_file(file):
+                        tasks[tool].add(file)
+            for tool, tool_tasks in tasks.items():
+                # perform the tasks
+                num_errors += tool.run(task, *tool_tasks, cwd=source_dir(), **kwargs)
+        return num_errors
+
+    def tools_for_task(self, task, languages):
+        """
+        Get the toolS able to process a task on given languages
+
+            >>> list(BBPProject.tools_for_task("format", ["C++"]))
+            [ClangFormat]
+            >>> list(BBPProject.tools_for_task("format", ["C++", "CMake"]))
+            [ClangFormat, CMake]
+
+        Args:
+            task: task name to execute
+            languages: list of languages
+
+        Return:
+            Generator of `Tool` instances
+        """
+        if languages is None:
+            languages = BBPProject.supported_languages(task)
+        for tool in self.tools.values():
+            task_config = tool.config.get("provides", {}).get(task, {})
+            if task_config:
+                for lang in task_config["languages"]:
+                    if lang.lower() in languages:
+                        yield tool
+
+    @classmethod
+    def supported_languages(cls, task):
+        """
+        Get the list of languages supported by a given task
+
+        Args:
+            task: task name to execute
+
+        Return:
+            list of programming languages supported by the provider
+        """
+        languages = set()
+        for tool_conf in cls.TOOLS_DESCRIPTION.values():
+            provider_conf = tool_conf.get("provides", {}).get(task)
+            if provider_conf:
+                provider_langs = provider_conf.get("languages")
+                assert isinstance(provider_langs, list)
+                for provider_lang in provider_langs:
+                    languages.add(provider_lang)
+        return languages
+
+    def __init__(self, config):
+        self._config = config
+
+    @cached_property
+    def tools(self):
+        tools = dict()
+        for name, tool_desc in BBPProject.TOOLS_DESCRIPTION.items():
+            if name in self._config["tools"]:
+                tools[name] = tool_desc["cls"](tool_desc, self._config["tools"][name])
+        return tools
+
+    @classmethod
+    def default_config_file(cls):
+        """
+        Return:
+            Path to the default YAML configuration file
+        """
+        return os.path.join(THIS_SCRIPT_DIR, "..", cls.CONFIG_FILE)
+
+    @classmethod
+    def user_config_file(cls):
+        """
+        Locate the user configuration file in parent directories
+
+        Return:
+            Path to the file if found, `None` otherwise
+        """
+        expected_location = os.path.join(source_dir(), cls.USER_CONFIG_FILE)
+        if os.path.exists(expected_location):
+            return expected_location
+        dir = THIS_SCRIPT_DIR
+        while dir != "/":
+            file = os.path.join(dir, cls.USER_CONFIG_FILE)
+            if os.path.exists(file):
+                return file
+            dir = os.path.dirname(dir)
+        return None
+
+    @classmethod
+    def merge_user_config(cls, conf, user_conf):
+        cls._merge_user_config_global(conf, user_conf)
+        cls._merge_user_config_tools(conf, user_conf)
+
+    @classmethod
+    def _apply_global_conf(cls, conf):
+        global_conf = conf["tools"].pop("global", None)
+        if not global_conf:
+            return
+        for tool in conf["tools"]:
+            if tool == "global":
+                continue
+            tool_conf = copy.copy(global_conf)
+            tool_conf.update(conf["tools"][tool])
+            conf["tools"][tool] = tool_conf
+
+    @classmethod
+    def _parse_conf_regex(cls, conf):
+        for tool, tool_conf in conf["tools"].items():
+            if tool == "global":
+                continue
+
+            def apply_on_section(section):
+                include = tool_conf.get(section)
+                if include is not None and include.get("match"):
+                    tool_conf[section]["match"] = list(
+                        map(re.compile, include["match"])
+                    )
+
+            apply_on_section("include")
+            apply_on_section("exclude")
+
+    @classmethod
+    def _merge_user_config_tools(cls, conf, user_conf):
+        tools = user_conf.get("tools", {})
+        assert isinstance(tools, dict)
+        for name, config in tools.items():
+            enable = config.get("enable", True)
+            conf["tools"][name]["enable"] = enable
+
+    @classmethod
+    def _merge_user_config_global(cls, conf, user_conf, path=None):
+        path = [] if path is None else path
+        for key in user_conf:
+            if key in conf:
+                if isinstance(conf[key], dict) and isinstance(user_conf[key], dict):
+                    cls._merge_user_config_global(
+                        conf[key], user_conf[key], path + [str(key)]
+                    )
+                elif conf[key] == user_conf[key]:
+                    pass
+                elif type(conf[key]) == type(user_conf[key]):  # noqa: E721
+                    conf[key] = user_conf[key]
+                else:
+                    raise Exception(f"Conflict at {'.'.join(path)}")
+            else:
+                conf[key] = user_conf[key]
+
+    @classmethod
+    def _exclude_disabled_tools(cls, conf):
+        tools = conf["tools"]
+        tools = {name: tools[name] for name in tools if tools[name]["enable"]}
+        conf["tools"] = tools
+
+    @classmethod
+    def _sanitize_config(cls, conf):
+        tools = conf.setdefault("tools", {})
+        for name in tools:
+            if tools[name] is None:
+                tools[name] = {}
+            config = tools[name]
+
+            def fix_re_pattern_sections(section):
+                include = config.get(section)
+                if include is not None and include.get("match"):
+                    if isinstance(include["match"], str):
+                        include["match"] = [include["match"]]
+
+            fix_re_pattern_sections("include")
+            fix_re_pattern_sections("exclude")
+
+    @classmethod
+    def from_config_files(cls):
+        """
+        Construct a BBPProject from:
+        - the YAML file bbp-project.yaml provided by this project
+        - the YAML file provided by the parent project if available.
+
+        Return:
+            Instance of `BBPProject`
+        """
+        cls.virtualenv().ensure_requirement("PyYAML>=5")
+        import yaml
+
+        with open(cls.default_config_file()) as file:
+            conf = yaml.safe_load(file)
+            cls._sanitize_config(conf)
+        for tool, config in conf["tools"].items():
+            config.setdefault("enable", True)
+        user_conf_file = cls.user_config_file()
+        if user_conf_file:
+            with open(user_conf_file) as file:
+                user_conf = yaml.safe_load(file)
+                cls._sanitize_config(user_conf)
+            cls.merge_user_config(conf, user_conf)
+        cls._apply_global_conf(conf)
+        cls._parse_conf_regex(conf)
+        cls._exclude_disabled_tools(conf)
+        return BBPProject(conf)

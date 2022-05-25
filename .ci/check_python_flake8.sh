@@ -14,4 +14,4 @@ set +u  # ignore errors in virtualenv's activate
 source "$VENV/bin/activate"
 set -u
 
-flake8 cpp/cmake dev/bump cpp/formatting
+flake8 cpp dev/bump
