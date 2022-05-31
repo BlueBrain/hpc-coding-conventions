@@ -26,6 +26,9 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 # * ${CODING_CONV_PREFIX}_SANITIZER_LAUNCHER: command prefix that will pre-load the sanitizer
 #   runtime libraries. This is useful if, for example, you want to load a sanitizer-instrumented
 #   shared library (such as a Python module) from a non-instrumented binary (such as python).
+# * ${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH: directory containing the sanitizer runtime
+#   library. This is provided separately from the ENVIRONMENT variables to avoid assumptions about
+#   the sanitizers being the only thing modifying LD_LIBRARY_PATH
 #
 # The caller is responsible for using these variables in a manner adapted to their application.
 function(cpp_cc_enable_sanitizers)
@@ -114,12 +117,64 @@ function(cpp_cc_enable_sanitizers)
     # -shared -pthread" COMPILER_FLAGS="-fsanitize=undefined -fsanitize=float-divide-by-zero
     # -fno-omit-frame-pointer -shared-libsan -fsanitize=implicit-conversion -fsanitize=local-bounds
     # -fsanitize=nullability-arg -fsanitize=nullability-assign -fsanitize=nullability-return"
-    # COMPILER_FLAGS="" -DNMODL_EXTRA_CXX_FLAGS="${COMPILER_FLAGS}" \
-
+    # COMPILER_FLAGS="" -DNMODL_EXTRA_CXX_FLAGS="${COMPILER_FLAGS}" \ TODO: llvm-symbolizer ?
+    set(${CODING_CONV_PREFIX}_SANITIZER_COMPILER_FLAGS
+        "${compiler_flags}"
+        PARENT_SCOPE)
+    set(${CODING_CONV_PREFIX}_SANITIZER_ENABLE_ENVIRONMENT
+        ""
+        PARENT_SCOPE)
+    set(${CODING_CONV_PREFIX}_SANITIZER_DISABLE_ENVIRONMENT
+        ""
+        PARENT_SCOPE)
+    set(${CODING_CONV_PREFIX}_SANITIZER_LAUNCHER
+        ""
+        PARENT_SCOPE)
+    set(${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH
+        "${runtime_library_directory}"
+        PARENT_SCOPE)
   else()
     message(FATAL_ERROR "${${CODING_CONV_PREFIX}_SANITIZERS} sanitizers not yet supported")
   endif()
 endfunction(cpp_cc_enable_sanitizers)
+
+# Helper function that modifies a test created by add_test to have the required environment
+# variables set for successful execution when sanitizers are enabled
+#
+# cpp_cc_set_sanitizer_env(TEST [<test1> ...])
+#
+# Arguments:
+#
+# * TEST: list of test names to modify
+function(cpp_cc_set_sanitizer_env)
+  cmake_parse_arguments("" "" "" "TEST" ${ARGN})
+  foreach(test ${_TEST})
+    if(${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH)
+      message(STATUS "Setting path to sanitizer runtime for test: ${test}")
+      # If LD_LIBRARY_PATH is already set, prepend our path to it. If it's not, set it to our path,
+      # followed by $ENV{LD_LIBRARY_PATH}
+      get_test_property(${test} ENVIRONMENT env)
+      set(seen_ld_library_path OFF)
+      if(NOT "${env}" STREQUAL "NOTFOUND")
+        foreach(env_var ${env})
+          if(env_var MATCHES "^LD_LIBRARY_PATH=(.*)$")
+            list(APPEND new_env
+                 "LD_LIBRARY_PATH=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH}:${CMAKE_MATCH_1}")
+            set(seen_ld_library_path ON)
+          else()
+            list(APPEND new_env "${env_var}")
+          endif()
+        endforeach()
+      endif()
+      if(NOT seen_ld_library_path)
+        list(
+          APPEND new_env
+          "LD_LIBRARY_PATH=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH}:$ENV{LD_LIBRARY_PATH}")
+      endif()
+      set_tests_properties(${test} PROPERTIES ENVIRONMENT "${new_env}")
+    endif()
+  endforeach()
+endfunction(cpp_cc_set_sanitizer_env)
 
 if(${CODING_CONV_PREFIX}_SANITIZERS)
   cpp_cc_enable_sanitizers()
