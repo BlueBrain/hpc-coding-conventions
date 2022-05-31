@@ -93,7 +93,7 @@ function(cpp_cc_enable_sanitizers)
       vptr)
   # Use the shared library version of the sanitizer runtime so that we can LD_PRELOAD it when
   # launching via Python and so on
-  set(compiler_flags -g -fno-omit-frame-pointer -shared-libsan)
+  set(compiler_flags -fno-omit-frame-pointer -shared-libsan)
   if("undefined" IN_LIST sanitizers)
     if(NOT sanitizers STREQUAL "undefined")
       message(
