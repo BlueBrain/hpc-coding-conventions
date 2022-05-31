@@ -106,26 +106,15 @@ function(cpp_cc_enable_sanitizers)
     get_filename_component(runtime_library_directory "${runtime_library}" DIRECTORY)
     message(STATUS "UBSan runtime library: ${runtime_library}")
     message(STATUS "UBSan runtime library directory: ${runtime_library_directory}")
-    # So the runtime can be found during the build. Do this before CMake so that if CMake reads
-    # LD_LIBRARY_PATH and saves it somewhere then it includes the path. export
-    # LD_LIBRARY_PATH=${SANITIZER_RUNTIME_DIR}${SANITIZER_RUNTIME_DIR:+:}${LD_LIBRARY_PATH} NEURON
-    # forces Python stuff to be built with the same compiler as NEURON itself. This causes problems,
-    # because Python wants to build things with the same compiler as Python. By default we get the
-    # worst of all worlds: NEURON makes Python stuff get compiled with Clang, Python makes it get
-    # linked with GCC. These two lines make us do things the NEURON way :shrug: export
-    # LDCSHARED="$(command -v clang) -shared -pthread" export LDCXXSHARED="$(command -v clang++)
-    # -shared -pthread" COMPILER_FLAGS="-fsanitize=undefined -fsanitize=float-divide-by-zero
-    # -fno-omit-frame-pointer -shared-libsan -fsanitize=implicit-conversion -fsanitize=local-bounds
-    # -fsanitize=nullability-arg -fsanitize=nullability-assign -fsanitize=nullability-return"
-    # COMPILER_FLAGS="" -DNMODL_EXTRA_CXX_FLAGS="${COMPILER_FLAGS}" \ TODO: llvm-symbolizer ?
+    # TODO: llvm-symbolizer?
     set(${CODING_CONV_PREFIX}_SANITIZER_COMPILER_FLAGS
         "${compiler_flags}"
         PARENT_SCOPE)
     set(${CODING_CONV_PREFIX}_SANITIZER_ENABLE_ENVIRONMENT
-        ""
+        "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1"
         PARENT_SCOPE)
     set(${CODING_CONV_PREFIX}_SANITIZER_DISABLE_ENVIRONMENT
-        ""
+        "UBSAN_OPTIONS=print_stacktrace=0:halt_on_error=0"
         PARENT_SCOPE)
     set(${CODING_CONV_PREFIX}_SANITIZER_LAUNCHER
         ""
@@ -171,6 +160,9 @@ function(cpp_cc_set_sanitizer_env)
           APPEND new_env
           "LD_LIBRARY_PATH=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH}:$ENV{LD_LIBRARY_PATH}")
       endif()
+      # This should be sanitizer-specific stuff like UBSAN_OPTIONS, so we don't need to worry about
+      # merging it with an existing value.
+      list(APPEND new_env "${${CODING_CONV_PREFIX}_SANITIZER_ENABLE_ENVIRONMENT}")
       set_tests_properties(${test} PROPERTIES ENVIRONMENT "${new_env}")
     endif()
   endforeach()
