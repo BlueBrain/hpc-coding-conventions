@@ -23,9 +23,6 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 #   **disable** sanitizers at runtime. This might be useful if, for example, some part of the
 #   instrumented application is used during the build and you don't want memory leaks to cause build
 #   failures.
-# * ${CODING_CONV_PREFIX}_SANITIZER_LAUNCHER: command prefix that will pre-load the sanitizer
-#   runtime libraries. This is useful if, for example, you want to load a sanitizer-instrumented
-#   shared library (such as a Python module) from a non-instrumented binary (such as python).
 # * ${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH: directory containing the sanitizer runtime
 #   library. This is provided separately from the ENVIRONMENT variables to avoid assumptions about
 #   the sanitizers being the only thing modifying LD_LIBRARY_PATH
@@ -65,9 +62,6 @@ function(cpp_cc_enable_sanitizers)
       unsigned-integer-overflow
       vla-bound
       vptr)
-  # Compile with -g and -fno-omit-frame-pointer to get proper debug information in your binary. Run
-  # your program with environment variable UBSAN_OPTIONS=print_stacktrace=1. Make sure
-  # llvm-symbolizer binary is in PATH.
   if("undefined" IN_LIST ${CODING_CONV_PREFIX}_SANITIZERS)
     if(NOT "${${CODING_CONV_PREFIX}_SANITIZERS}" STREQUAL "undefined")
       message(
@@ -87,37 +81,38 @@ function(cpp_cc_enable_sanitizers)
     foreach(undefined_check ${undefined_checks})
       list(APPEND compiler_flags -fsanitize=${undefined_check})
     endforeach()
-    message(STATUS "UBSan compiler flags: ${compiler_flags}")
+    string(JOIN " " compiler_flags_str ${compiler_flags})
+    message(STATUS "UBSan compiler flags: ${compiler_flags_str}")
     # Figure out where the runtime library lives
     execute_process(
       COMMAND
         ${CMAKE_CXX_COMPILER}
         -print-file-name=${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.ubsan_standalone-${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}
       RESULT_VARIABLE clang_status
-      OUTPUT_VARIABLE clang_stdout
+      OUTPUT_VARIABLE runtime_library
       ERROR_VARIABLE clang_stderr
       OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
     if(${clang_status})
       message(
         FATAL_ERROR
-          "Failed to find UBSan runtime library (stdout: ${clang_stdout}, stderr: ${clang_stderr})")
+          "Failed to find UBSan runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
+      )
     endif()
-    set(runtime_library "${clang_stdout}")
     get_filename_component(runtime_library_directory "${runtime_library}" DIRECTORY)
     message(STATUS "UBSan runtime library: ${runtime_library}")
-    message(STATUS "UBSan runtime library directory: ${runtime_library_directory}")
-    # TODO: llvm-symbolizer?
+    # TODO: llvm-symbolizer? ensure it's in the path via these environment variables? TODO:
+    # standardised way of using exclusions/suppressions for the different sanitizers
+    if(EXISTS "${PROJECT_SOURCE_DIR}/.sanitizers/undefined.supp")
+      set(ubsan_opts "suppressions=${PROJECT_SOURCE_DIR}/.sanitizers/undefined.supp:")
+    endif()
     set(${CODING_CONV_PREFIX}_SANITIZER_COMPILER_FLAGS
         "${compiler_flags}"
         PARENT_SCOPE)
     set(${CODING_CONV_PREFIX}_SANITIZER_ENABLE_ENVIRONMENT
-        "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1"
+        "UBSAN_OPTIONS=${ubsan_opts}print_stacktrace=1:halt_on_error=1"
         PARENT_SCOPE)
     set(${CODING_CONV_PREFIX}_SANITIZER_DISABLE_ENVIRONMENT
-        "UBSAN_OPTIONS=print_stacktrace=0:halt_on_error=0"
-        PARENT_SCOPE)
-    set(${CODING_CONV_PREFIX}_SANITIZER_LAUNCHER
-        ""
+        "UBSAN_OPTIONS=${ubsan_opts}print_stacktrace=0:halt_on_error=0"
         PARENT_SCOPE)
     set(${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH
         "${runtime_library_directory}"
