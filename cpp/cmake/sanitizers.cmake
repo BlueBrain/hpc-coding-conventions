@@ -62,38 +62,17 @@ function(cpp_cc_enable_sanitizers)
   message(STATUS "Enabling sanitizers: ${${CODING_CONV_PREFIX}_SANITIZERS}")
   # comma-separated string -> CMake list
   string(REPLACE "," ";" sanitizers "${${CODING_CONV_PREFIX}_SANITIZERS}")
-  # known exclusions from this list: objc-cast
-  set(undefined_checks
-      alignment
-      bool
-      builtin
-      array-bounds
-      local-bounds
-      enum
-      float-cast-overflow
+  set(known_undefined_checks
+      undefined
       float-divide-by-zero
-      function
-      implicit-unsigned-integer-truncation
+      unsigned-integer-overflow
+      implicit-integer-sign-change.
       implicit-signed-integer-truncation
-      implicit-integer-sign-change
-      integer-divide-by-zero
-      nonnull-attribute
-      null
+      implicit-unsigned-integer-truncation
+      local-bounds
       nullability-arg
       nullability-assign
-      nullability-return
-      object-size
-      pointer-overflow
-      return
-      returns-nonnull-attribute
-      shift-base
-      shift-exponent
-      unsigned-shift-base
-      signed-integer-overflow
-      unreachable
-      unsigned-integer-overflow
-      vla-bound
-      vptr)
+      nullability-return)
   # Use the shared library version of the sanitizer runtime so that we can LD_PRELOAD it when
   # launching via Python and so on
   set(compiler_flags -fno-omit-frame-pointer -shared-libsan)
@@ -105,6 +84,7 @@ function(cpp_cc_enable_sanitizers)
       )
     endif()
     # Enable the undefined behaviour sanitizer
+    set(undefined_checks ${known_undefined_checks})
     if(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS)
       message(
         STATUS "Disabling UBSan checks: ${${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS}")
@@ -113,6 +93,13 @@ function(cpp_cc_enable_sanitizers)
     foreach(undefined_check ${undefined_checks})
       list(APPEND compiler_flags -fsanitize=${undefined_check})
     endforeach()
+    # If we were asked to disable checks that are not listed in known_undefined_checks then emit
+    # -fno-sanitize=XXX for them
+    list(REMOVE_ITEM ${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
+         ${known_undefined_checks})
+    foreach(undefined_check ${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS)
+      list(APPEND compiler_flags -fno-sanitize=${undefined_check})
+    endforeach()
     string(JOIN " " compiler_flags_str ${compiler_flags})
     # Figure out where the runtime library lives
     cpp_cc_find_sanitizer_runtime(NAME ubsan_standalone OUTPUT runtime_library)
@@ -120,7 +107,8 @@ function(cpp_cc_enable_sanitizers)
     if(EXISTS "${PROJECT_SOURCE_DIR}/.sanitizers/undefined.supp")
       set(ubsan_opts "suppressions=${PROJECT_SOURCE_DIR}/.sanitizers/undefined.supp:")
     endif()
-    set(enable_env "UBSAN_OPTIONS=${ubsan_opts}print_stacktrace=1:halt_on_error=1")
+    set(enable_env
+        "UBSAN_OPTIONS=${ubsan_opts}print_stacktrace=1:halt_on_error=1:report_error_type=1")
     set(disable_env "UBSAN_OPTIONS=${ubsan_opts}print_stacktrace=0:halt_on_error=0")
   elseif("address" IN_LIST sanitizers)
     list(APPEND compiler_flags -fsanitize=address -fsanitize-address-use-after-scope)
