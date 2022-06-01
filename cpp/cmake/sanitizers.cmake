@@ -97,7 +97,7 @@ function(cpp_cc_enable_sanitizers)
     # -fno-sanitize=XXX for them
     list(REMOVE_ITEM ${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
          ${known_undefined_checks})
-    foreach(undefined_check ${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS)
+    foreach(undefined_check ${${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS})
       list(APPEND compiler_flags -fno-sanitize=${undefined_check})
     endforeach()
     string(JOIN " " compiler_flags_str ${compiler_flags})
