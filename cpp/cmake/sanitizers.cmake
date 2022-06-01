@@ -66,7 +66,7 @@ function(cpp_cc_enable_sanitizers)
       undefined
       float-divide-by-zero
       unsigned-integer-overflow
-      implicit-integer-sign-change.
+      implicit-integer-sign-change
       implicit-signed-integer-truncation
       implicit-unsigned-integer-truncation
       local-bounds
