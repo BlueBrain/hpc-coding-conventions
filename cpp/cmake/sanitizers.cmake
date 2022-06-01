@@ -1,6 +1,9 @@
 set(${CODING_CONV_PREFIX}_SANITIZERS
     ""
-    CACHE STRING "Runtime sanitizers to enable. Possible values: undefined")
+    CACHE
+      STRING
+      "Comma-separated list of runtime sanitizers to enable. Possible values: address, leak, undefined"
+)
 set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
     ""
     CACHE
@@ -111,11 +114,9 @@ function(cpp_cc_enable_sanitizers)
       list(APPEND compiler_flags -fsanitize=${undefined_check})
     endforeach()
     string(JOIN " " compiler_flags_str ${compiler_flags})
-    message(STATUS "UBSan compiler flags: ${compiler_flags_str}")
     # Figure out where the runtime library lives
     cpp_cc_find_sanitizer_runtime(NAME ubsan_standalone OUTPUT runtime_library)
-    # TODO: llvm-symbolizer? ensure it's in the path via these environment variables? TODO:
-    # standardised way of using exclusions/suppressions for the different sanitizers
+    # TODO: llvm-symbolizer? ensure it's in the path via these environment variables?
     if(EXISTS "${PROJECT_SOURCE_DIR}/.sanitizers/undefined.supp")
       set(ubsan_opts "suppressions=${PROJECT_SOURCE_DIR}/.sanitizers/undefined.supp:")
     endif()
@@ -161,46 +162,37 @@ function(cpp_cc_enable_sanitizers)
       PARENT_SCOPE)
 endfunction(cpp_cc_enable_sanitizers)
 
-# Helper function that modifies a test created by add_test to have the required environment
-# variables set for successful execution when sanitizers are enabled
+# Helper function that modifies targets (executables, libraries, ...) and tests (created by
+# add_test) for successful execution when sanitizers are enabled
 #
-# cpp_cc_set_sanitizer_env(TEST [<test1> ...] [PRELOAD])
+# cpp_cc_configure_sanitizers(TARGET [<target1> ...] TEST [<test1> ...] [PRELOAD])
 #
 # Arguments:
 #
-# * TEST: list of test names to modify
+# * TARGET: list of targets to modify
+# * TEST: list of tests to modify
 # * PRELOAD: if passed, LD_PRELOAD will be set to the sanitizer runtime library and LD_LIBRARY_PATH
 #   will not be modified
-function(cpp_cc_set_sanitizer_env)
-  cmake_parse_arguments("" "PRELOAD" "" "TEST" ${ARGN})
+function(cpp_cc_configure_sanitizers)
+  cmake_parse_arguments("" "PRELOAD" "" "TARGET;TEST" ${ARGN})
+  foreach(target ${_TARGET})
+    # Make sure that the RPATH to the sanitizer runtime is set, so the library/executable can be run
+    # without setting $LD_LIBRARY_PATH
+    set_property(
+      TARGET ${target}
+      APPEND
+      PROPERTY BUILD_RPATH "${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR}")
+    set_property(
+      TARGET ${target}
+      APPEND
+      PROPERTY INSTALL_RPATH "${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR}")
+  endforeach()
   foreach(test ${_TEST})
     if(_PRELOAD)
       set_property(
         TEST ${test}
         APPEND
         PROPERTY ENVIRONMENT LD_PRELOAD=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH})
-    elseif(${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR)
-      message(STATUS "Setting path to sanitizer runtime for test: ${test}")
-      # If LD_LIBRARY_PATH is already set, prepend our path to it. If it's not, set it to our path,
-      # followed by $ENV{LD_LIBRARY_PATH}
-      get_test_property(${test} ENVIRONMENT env)
-      set(seen_ld_library_path OFF)
-      if(NOT "${env}" STREQUAL "NOTFOUND")
-        foreach(env_var ${env})
-          if(env_var MATCHES "^LD_LIBRARY_PATH=(.*)$")
-            list(APPEND new_env
-                 "LD_LIBRARY_PATH=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR}:${CMAKE_MATCH_1}")
-            set(seen_ld_library_path ON)
-          else()
-            list(APPEND new_env "${env_var}")
-          endif()
-        endforeach()
-      endif()
-      if(NOT seen_ld_library_path)
-        list(APPEND new_env
-             "LD_LIBRARY_PATH=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR}:$ENV{LD_LIBRARY_PATH}")
-      endif()
-      set_tests_properties(${test} PROPERTIES ENVIRONMENT "${new_env}")
     endif()
     # This should be sanitizer-specific stuff like UBSAN_OPTIONS, so we don't need to worry about
     # merging it with an existing value.
@@ -209,7 +201,7 @@ function(cpp_cc_set_sanitizer_env)
       APPEND
       PROPERTY ENVIRONMENT ${${CODING_CONV_PREFIX}_SANITIZER_ENABLE_ENVIRONMENT})
   endforeach()
-endfunction(cpp_cc_set_sanitizer_env)
+endfunction(cpp_cc_configure_sanitizers)
 
 if(${CODING_CONV_PREFIX}_SANITIZERS)
   cpp_cc_enable_sanitizers()
