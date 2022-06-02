@@ -176,7 +176,7 @@ function(cpp_cc_configure_sanitizers)
       PROPERTY INSTALL_RPATH "${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR}")
   endforeach()
   foreach(test ${_TEST})
-    if(_PRELOAD)
+    if(_PRELOAD AND ${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH)
       set_property(
         TEST ${test}
         APPEND
