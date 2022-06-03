@@ -14,4 +14,4 @@ jobs:
         - name: Install packages
           run: sudo apt-get update && sudo apt-get install python3-venv
         - name: Check Python format
-          run: .ci/check_python_format.sh --check
+          run: bin/format -n --lang python

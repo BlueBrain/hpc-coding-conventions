@@ -46,6 +46,26 @@ tools:
     include:
       match: .*\.c((c)|(pp)|(xx))$
 
+  Flake8:
+    enable: False
+    version: ">=4"
+
+    option:
+    - --import-order-style
+    - google
+
+    # Additional Python packages to install
+    requirements:
+    - flake8-import-order
+
+    include:
+      match:
+      - .*\.py$
+
+  Black:
+    enable: False
+    version: ~=22.3
+
 #  will come later
 #  PreCommit:
 #    enable: False

@@ -8,13 +8,14 @@ import glob
 import logging
 import operator
 import os.path
-import pkg_resources
 import re
 import shlex
 import shutil
-import sys
 import subprocess
+import sys
 import venv
+
+import pkg_resources
 
 THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -395,7 +396,20 @@ class Tool(metaclass=abc.ABCMeta):
 
     @cached_property
     def requirement(self):
-        return pkg_resources.Requirement.parse(f"{self} {self.user_config['version']}")
+        """
+        Return:
+            `pkg_resources.Requirement` of the tool if it is a Python package,
+            `None` otherwise
+        """
+        pip_pkg = self.config["capabilities"].pip_pkg
+        assert isinstance(pip_pkg, (str, bool))
+        if not pip_pkg:
+            return None
+        if isinstance(pip_pkg, str):
+            name = pip_pkg
+        else:
+            name = self.name
+        return pkg_resources.Requirement.parse(f"{name} {self.user_config['version']}")
 
     @abc.abstractmethod
     def configure(self):
@@ -576,19 +590,22 @@ class ExecutableTool(Tool):
             try:
                 self._path, self._version = self.find_tool_in_path()
             except FileNotFoundError as e:
-                pip_pkg = self.config["capabilities"].pip_pkg
-                if pip_pkg is None:
+                if self.requirement:
+                    BBPProject.virtualenv().ensure_requirement(self.requirement)
+                    self._path, self._version = self.find_tool_in_path(
+                        [BBPProject.virtualenv().bin_dir]
+                    )
+                else:
                     raise e
-                BBPProject.virtualenv().ensure_requirement(self.requirement)
-                self._path, self._version = self.find_tool_in_path(
-                    [BBPProject.virtualenv().bin_dir]
-                )
             logging.info(
                 f"{self}: found version {self._version}: {self._path}"
                 + f" matching the requirement {self.requirement}"
             )
         else:
             self._version = self.find_version(self.path)
+        # Install additional requirements
+        for req in self.user_config.get("requirements", []):
+            BBPProject.virtualenv().ensure_requirement(req, restart=False)
 
     def find_tool_in_path(self, search_paths=None):
         paths = list(where(self.name, self.names_glob_patterns, search_paths))
@@ -614,6 +631,13 @@ class ExecutableTool(Tool):
         Returns:
             extract version of given utility, i.e "13.0.0"
         """
+        if self.config["capabilities"].pip_pkg:
+            # this tool is a Python package
+            pkg_name = self.name
+            if isinstance(self.config["capabilities"].pip_pkg, str):
+                pkg_name = self.config["capabilities"].pip_pkg
+            return pkg_resources.get_distribution(pkg_name).version
+
         cmd = [path] + self._config["version_opt"]
         log_command(cmd)
         proc = subprocess.run(
@@ -714,7 +738,10 @@ class ToolCapabilities(
                         or should the files be listed and then passed to the tool
                         (like clang-format)
         cli_max_num_files: number of files that can be passed at once to the tool in CLI
-        pip_pkg: Python package name to install the tool if applicable, None otherwise
+        pip_pkg:
+            - `True` if the tool is an installable Python package
+            - the package name if different than the tool
+            - `False` if the tool is not a Python package
     """
 
 
@@ -748,7 +775,7 @@ class BBPProject:
             capabilities=ToolCapabilities(
                 cli_accept_dir=False,
                 cli_max_num_files=30,
-                pip_pkg="clang-format",
+                pip_pkg=True,
             ),
             provides=dict(
                 format=dict(
@@ -793,12 +820,43 @@ class BBPProject:
                 ),
             },
             capabilities=ToolCapabilities(
-                cli_accept_dir=False, cli_max_num_files=30, pip_pkg=None
+                cli_accept_dir=False, cli_max_num_files=30, pip_pkg=False
             ),
             config_file=".{self}",
             custom_config_file=".{self}.changes.yaml",
             config_yaml_transformers=ClangTidy.merge_clang_tidy_checks,
         ),
+        Flake8=dict(
+            cls=ExecutableTool,
+            name="flake8",
+            provides={
+                "static-analysis": dict(
+                    languages=["Python"],
+                    cmd_opts=[],
+                ),
+            },
+            capabilities=ToolCapabilities(
+                cli_accept_dir=True,
+                cli_max_num_files=30,
+                pip_pkg=True,
+            ),
+        ),
+        Black=dict(
+            cls=ExecutableTool,
+            name="black",
+            provides=dict(
+                format=dict(
+                    languages=["Python"],
+                    cmd_opts=[],
+                    dry_run_cmd_opts=["--check"],
+                )
+            ),
+            capabilities=ToolCapabilities(
+                cli_accept_dir=True,
+                cli_max_num_files=30,
+                pip_pkg=True,
+            ),
+        )
         # Will come later
         # PreCommit=dict(
         #     cls=ExecutableTool,
@@ -807,7 +865,6 @@ class BBPProject:
         #     version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
         #     provides={"setup": dict()},
         #     capabilities=ToolCapabilities(
-        #         pip_pkg="pre-commit",
         #     ),
         # ),
     )
@@ -935,7 +992,7 @@ class BBPProject:
         """
         tools = list(self.tools_for_task(task, kwargs["languages"]))
         [tool.configure() for tool in tools]
-        [tool.prepare_config(self) for tool in tools]
+        [tool.prepare_config(self) for tool in tools if "config_file" in tool.config]
         num_errors = 0
         for tool in tools:
             num_errors += tool.run(task, **kwargs)
@@ -956,7 +1013,7 @@ class BBPProject:
         """
         tools = list(self.tools_for_task(task, languages))
         [tool.configure() for tool in tools]
-        [tool.prepare_config(self) for tool in tools]
+        [tool.prepare_config(self) for tool in tools if "config_file" in tool.config]
 
         if not tools:
             logging.warn(
