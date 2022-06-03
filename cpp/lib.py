@@ -1,3 +1,7 @@
+"""
+Main module of this project
+"""
+
 import abc
 import argparse
 import collections
@@ -48,10 +52,10 @@ def source_dir():
     return os.path.dirname(git_dir)
 
 
-def merge_yaml_files(self, *files, **kwargs):
+def merge_yaml_files(*files, **kwargs):
     """Merge YAML files. The last argument is the destination file"""
     try:
-        import yaml
+        import yaml  # pylint: disable=C0415
     except ImportError:
         logging.error(
             "Cannot find Python yaml module, which is needed to merge YAML files."
@@ -69,7 +73,7 @@ def merge_yaml_files(self, *files, **kwargs):
     if outdated:
         data = {}
         for file in ins:
-            with open(file) as istr:
+            with open(file, encoding="utf-8") as istr:
                 content = yaml.safe_load(istr)
                 if not isinstance(content, dict):
                     logging.error(
@@ -88,14 +92,14 @@ def merge_yaml_files(self, *files, **kwargs):
                         data[key] = value
         logging.info("writing file %s", out)
         if succeeded:
-            with open(out, "w") as ostr:
+            with open(out, "w", encoding="utf-8") as ostr:
                 yaml.dump(data, ostr, default_flow_style=False)
     else:
         logging.info("file %s is up to date, nothing to do.", out)
     return succeeded
 
 
-def is_file_tracked(file, cwd=None):
+def is_file_tracked(file: str, cwd=None) -> bool:
     """
     Args:
         file: relative path to file within a git repository
@@ -140,7 +144,7 @@ def log_command(*commands, logger=None, level=logging.DEBUG):
     logger.log(level, message)
 
 
-class cached_property(object):
+class cached_property:  # pylint: disable=C0103
     """
     A property that is only computed once per instance and then replaces itself
     with an ordinary attribute. Deleting the attribute resets the property.
@@ -160,7 +164,7 @@ class cached_property(object):
 
 
 @functools.lru_cache()
-def which(program, paths=None):
+def which(program: str, paths=None):
     """
     Find the first location of a program in PATH environment variable.
 
@@ -182,7 +186,7 @@ def which(program, paths=None):
             return abs_path
 
 
-def where(program, glob_patterns=None, paths=None):
+def where(program: str, glob_patterns=None, paths=None):
     """
     Find all the locations of a program in PATH environment variable.
 
@@ -216,7 +220,7 @@ class BBPVEnv:
     Wrapper for the Python virtual environment used by this module.
     """
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         """
         Args:
             path: path to virtualenvironment
@@ -224,19 +228,35 @@ class BBPVEnv:
         self._path = path
 
     @property
-    def path(self):
+    def path(self) -> str:
+        """
+        Return:
+            Path to the virtual environment
+        """
         return self._path
 
     @property
-    def bin_dir(self):
+    def bin_dir(self) -> str:
+        """
+        Return:
+            Path to the /bin directory of the virtual environment
+        """
         return os.path.join(self.path, "bin")
 
     @property
-    def interpreter(self):
+    def interpreter(self) -> str:
+        """
+        Return:
+            Path to the Python interpreter of the virtual environment
+        """
         return os.path.join(self.bin_dir, "python")
 
     @property
-    def pip(self):
+    def pip(self) -> str:
+        """
+        Return:
+            Path to the pip executable within the virtual environment
+        """
         return os.path.join(self.bin_dir, "pip")
 
     def pip_install(self, requirement, upgrade=False):
@@ -248,7 +268,7 @@ class BBPVEnv:
                 - [pkg_resources.Requirement.parse("foo==1.0"), "bar==1.0"]
         """
         cmd = [self.pip, "install"]
-        if logging.getLogger() != logging.DEBUG:
+        if logging.getLogger().level != logging.DEBUG:
             cmd += ["-q"]
         if upgrade:
             cmd += ["--upgrade"]
@@ -260,7 +280,7 @@ class BBPVEnv:
         subprocess.check_call(cmd)
 
     @property
-    def in_venv(self):
+    def in_venv(self) -> bool:
         """
         Return:
             True if the current process is run by the Python interpreter
@@ -283,14 +303,14 @@ class BBPVEnv:
         if not self.in_venv:
             if not os.path.isdir(self.path):
                 builder = venv.EnvBuilder(symlinks=True, with_pip=True)
-                logging.debug(f"Creating virtual environment {self.path}")
+                logging.debug("Creating virtual environment %s", self.path)
                 builder.create(self.path)
                 self.pip_install("pip", upgrade=True)
-        logging.debug("Restarting process within own Python virtualenv" + reason)
+        logging.debug("Restarting process within own Python virtualenv %s", reason)
         os.execv(self.interpreter, [self.interpreter] + sys.argv)
 
     @classmethod
-    def is_requirement_met(cls, requirement):
+    def is_requirement_met(cls, requirement) -> bool:
         """
         Args:
             requirement: str of pkg_resources.Requirement
@@ -331,10 +351,10 @@ class BBPVEnv:
                 self.pip_install(requirement)
                 if restart:
                     self.restart_in_venv(
-                        f" to take into account installed requirement {requirement}"
+                        f"to take into account installed requirement {requirement}"
                     )
             else:
-                self.restart_in_venv(f" because requirement {requirement} is not met")
+                self.restart_in_venv(f"because requirement {requirement} is not met")
 
 
 class Tool(metaclass=abc.ABCMeta):
@@ -344,7 +364,7 @@ class Tool(metaclass=abc.ABCMeta):
 
     LOG_JOBS = True
 
-    def __init__(self, config, user_config):
+    def __init__(self, config: dict, user_config: dict):
         """
         Args:
             config: describes how to tool works internally
@@ -354,7 +374,12 @@ class Tool(metaclass=abc.ABCMeta):
         self._user_config = user_config
 
     @cached_property
-    def job_logger(self):
+    def job_logger(self) -> logging.Logger:
+        """
+        Return:
+            `logging.getLogger` instance use to report
+            the commands executed by a tool.
+        """
         logger = logging.getLogger("job")
         logger.propagate = False
         logger.setLevel(logging.INFO if Tool.LOG_JOBS else logging.WARN)
@@ -365,22 +390,38 @@ class Tool(metaclass=abc.ABCMeta):
         return logger
 
     @property
-    def name(self):
+    def name(self) -> str:
+        """
+        Return:
+            the tool name
+        """
         return self._config["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        Return:
+            the tool name
+        """
         return self.name
 
     @property
-    def config(self):
+    def config(self) -> dict:
+        """
+        Return:
+            tool internal configuration
+        """
         return self._config
 
     @property
-    def user_config(self):
+    def user_config(self) -> dict:
+        """
+        Return:
+            tool user configuration
+        """
         return self._user_config
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         Return:
             absolute path to the tool
@@ -416,20 +457,18 @@ class Tool(metaclass=abc.ABCMeta):
         """
         Find the tool on the system and setup its configuration
         """
-        pass
 
     @classmethod
-    def cli_options(cls, task, parser):
+    def cli_options(cls, task: str, parser: argparse.ArgumentParser):
         """
         Hook function to add options to the CLI parser of a task
 
         Args:
             task: task name
-            parser: instance of `argparse.ArgumentParser`
+            parser: argument parser to complete
         """
-        pass
 
-    def cmd_opts(self, task, dry_run=False, **kwargs):
+    def cmd_opts(self, task: str, dry_run=False, **kwargs):
         """
         Args:
             task: task name
@@ -443,8 +482,8 @@ class Tool(metaclass=abc.ABCMeta):
         if dry_run:
             try:
                 return task_config["dry_run_cmd_opts"]
-            except KeyError:
-                raise Exception(f"{self}: error: dry-run: unsupported option")
+            except KeyError as exc:
+                raise Exception(f"{self}: error: dry-run: unsupported option") from exc
         else:
             return task_config["cmd_opts"]
 
@@ -474,12 +513,11 @@ class Tool(metaclass=abc.ABCMeta):
             f"Could not find appropriate config file for {self} {version}"
         )
 
-    def prepare_config(self, project):
+    def prepare_config(self):
         """
         Setup the configuration file of the tool. For instance this function
         will create the proper ".clang-format" file at the root of a C++ project.
         """
-        assert isinstance(project, BBPProject)
         config_fname = self.config["config_file"].format(self=self)
         config_f = os.path.join(source_dir(), config_fname)
         if not is_file_tracked(config_fname, cwd=source_dir()) or not os.path.exists(
@@ -489,7 +527,7 @@ class Tool(metaclass=abc.ABCMeta):
                 source_dir(), self.config["custom_config_file"].format(self=self)
             )
             if os.path.exists(custom_config_f):
-                logging.info(f"Merging custom {self} YAML changes ")
+                logging.info("Merging custom %s YAML changes ", self)
                 merge_yaml_files(
                     self.bbp_config_file,
                     custom_config_f,
@@ -503,17 +541,19 @@ class Tool(metaclass=abc.ABCMeta):
                     config_f
                 ) < os.path.getmtime(bbp_config_f):
                     logging.info(
-                        f"Copying BBP config {bbp_config_base} to {source_dir()}"
+                        "Copying BBP config %s to %s", bbp_config_base, source_dir()
                     )
                     shutil.copy(bbp_config_f, config_f)
                 else:
                     logging.info(
-                        f"{self} config is up to date with BBP {bbp_config_base} config"
+                        "%s config is up to date with BBP %s config",
+                        self,
+                        bbp_config_base,
                     )
         else:
-            logging.info(f"{self} config is tracked by git, nothing to do.")
+            logging.info("%s config is tracked by git, nothing to do.", self)
 
-    def run(self, task, *files, dry_run=False, **kwargs):
+    def run(self, task: str, *files, dry_run=False, **kwargs):
         """
         Execute a task on a set of files
 
@@ -533,7 +573,7 @@ class Tool(metaclass=abc.ABCMeta):
             num_errors += self._run_chunk(task, *files_chunk, dry_run=dry_run, **kwargs)
         return num_errors
 
-    def _run_chunk(self, task, *files, cwd=None, **kwargs):
+    def _run_chunk(self, task: str, *files, cwd=None, **kwargs):
         cmd = [self.path]
         user_option = self.user_config.get("option") or []
         if isinstance(user_option, str):
@@ -551,8 +591,9 @@ class Tool(metaclass=abc.ABCMeta):
                 lang_str = ", ".join(task_config["languages"])
                 logging.error(
                     "\033[1;31merror:\033[0;0m"
-                    f"improper {lang_str} file formatting: "
+                    "improper %s file formatting: "
                     "\033[;1m%s\033[0;0m",
+                    lang_str,
                     " ".join(files),
                 )
         else:
@@ -561,7 +602,7 @@ class Tool(metaclass=abc.ABCMeta):
             status = subprocess.call(cmd, cwd=cwd)
         return 1 if status != 0 else 0
 
-    def accepts_file(self, file):
+    def accepts_file(self, file: str) -> bool:
         """
         Args:
             file: path to file
@@ -598,8 +639,10 @@ class ExecutableTool(Tool):
                 else:
                     raise e
             logging.info(
-                f"{self}: found version {self._version}: {self._path}"
-                + f" matching the requirement {self.requirement}"
+                f"{self}: found %s (%s) matching requirement %s",
+                self._path,
+                self._version,
+                self.requirement,
             )
         else:
             self._version = self.find_version(self.path)
@@ -624,9 +667,14 @@ class ExecutableTool(Tool):
 
     @property
     def names_glob_patterns(self):
+        """
+        Return:
+            list of additional globbing pattern to look for
+            the tool in PATH environment variables
+        """
         return self.config.get("names_glob_patterns")
 
-    def find_version(self, path):
+    def find_version(self, path: str) -> str:
         """
         Returns:
             extract version of given utility, i.e "13.0.0"
@@ -658,8 +706,15 @@ class ExecutableTool(Tool):
 
 
 class ClangTidy(ExecutableTool):
+    """
+    Specialization for ClangTidy utility in order to:
+    - add the -p CLI option and takes it into account when
+      executing the command
+    - properly merge the ClangTidy checks in YAML files
+    """
+
     @classmethod
-    def cli_options(cls, task, parser):
+    def cli_options(cls, task: str, parser: argparse.ArgumentParser):
         parser.add_argument(
             "-p",
             metavar="build-path",
@@ -668,7 +723,7 @@ class ClangTidy(ExecutableTool):
             help="a Clang compile command database",
         )
 
-    def cmd_opts(self, task, compile_commands_file=None, **kwargs):
+    def cmd_opts(self, task: str, compile_commands_file=None, **kwargs):
         compile_commands_file = compile_commands_file or self.user_config.get(
             "compile_commands_file"
         )
@@ -875,7 +930,7 @@ class BBPProject:
         return BBPVEnv(os.path.join(source_dir(), ".bbp-project-venv"))
 
     @classmethod
-    def task_cli(cls, task):
+    def task_cli(cls, task: str):
         """
         Construct the `argparse.ArgumentParser` for the given `task`
 
@@ -942,7 +997,7 @@ class BBPProject:
         return parser
 
     @classmethod
-    def run_task(cls, task, args=None):
+    def run_task(cls, task: str, args=None):
         """
         Execute a task
 
@@ -976,7 +1031,7 @@ class BBPProject:
         else:
             num_errors = project.run_global_task(**vars(options))
         if num_errors != 0:
-            logging.error(f"{num_errors} jobs failed")
+            logging.error("%i jobs failed", num_errors)
         return num_errors
 
     def run_global_task(self, task, **kwargs):
@@ -991,14 +1046,16 @@ class BBPProject:
             Number of failed jobs
         """
         tools = list(self.tools_for_task(task, kwargs["languages"]))
+        for tool in tools:
+            tool.configure()
         [tool.configure() for tool in tools]
-        [tool.prepare_config(self) for tool in tools if "config_file" in tool.config]
+        [tool.prepare_config() for tool in tools if "config_file" in tool.config]
         num_errors = 0
         for tool in tools:
             num_errors += tool.run(task, **kwargs)
         return num_errors
 
-    def run_task_on_codebase(self, task, languages=None, sources=None, **kwargs):
+    def run_task_on_codebase(self, task: str, languages=None, sources=None, **kwargs):
         """
         Execute a task working on files of the codebase
 
@@ -1013,15 +1070,17 @@ class BBPProject:
         """
         tools = list(self.tools_for_task(task, languages))
         [tool.configure() for tool in tools]
-        [tool.prepare_config(self) for tool in tools if "config_file" in tool.config]
+        [tool.prepare_config() for tool in tools if "config_file" in tool.config]
 
         if not tools:
-            logging.warn(
-                f"No tool enabled for task {task}. "
-                f"Consider editing file {self.USER_CONFIG_FILE}"
-                " at the root of your project"
+            logging.warning(
+                "No tool enabled for task %s. "
+                "Consider editing file %s"
+                " at the root of your project",
+                task,
+                self.USER_CONFIG_FILE,
             )
-            return
+            return 0
 
         src_dirs = []
         src_others = []
@@ -1078,7 +1137,7 @@ class BBPProject:
                 num_errors += tool.run(task, *tool_tasks, cwd=source_dir(), **kwargs)
         return num_errors
 
-    def tools_for_task(self, task, languages):
+    def tools_for_task(self, task: str, languages):
         """
         Get the toolS able to process a task on given languages
 
@@ -1104,7 +1163,7 @@ class BBPProject:
                         yield tool
 
     @classmethod
-    def supported_languages(cls, task):
+    def supported_languages(cls, task: str):
         """
         Get the list of languages supported by a given task
 
@@ -1129,7 +1188,7 @@ class BBPProject:
 
     @cached_property
     def tools(self):
-        tools = dict()
+        tools = {}
         for name, tool_desc in BBPProject.TOOLS_DESCRIPTION.items():
             if name in self._config["tools"]:
                 tools[name] = tool_desc["cls"](tool_desc, self._config["tools"][name])
@@ -1163,12 +1222,12 @@ class BBPProject:
         return None
 
     @classmethod
-    def merge_user_config(cls, conf, user_conf):
+    def merge_user_config(cls, conf: dict, user_conf: dict):
         cls._merge_user_config_global(conf, user_conf)
         cls._merge_user_config_tools(conf, user_conf)
 
     @classmethod
-    def _apply_global_conf(cls, conf):
+    def _apply_global_conf(cls, conf: dict):
         global_conf = conf["tools"].pop("global", None)
         if not global_conf:
             return
@@ -1180,7 +1239,7 @@ class BBPProject:
             conf["tools"][tool] = tool_conf
 
     @classmethod
-    def _parse_conf_regex(cls, conf):
+    def _parse_conf_regex(cls, conf: dict):
         for tool, tool_conf in conf["tools"].items():
             if tool == "global":
                 continue
@@ -1196,7 +1255,7 @@ class BBPProject:
             apply_on_section("exclude")
 
     @classmethod
-    def _merge_user_config_tools(cls, conf, user_conf):
+    def _merge_user_config_tools(cls, conf: dict, user_conf: dict):
         tools = user_conf.get("tools", {})
         assert isinstance(tools, dict)
         for name, config in tools.items():
@@ -1204,10 +1263,11 @@ class BBPProject:
             conf["tools"][name]["enable"] = enable
 
     @classmethod
-    def _merge_user_config_global(cls, conf, user_conf, path=None):
+    def _merge_user_config_global(cls, conf: dict, user_conf: dict, path=None):
         path = [] if path is None else path
         for key in user_conf:
             if key in conf:
+                # pylint: disable=C0123
                 if isinstance(conf[key], dict) and isinstance(user_conf[key], dict):
                     cls._merge_user_config_global(
                         conf[key], user_conf[key], path + [str(key)]
@@ -1222,7 +1282,7 @@ class BBPProject:
                 conf[key] = user_conf[key]
 
     @classmethod
-    def _exclude_disabled_tools(cls, conf):
+    def _exclude_disabled_tools(cls, conf: dict):
         tools = conf["tools"]
         tools = {name: tools[name] for name in tools if tools[name]["enable"]}
         conf["tools"] = tools
@@ -1255,16 +1315,16 @@ class BBPProject:
             Instance of `BBPProject`
         """
         cls.virtualenv().ensure_requirement("PyYAML>=5")
-        import yaml
+        import yaml  # pylint: disable=C0415
 
-        with open(cls.default_config_file()) as file:
+        with open(cls.default_config_file(), encoding="utf-8") as file:
             conf = yaml.safe_load(file)
             cls._sanitize_config(conf)
-        for tool, config in conf["tools"].items():
+        for config in conf["tools"].values():
             config.setdefault("enable", True)
         user_conf_file = cls.user_config_file()
         if user_conf_file:
-            with open(user_conf_file) as file:
+            with open(user_conf_file, encoding="utf-8") as file:
                 user_conf = yaml.safe_load(file)
                 cls._sanitize_config(user_conf)
             cls.merge_user_config(conf, user_conf)
