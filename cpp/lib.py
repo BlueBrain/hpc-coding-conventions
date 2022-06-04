@@ -12,6 +12,7 @@ import glob
 import logging
 import operator
 import os.path
+from pathlib import Path
 import re
 import shlex
 import shutil
@@ -21,7 +22,7 @@ import venv
 
 import pkg_resources
 
-THIS_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+THIS_SCRIPT_DIR = Path(__file__).resolve().parent
 
 
 @functools.lru_cache()
@@ -44,12 +45,12 @@ def source_dir():
         output = subprocess.check_output(cmd, **kwargs).decode("utf-8").strip()
         return os.path.realpath(output)
 
-    git_dir = git_rev_parse("--git-dir", cwd=THIS_SCRIPT_DIR)
-    if os.path.dirname(git_dir) not in THIS_SCRIPT_DIR:
+    git_dir = Path(git_rev_parse("--git-dir", cwd=THIS_SCRIPT_DIR))
+    if git_dir.parent not in THIS_SCRIPT_DIR.parents:
         # This project is used as a git module
         module_dir = git_rev_parse("--show-toplevel", cwd=THIS_SCRIPT_DIR)
         git_dir = git_rev_parse("--git-dir", cwd=os.path.dirname(module_dir))
-    return os.path.dirname(git_dir)
+    return git_dir.parent
 
 
 def merge_yaml_files(*files, **kwargs):
@@ -63,7 +64,7 @@ def merge_yaml_files(*files, **kwargs):
         sys.exit(1)
 
     succeeded = True
-    transformers = kwargs.get("transformers", {})
+    transformers = kwargs.get("transformers") or {}
     out = files[-1]
     ins = files[:-1]
 
@@ -172,18 +173,21 @@ def which(program: str, paths=None):
         program: program to look for i.e "clang-format"
         paths: optional list of paths where to look for the program.
                default is the PATH environment variable.
+
+    Return:
+        Path `str` of the executable if found, `None otherwise
     """
     env_variable = re.sub("[^0-9a-zA-Z_]", "_", program).upper()
 
-    program = os.environ.get(env_variable, program)
-    if os.path.isabs(program):
-        return program
+    program = Path(os.environ.get(env_variable, program))
+    if program.is_absolute():
+        return str(program)
 
     paths = paths or os.getenv("PATH").split(os.path.pathsep)
     for path in paths:
-        abs_path = os.path.join(path, program)
-        if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
-            return abs_path
+        abs_path = Path(path).joinpath(program)
+        if abs_path.exists() and os.access(abs_path, os.X_OK):
+            return str(abs_path)
 
 
 def where(program: str, glob_patterns=None, paths=None):
@@ -223,8 +227,9 @@ class BBPVEnv:
     def __init__(self, path: str):
         """
         Args:
-            path: path to virtualenvironment
+            path: path to virtual environment
         """
+        assert isinstance(path, Path)
         self._path = path
 
     @property
@@ -241,7 +246,7 @@ class BBPVEnv:
         Return:
             Path to the /bin directory of the virtual environment
         """
-        return os.path.join(self.path, "bin")
+        return self.path.joinpath("bin")
 
     @property
     def interpreter(self) -> str:
@@ -249,7 +254,7 @@ class BBPVEnv:
         Return:
             Path to the Python interpreter of the virtual environment
         """
-        return os.path.join(self.bin_dir, "python")
+        return self.bin_dir.joinpath("python")
 
     @property
     def pip(self) -> str:
@@ -257,7 +262,7 @@ class BBPVEnv:
         Return:
             Path to the pip executable within the virtual environment
         """
-        return os.path.join(self.bin_dir, "pip")
+        return self.bin_dir.joinpath("pip")
 
     def pip_install(self, requirement, upgrade=False):
         """
@@ -267,7 +272,7 @@ class BBPVEnv:
                 - "foo==1.0"
                 - [pkg_resources.Requirement.parse("foo==1.0"), "bar==1.0"]
         """
-        cmd = [self.pip, "install"]
+        cmd = [str(self.pip), "install"]
         if logging.getLogger().level != logging.DEBUG:
             cmd += ["-q"]
         if upgrade:
@@ -286,8 +291,7 @@ class BBPVEnv:
             True if the current process is run by the Python interpreter
             of this virtual environment, False otherwise.
         """
-        venv_abs_path = os.path.abspath(self.path)
-        venv_python_interpreter_pattern = os.path.join(venv_abs_path, "bin", "python*")
+        venv_python_interpreter_pattern = self.bin_dir.resolve().joinpath("python*")
         return fnmatch(sys.executable, venv_python_interpreter_pattern)
 
     def restart_in_venv(self, reason=""):
@@ -301,10 +305,10 @@ class BBPVEnv:
             reason: optional log message
         """
         if not self.in_venv:
-            if not os.path.isdir(self.path):
+            if not self.path.is_dir():
                 builder = venv.EnvBuilder(symlinks=True, with_pip=True)
                 logging.debug("Creating virtual environment %s", self.path)
-                builder.create(self.path)
+                builder.create(str(self.path))
                 self.pip_install("pip", upgrade=True)
         logging.debug("Restarting process within own Python virtualenv %s", reason)
         os.execv(self.interpreter, [self.interpreter] + sys.argv)
@@ -491,7 +495,7 @@ class Tool(metaclass=abc.ABCMeta):
     def bbp_config_file(self):
         """
         Returns:
-            absolute path to the proper config file
+            absolute path `pathlib.Path` to the proper config file
             in the hpc-coding-conventions project.
             It depends on the version of the tool
         """
@@ -500,14 +504,14 @@ class Tool(metaclass=abc.ABCMeta):
         config_lib_dir = THIS_SCRIPT_DIR
         test_ver = int(major_ver)
         while test_ver >= 0:
-            candidate = os.path.join(config_lib_dir, f"{self}-{test_ver}")
-            if os.path.exists(candidate):
+            candidate = config_lib_dir.joinpath(f"{self}-{test_ver}")
+            if candidate.exists():
                 return candidate
             test_ver -= 1
-        candidate = os.path.join(
-            config_lib_dir, self.config["config_file"].format(self=self)[1:]
+        candidate = config_lib_dir.joinpath(
+            self.config["config_file"].format(self=self)[1:]
         )
-        if os.path.exists(candidate):
+        if candidate.exists():
             return candidate
         raise RuntimeError(
             f"Could not find appropriate config file for {self} {version}"
@@ -519,25 +523,39 @@ class Tool(metaclass=abc.ABCMeta):
         will create the proper ".clang-format" file at the root of a C++ project.
         """
         config_fname = self.config["config_file"].format(self=self)
-        config_f = os.path.join(source_dir(), config_fname)
-        if not is_file_tracked(config_fname, cwd=source_dir()) or not os.path.exists(
-            config_f
-        ):
-            custom_config_f = os.path.join(
-                source_dir(), self.config["custom_config_file"].format(self=self)
-            )
-            if os.path.exists(custom_config_f):
-                logging.info("Merging custom %s YAML changes ", self)
-                merge_yaml_files(
-                    self.bbp_config_file,
-                    custom_config_f,
-                    config_f,
-                    transformers=self.config.get("config_yaml_transformers"),
-                )
+        config_f = source_dir().joinpath(config_fname)
+        if not is_file_tracked(config_fname, cwd=source_dir()) or not config_f.exists():
+            custom_conf_f_name = self.config["custom_config_file"].format(self=self)
+            custom_config_f = source_dir().joinpath(custom_conf_f_name)
+            if custom_config_f.exists():
+                build_file = False
+                if not config_f.exists():
+                    build_file = True
+                else:
+                    config_f_mtime = os.path.getmtime(config_f)
+                    deps = [config_f, custom_config_f]
+                    if config_f_mtime < max((os.path.getmtime(f) for f in deps)):
+                        build_file = True
+                if build_file:
+                    logging.info("Merging custom %s YAML changes ", self)
+                    merge_yaml_files(
+                        self.bbp_config_file,
+                        custom_config_f,
+                        config_f,
+                        transformers=self.config.get("config_yaml_transformers"),
+                    )
+                else:
+                    logging.info(
+                        "%s config is up to date with BBP %s"
+                        " and custom %s config files",
+                        self,
+                        self.bbp_config_file.name,
+                        custom_conf_f_name,
+                    )
             else:
                 bbp_config_f = self.bbp_config_file
-                bbp_config_base = os.path.basename(bbp_config_f)
-                if not os.path.exists(config_f) or os.path.getmtime(
+                bbp_config_base = bbp_config_f.name
+                if not config_f.exists() or os.path.getmtime(
                     config_f
                 ) < os.path.getmtime(bbp_config_f):
                     logging.info(
@@ -927,7 +945,7 @@ class BBPProject:
     @classmethod
     @functools.lru_cache()
     def virtualenv(cls):
-        return BBPVEnv(os.path.join(source_dir(), ".bbp-project-venv"))
+        return BBPVEnv(source_dir().joinpath(".bbp-project-venv"))
 
     @classmethod
     def task_cli(cls, task: str):
@@ -1200,7 +1218,7 @@ class BBPProject:
         Return:
             Path to the default YAML configuration file
         """
-        return os.path.join(THIS_SCRIPT_DIR, "..", cls.CONFIG_FILE)
+        return THIS_SCRIPT_DIR.parent.joinpath(cls.CONFIG_FILE)
 
     @classmethod
     def user_config_file(cls):
@@ -1210,15 +1228,15 @@ class BBPProject:
         Return:
             Path to the file if found, `None` otherwise
         """
-        expected_location = os.path.join(source_dir(), cls.USER_CONFIG_FILE)
-        if os.path.exists(expected_location):
+        expected_location = source_dir().joinpath(cls.USER_CONFIG_FILE)
+        if expected_location.exists():
             return expected_location
         dir = THIS_SCRIPT_DIR
         while dir != "/":
-            file = os.path.join(dir, cls.USER_CONFIG_FILE)
-            if os.path.exists(file):
+            file = dir.joinpath(cls.USER_CONFIG_FILE)
+            if file.exists():
                 return file
-            dir = os.path.dirname(dir)
+            dir = dir.parent
         return None
 
     @classmethod

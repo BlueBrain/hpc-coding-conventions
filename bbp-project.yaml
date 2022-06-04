@@ -30,7 +30,7 @@ tools:
 
   CMakeFormat:
     enable: False
-    version: ">=0.6, <0.7"
+    version: ~=0.6
     include:
       match:
       - .*\.cmake$
