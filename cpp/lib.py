@@ -43,7 +43,7 @@ def source_dir():
         cmd = list((which("git"), "rev-parse") + args)
         log_command(cmd, level=logging.DEBUG)
         output = subprocess.check_output(cmd, **kwargs).decode("utf-8").strip()
-        return os.path.realpath(output)
+        return Path(output).resolve()
 
     git_dir = Path(git_rev_parse("--git-dir", cwd=THIS_SCRIPT_DIR))
     if git_dir.parent not in THIS_SCRIPT_DIR.parents:
