@@ -608,9 +608,7 @@ class Tool(metaclass=abc.ABCMeta):
             if status != 0:
                 lang_str = ", ".join(task_config["languages"])
                 logging.error(
-                    "\033[1;31merror:\033[0;0m"
-                    "improper %s file formatting: "
-                    "\033[;1m%s\033[0;0m",
+                    "improper %s file formatting: %s",
                     lang_str,
                     " ".join(files),
                 )
