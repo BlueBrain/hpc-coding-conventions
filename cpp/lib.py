@@ -819,6 +819,7 @@ class ToolCapabilities(
 
 
 class BBPProject:
+    # This is the config file of the HPC Coding Conventions project.
     CONFIG_FILE = "bbp-project.yaml"
     # This is the config file for the project being formatted. The path is
     # relative to root of the project using the HPC CC.
