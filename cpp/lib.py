@@ -820,6 +820,8 @@ class ToolCapabilities(
 
 class BBPProject:
     CONFIG_FILE = "bbp-project.yaml"
+    # This is the config file for the project being formatted. The path is
+    # relative to root of the project using the HPC CC.
     USER_CONFIG_FILE = ".bbp-project.yaml"
     TASKS_DESCRIPTION = {
         "format": TaskDescription(
