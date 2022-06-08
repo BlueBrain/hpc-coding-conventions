@@ -696,11 +696,17 @@ class ExecutableTool(Tool):
             extract version of given utility, i.e "13.0.0"
         """
         if self.config["capabilities"].pip_pkg:
-            # this tool is a Python package
-            pkg_name = self.name
-            if isinstance(self.config["capabilities"].pip_pkg, str):
-                pkg_name = self.config["capabilities"].pip_pkg
-            return pkg_resources.get_distribution(pkg_name).version
+            # This tool is a Python package
+            venv = BBPProject.virtualenv()
+            if venv.in_venv and venv.bin_dir in Path(path).parents:
+                # `path` belongs to the ClangFormat Python package
+                # available in the current Python environment.
+                # Let's query the environment instead of parsing
+                # the output of `clang-format --version`
+                pkg_name = self.name
+                if isinstance(self.config["capabilities"].pip_pkg, str):
+                    pkg_name = self.config["capabilities"].pip_pkg
+                return pkg_resources.get_distribution(pkg_name).version
 
         cmd = [path] + self._config["version_opt"]
         log_command(cmd)
