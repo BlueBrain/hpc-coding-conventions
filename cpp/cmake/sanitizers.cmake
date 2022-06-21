@@ -62,17 +62,21 @@ function(cpp_cc_enable_sanitizers)
   message(STATUS "Enabling sanitizers: ${${CODING_CONV_PREFIX}_SANITIZERS}")
   # comma-separated string -> CMake list
   string(REPLACE "," ";" sanitizers "${${CODING_CONV_PREFIX}_SANITIZERS}")
-  set(known_undefined_checks
-      undefined
-      float-divide-by-zero
-      unsigned-integer-overflow
-      implicit-integer-sign-change
-      implicit-signed-integer-truncation
-      implicit-unsigned-integer-truncation
-      local-bounds
-      nullability-arg
-      nullability-assign
-      nullability-return)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+    set(known_undefined_checks undefined)
+  else()
+    set(known_undefined_checks
+        undefined
+        float-divide-by-zero
+        unsigned-integer-overflow
+        implicit-integer-sign-change
+        implicit-signed-integer-truncation
+        implicit-unsigned-integer-truncation
+        local-bounds
+        nullability-arg
+        nullability-assign
+        nullability-return)
+  endif()
   # Use the shared library version of the sanitizer runtime so that we can LD_PRELOAD it when
   # launching via Python and so on
   set(compiler_flags -fno-omit-frame-pointer -shared-libsan)
