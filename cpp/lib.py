@@ -606,9 +606,9 @@ class Tool(metaclass=abc.ABCMeta):
             log_command(cmd, logger=self.job_logger, level=logging.INFO)
             status = subprocess.call(cmd, stderr=subprocess.DEVNULL)
             if status != 0:
-                lang_str = ", ".join(task_config["languages"])
+                lang_str = "/".join(task_config["languages"])
                 logging.error(
-                    "improper %s file formatting: %s",
+                    "%s | Incorrect formatting (one or more): %s",
                     lang_str,
                     " ".join(files),
                 )
