@@ -1,0 +1,13 @@
+tools:
+  CMakeFormat:
+    enable: True
+  Flake8:
+    enable: True
+    include: &pyfiles
+        match:
+        - bin/.*
+        - .*\.py
+  Black:
+    enable: True
+    include: *pyfiles
+
