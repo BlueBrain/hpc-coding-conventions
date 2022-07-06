@@ -102,10 +102,6 @@ bob_option(${CODING_CONV_PREFIX}_STATIC_ANALYSIS "Enable C++ static analysis dur
            OFF)
 bob_option(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis test" OFF)
 
-if(${CODING_CONV_PREFIX}_CLANG_FORMAT OR ${CODING_CONV_PREFIX}_FORMATTING)
-  cpp_cc_enable_clang_formatting()
-endif()
-
 if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
   add_test(NAME check_formatting_${PROJECT_NAME}
            COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../bin/format" --dry-run)
