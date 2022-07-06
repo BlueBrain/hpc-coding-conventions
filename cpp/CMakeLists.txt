@@ -104,6 +104,7 @@ bob_option(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS "Add CTest static analysis
 
 if(${CODING_CONV_PREFIX}_TEST_FORMATTING)
   add_test(NAME check_formatting_${PROJECT_NAME}
+           WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
            COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../bin/format" --dry-run)
 endif()
 
