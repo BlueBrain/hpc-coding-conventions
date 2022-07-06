@@ -23,6 +23,7 @@ import venv
 import pkg_resources
 
 THIS_SCRIPT_DIR = Path(__file__).resolve().parent
+DEFAULT_RE_EXTRACT_VERSION = "([0-9]+\\.[0-9]+(\\.[0-9]+)?[ab]?)"
 
 
 @functools.lru_cache()
@@ -645,6 +646,11 @@ class ExecutableTool(Tool):
             # path is not provided by the user conf
             # let's find it!
             try:
+                if self.user_config.get("requirements", []):
+                    raise FileNotFoundError(
+                        f"Force usage of custom virtualenv for {self} "
+                        "since it requires extra Python packages"
+                    )
                 self._path, self._version = self.find_tool_in_path()
             except FileNotFoundError as e:
                 if self.requirement:
@@ -851,7 +857,7 @@ class BBPProject:
             name="clang-format",
             names_glob=["clang-format-*"],
             version_opt=["--version"],
-            version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+            version_re=DEFAULT_RE_EXTRACT_VERSION,
             capabilities=ToolCapabilities(
                 cli_accept_dir=False,
                 cli_max_num_files=30,
@@ -871,7 +877,7 @@ class BBPProject:
             cls=ExecutableTool,
             name="cmake-format",
             version_opt=["--version"],
-            version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+            version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides=dict(
                 format=dict(
                     languages=["CMake"],
@@ -892,7 +898,7 @@ class BBPProject:
             name="clang-tidy",
             names_glob="clang-tidy-*",
             version_opt=["--version"],
-            version_re="([0-9]+\\.[0-9]+\\.[0-9]+)",
+            version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides={
                 "static-analysis": dict(languages=["C++"]),
                 "clang-tidy": dict(
@@ -909,6 +915,8 @@ class BBPProject:
         Flake8=dict(
             cls=ExecutableTool,
             name="flake8",
+            version_opt=["--version"],
+            version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides={
                 "static-analysis": dict(
                     languages=["Python"],
@@ -924,6 +932,8 @@ class BBPProject:
         Black=dict(
             cls=ExecutableTool,
             name="black",
+            version_opt=["--version"],
+            version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides=dict(
                 format=dict(
                     languages=["Python"],
