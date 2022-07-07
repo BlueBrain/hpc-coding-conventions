@@ -1167,9 +1167,9 @@ class BBPProject:
                 for tool in tools:
                     if tool.accepts_file(file):
                         tasks[tool].add(file)
-            for tool, tool_tasks in tasks.items():
-                # perform the tasks
-                num_errors += tool.run(task, *tool_tasks, cwd=source_dir(), **kwargs)
+        for tool, tool_tasks in tasks.items():
+            # perform the tasks
+            num_errors += tool.run(task, *tool_tasks, cwd=source_dir(), **kwargs)
         return num_errors
 
     def tools_for_task(self, task: str, languages):
