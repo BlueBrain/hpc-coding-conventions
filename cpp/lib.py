@@ -51,6 +51,13 @@ def source_dir():
         # This project is used as a git module
         module_dir = git_rev_parse("--show-toplevel", cwd=THIS_SCRIPT_DIR)
         git_dir = git_rev_parse("--git-dir", cwd=os.path.dirname(module_dir))
+        try:
+            Path.cwd().relative_to(module_dir)
+            # cwd is inside hpc-coding-conventions module.
+            # assume this is for its development.
+            return module_dir
+        except ValueError:
+            pass
     return git_dir.parent
 
 
@@ -602,10 +609,13 @@ class Tool(metaclass=abc.ABCMeta):
         dry_run = kwargs.get("dry_run", False)
 
         task_config = self.config["provides"][task]
+        call_kwargs = dict(cwd=cwd)
+        if logging.getLogger().level > logging.INFO:
+            call_kwargs.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if dry_run:
             cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
             log_command(cmd, logger=self.job_logger, level=logging.INFO)
-            status = subprocess.call(cmd, stderr=subprocess.DEVNULL)
+            status = subprocess.call(cmd, **call_kwargs)
             if status != 0:
                 lang_str = "/".join(task_config["languages"])
                 logging.error(
@@ -616,7 +626,7 @@ class Tool(metaclass=abc.ABCMeta):
         else:
             cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
             log_command(cmd, logger=self.job_logger, level=logging.INFO)
-            status = subprocess.call(cmd, cwd=cwd)
+            status = subprocess.call(cmd, **call_kwargs)
         return 1 if status != 0 else 0
 
     def accepts_file(self, file: str) -> bool:
@@ -1167,9 +1177,9 @@ class BBPProject:
                 for tool in tools:
                     if tool.accepts_file(file):
                         tasks[tool].add(file)
-            for tool, tool_tasks in tasks.items():
-                # perform the tasks
-                num_errors += tool.run(task, *tool_tasks, cwd=source_dir(), **kwargs)
+        for tool, tool_tasks in tasks.items():
+            # perform the tasks
+            num_errors += tool.run(task, *tool_tasks, cwd=source_dir(), **kwargs)
         return num_errors
 
     def tools_for_task(self, task: str, languages):
