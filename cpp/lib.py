@@ -602,10 +602,13 @@ class Tool(metaclass=abc.ABCMeta):
         dry_run = kwargs.get("dry_run", False)
 
         task_config = self.config["provides"][task]
+        call_kwargs = dict(cwd=cwd)
+        if logging.getLogger().level > logging.INFO:
+            call_kwargs.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if dry_run:
             cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
             log_command(cmd, logger=self.job_logger, level=logging.INFO)
-            status = subprocess.call(cmd, stderr=subprocess.DEVNULL)
+            status = subprocess.call(cmd, **call_kwargs)
             if status != 0:
                 lang_str = "/".join(task_config["languages"])
                 logging.error(
@@ -616,7 +619,7 @@ class Tool(metaclass=abc.ABCMeta):
         else:
             cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
             log_command(cmd, logger=self.job_logger, level=logging.INFO)
-            status = subprocess.call(cmd, cwd=cwd)
+            status = subprocess.call(cmd, **call_kwargs)
         return 1 if status != 0 else 0
 
     def accepts_file(self, file: str) -> bool:
