@@ -51,6 +51,13 @@ def source_dir():
         # This project is used as a git module
         module_dir = git_rev_parse("--show-toplevel", cwd=THIS_SCRIPT_DIR)
         git_dir = git_rev_parse("--git-dir", cwd=os.path.dirname(module_dir))
+        try:
+            Path.cwd().relative_to(module_dir)
+            # cwd is inside hpc-coding-conventions module.
+            # assume this is for its development.
+            return module_dir
+        except ValueError:
+            pass
     return git_dir.parent
 
 
