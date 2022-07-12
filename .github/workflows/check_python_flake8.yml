@@ -14,4 +14,4 @@ jobs:
         - name: Install packages
           run: sudo apt-get update && sudo apt-get install python3-venv
         - name: Check Python Flake8
-          run: bin/static-analysis --lang python
+          run: bin/static-analysis -v --lang python

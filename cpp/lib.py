@@ -224,7 +224,7 @@ def where(program: str, glob_patterns=None, paths=None):
             for pattern in glob_patterns:
                 for file in glob.glob(os.path.join(path, pattern)):
                     if os.access(file, os.X_OK):
-                        yield abs_path
+                        yield file
 
 
 class BBPVEnv:
@@ -865,7 +865,7 @@ class BBPProject:
         ClangFormat=dict(
             cls=ExecutableTool,
             name="clang-format",
-            names_glob=["clang-format-*"],
+            names_glob_patterns=["clang-format-*"],
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             capabilities=ToolCapabilities(
@@ -906,7 +906,7 @@ class BBPProject:
         ClangTidy=dict(
             cls=ClangTidy,
             name="clang-tidy",
-            names_glob="clang-tidy-*",
+            names_glob_patterns="clang-tidy-*",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides={
