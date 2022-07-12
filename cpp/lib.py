@@ -929,7 +929,7 @@ class BBPProject:
         ClangTidy=dict(
             cls=ClangTidy,
             name="clang-tidy",
-            names_glob_patterns="clang-tidy-*",
+            names_glob_patterns=["clang-tidy-*"],
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides={
