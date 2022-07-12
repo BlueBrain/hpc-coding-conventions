@@ -481,8 +481,6 @@ class Tool(metaclass=abc.ABCMeta):
         """
         pip_pkg = self.config["capabilities"].pip_pkg
         assert isinstance(pip_pkg, (str, bool))
-        if not pip_pkg:
-            return None
         if isinstance(pip_pkg, str):
             name = pip_pkg
         else:
