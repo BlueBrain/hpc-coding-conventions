@@ -18,6 +18,8 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
+import urllib.request
 import venv
 
 import pkg_resources
@@ -292,6 +294,27 @@ class BBPVEnv:
         log_command(cmd)
         subprocess.check_call(cmd)
 
+    def ensure_pip(self):
+        def py_call(*cmd, check=False):
+            cmd = [str(self.interpreter)] + list(cmd)
+            log_command(cmd)
+            kwargs = {}
+            if logging.getLogger().level != logging.DEBUG:
+                kwargs.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            call = subprocess.call
+            if check:
+                call = subprocess.check_call
+            return call(cmd, **kwargs) == 0
+
+        if not py_call("-m", "pip", "--version"):
+            py_call("-m", "ensurepip", "--default-pip")
+            if not py_call("-m", "pip", "--version"):
+                with tempfile.NamedTemporaryFile(suffix=".py") as get_pip_script:
+                    url = "https://bootstrap.pypa.io/get-pip.py"
+                    urllib.request.urlretrieve(url, get_pip_script.name)
+                    py_call(get_pip_script.name)
+                py_call("-m", "pip", "--version", check=True)
+
     @property
     def in_venv(self) -> bool:
         """
@@ -317,6 +340,7 @@ class BBPVEnv:
                 builder = venv.EnvBuilder(symlinks=True, with_pip=True)
                 logging.debug("Creating virtual environment %s", self.path)
                 builder.create(str(self.path))
+                self.ensure_pip()
                 self.pip_install("pip", upgrade=True)
         logging.debug("Restarting process within own Python virtualenv %s", reason)
         os.execv(self.interpreter, [self.interpreter] + sys.argv)
