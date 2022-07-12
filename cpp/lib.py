@@ -216,6 +216,7 @@ def where(program: str, glob_patterns=None, paths=None):
     program = os.environ.get(env_variable, program)
     if os.path.isabs(program):
         yield program
+        return
 
     paths = paths or os.getenv("PATH").split(os.path.pathsep)
     for path in paths:
