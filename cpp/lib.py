@@ -19,6 +19,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import List
 import urllib.request
 import venv
 
@@ -267,13 +268,17 @@ class BBPVEnv:
         """
         return self.bin_dir.joinpath("python")
 
-    @property
-    def pip(self) -> str:
+    def pip_cmd(self, *args) -> List[str]:
         """
+        Execute a pip command
+
+        Arguments:
+            args: the command
+
         Return:
-            Path to the pip executable within the virtual environment
+            array containing the shell command to execute
         """
-        return self.bin_dir.joinpath("pip")
+        return [str(self.interpreter), "-m", "pip"] + list(args)
 
     def pip_install(self, requirement, upgrade=False):
         """
@@ -283,7 +288,7 @@ class BBPVEnv:
                 - "foo==1.0"
                 - [pkg_resources.Requirement.parse("foo==1.0"), "bar==1.0"]
         """
-        cmd = [str(self.pip), "install"]
+        cmd = self.pip_cmd("install")
         if logging.getLogger().level != logging.DEBUG:
             cmd += ["-q"]
         if upgrade:
