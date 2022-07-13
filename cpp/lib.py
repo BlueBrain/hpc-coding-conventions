@@ -8,7 +8,6 @@ import collections
 import copy
 from fnmatch import fnmatch
 import functools
-import glob
 import logging
 import operator
 import os.path
@@ -18,6 +17,9 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
+from typing import List
+import urllib.request
 import venv
 
 import pkg_resources
@@ -198,14 +200,14 @@ def which(program: str, paths=None):
             return str(abs_path)
 
 
-def where(program: str, glob_patterns=None, paths=None):
+def where(program: str, regex=None, paths=None):
     """
     Find all the locations of a program in PATH environment variable.
 
     Args:
         program: program to look for i.e "clang-format"
-        glob_patterns: optional patterns for alternative program names
-                       i.e ["clang-format-*"]
+        regex: optional regular expression for alternative program names
+             i.e re.compile("clang-format-.*"])
         paths: optional list of paths where to look for the program.
                default is the PATH environment variable.
     """
@@ -214,17 +216,18 @@ def where(program: str, glob_patterns=None, paths=None):
     program = os.environ.get(env_variable, program)
     if os.path.isabs(program):
         yield program
+        return
 
     paths = paths or os.getenv("PATH").split(os.path.pathsep)
     for path in paths:
         abs_path = os.path.join(path, program)
         if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
             yield abs_path
-        if glob_patterns:
-            for pattern in glob_patterns:
-                for file in glob.glob(os.path.join(path, pattern)):
-                    if os.access(file, os.X_OK):
-                        yield file
+        if regex:
+            for file_name in os.listdir(path):
+                file_path = os.path.join(path, file_name)
+                if regex.match(file_name) and os.access(file_path, os.X_OK):
+                    yield file_path
 
 
 class BBPVEnv:
@@ -264,13 +267,17 @@ class BBPVEnv:
         """
         return self.bin_dir.joinpath("python")
 
-    @property
-    def pip(self) -> str:
+    def pip_cmd(self, *args) -> List[str]:
         """
+        Execute a pip command
+
+        Arguments:
+            args: the command
+
         Return:
-            Path to the pip executable within the virtual environment
+            array containing the shell command to execute
         """
-        return self.bin_dir.joinpath("pip")
+        return [str(self.interpreter), "-m", "pip"] + list(args)
 
     def pip_install(self, requirement, upgrade=False):
         """
@@ -280,7 +287,7 @@ class BBPVEnv:
                 - "foo==1.0"
                 - [pkg_resources.Requirement.parse("foo==1.0"), "bar==1.0"]
         """
-        cmd = [str(self.pip), "install"]
+        cmd = self.pip_cmd("install")
         if logging.getLogger().level != logging.DEBUG:
             cmd += ["-q"]
         if upgrade:
@@ -291,6 +298,27 @@ class BBPVEnv:
         cmd += requirement
         log_command(cmd)
         subprocess.check_call(cmd)
+
+    def ensure_pip(self):
+        def py_call(*cmd, check=False):
+            cmd = [str(self.interpreter)] + list(cmd)
+            log_command(cmd)
+            kwargs = {}
+            if logging.getLogger().level != logging.DEBUG:
+                kwargs.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            call = subprocess.call
+            if check:
+                call = subprocess.check_call
+            return call(cmd, **kwargs) == 0
+
+        if not py_call("-m", "pip", "--version"):
+            py_call("-m", "ensurepip", "--default-pip")
+            if not py_call("-m", "pip", "--version"):
+                with tempfile.NamedTemporaryFile(suffix=".py") as get_pip_script:
+                    url = "https://bootstrap.pypa.io/get-pip.py"
+                    urllib.request.urlretrieve(url, get_pip_script.name)
+                    py_call(get_pip_script.name)
+                py_call("-m", "pip", "--version", check=True)
 
     @property
     def in_venv(self) -> bool:
@@ -317,6 +345,7 @@ class BBPVEnv:
                 builder = venv.EnvBuilder(symlinks=True, with_pip=True)
                 logging.debug("Creating virtual environment %s", self.path)
                 builder.create(str(self.path))
+                self.ensure_pip()
                 self.pip_install("pip", upgrade=True)
         logging.debug("Restarting process within own Python virtualenv %s", reason)
         os.execv(self.interpreter, [self.interpreter] + sys.argv)
@@ -456,8 +485,6 @@ class Tool(metaclass=abc.ABCMeta):
         """
         pip_pkg = self.config["capabilities"].pip_pkg
         assert isinstance(pip_pkg, (str, bool))
-        if not pip_pkg:
-            return None
         if isinstance(pip_pkg, str):
             name = pip_pkg
         else:
@@ -683,7 +710,7 @@ class ExecutableTool(Tool):
             BBPProject.virtualenv().ensure_requirement(req, restart=False)
 
     def find_tool_in_path(self, search_paths=None):
-        paths = list(where(self.name, self.names_glob_patterns, search_paths))
+        paths = list(where(self.name, self.names_regex, search_paths))
         if not paths:
             raise FileNotFoundError(f"Could not find tool {self}")
         all_paths = [(p, self.find_version(p)) for p in paths]
@@ -697,14 +724,15 @@ class ExecutableTool(Tool):
             )
         return paths[-1]
 
-    @property
-    def names_glob_patterns(self):
+    @cached_property
+    def names_regex(self):
         """
         Return:
-            list of additional globbing pattern to look for
-            the tool in PATH environment variables
+            Optional additional regular expression to look for
+            the tool in PATH environment variables.
         """
-        return self.config.get("names_glob_patterns")
+        pattern = self.config.get("names_regex")
+        return re.compile(pattern) if pattern else None
 
     def find_version(self, path: str) -> str:
         """
@@ -865,7 +893,7 @@ class BBPProject:
         ClangFormat=dict(
             cls=ExecutableTool,
             name="clang-format",
-            names_glob_patterns=["clang-format-*"],
+            names_regex="clang-format-[-a-z0-9]+",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             capabilities=ToolCapabilities(
@@ -906,7 +934,7 @@ class BBPProject:
         ClangTidy=dict(
             cls=ClangTidy,
             name="clang-tidy",
-            names_glob_patterns="clang-tidy-*",
+            names_regex="clang-tidy-.*",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides={
