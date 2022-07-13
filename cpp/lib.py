@@ -8,7 +8,6 @@ import collections
 import copy
 from fnmatch import fnmatch
 import functools
-import glob
 import logging
 import operator
 import os.path
@@ -201,14 +200,14 @@ def which(program: str, paths=None):
             return str(abs_path)
 
 
-def where(program: str, glob_patterns=None, paths=None):
+def where(program: str, regex=None, paths=None):
     """
     Find all the locations of a program in PATH environment variable.
 
     Args:
         program: program to look for i.e "clang-format"
-        glob_patterns: optional patterns for alternative program names
-                       i.e ["clang-format-*"]
+        regex: optional regular expression for alternative program names
+             i.e re.compile("clang-format-.*"])
         paths: optional list of paths where to look for the program.
                default is the PATH environment variable.
     """
@@ -224,11 +223,11 @@ def where(program: str, glob_patterns=None, paths=None):
         abs_path = os.path.join(path, program)
         if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
             yield abs_path
-        if glob_patterns:
-            for pattern in glob_patterns:
-                for file in glob.glob(os.path.join(path, pattern)):
-                    if os.access(file, os.X_OK):
-                        yield file
+        if regex:
+            for file_name in os.listdir(path):
+                file_path = os.path.join(path, file_name)
+                if regex.match(file_name) and os.access(file_path, os.X_OK):
+                    yield file_path
 
 
 class BBPVEnv:
@@ -711,7 +710,7 @@ class ExecutableTool(Tool):
             BBPProject.virtualenv().ensure_requirement(req, restart=False)
 
     def find_tool_in_path(self, search_paths=None):
-        paths = list(where(self.name, self.names_glob_patterns, search_paths))
+        paths = list(where(self.name, self.names_regex, search_paths))
         if not paths:
             raise FileNotFoundError(f"Could not find tool {self}")
         all_paths = [(p, self.find_version(p)) for p in paths]
@@ -725,14 +724,15 @@ class ExecutableTool(Tool):
             )
         return paths[-1]
 
-    @property
-    def names_glob_patterns(self):
+    @cached_property
+    def names_regex(self):
         """
         Return:
-            list of additional globbing pattern to look for
-            the tool in PATH environment variables
+            Optional additional regular expression to look for
+            the tool in PATH environment variables.
         """
-        return self.config.get("names_glob_patterns")
+        pattern = self.config.get("names_regex")
+        return re.compile(pattern) if pattern else None
 
     def find_version(self, path: str) -> str:
         """
@@ -893,7 +893,7 @@ class BBPProject:
         ClangFormat=dict(
             cls=ExecutableTool,
             name="clang-format",
-            names_glob_patterns=["clang-format-[-a-z0-9]"],
+            names_regex="clang-format-[-a-z0-9]+",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             capabilities=ToolCapabilities(
@@ -934,7 +934,7 @@ class BBPProject:
         ClangTidy=dict(
             cls=ClangTidy,
             name="clang-tidy",
-            names_glob_patterns=["clang-tidy-*"],
+            names_regex="clang-tidy-.*",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             provides={
