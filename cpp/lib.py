@@ -893,7 +893,7 @@ class BBPProject:
         ClangFormat=dict(
             cls=ExecutableTool,
             name="clang-format",
-            names_regex="clang-format-[-a-z0-9]+",
+            names_regex="clang-format-[-a-z0-9]+$",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             capabilities=ToolCapabilities(

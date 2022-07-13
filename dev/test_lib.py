@@ -28,6 +28,13 @@ def test_where():
             executable = Path(bin_dir, name)
             executable.chmod(executable.stat().st_mode | stat.S_IEXEC)
             expected_paths.add(str(executable))
+        for name in [
+            "clang-format-diff.py",
+            "clang-format-mp-diff.py",
+            "clang-format-14-diff.py",
+        ]:
+            executable = Path(bin_dir, name)
+            executable.chmod(executable.stat().st_mode | stat.S_IEXEC)
         names_regex = cpp.lib.BBPProject.TOOLS_DESCRIPTION["ClangFormat"]["names_regex"]
         paths = set(
             cpp.lib.where(
