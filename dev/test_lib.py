@@ -22,6 +22,9 @@ def test_where():
             "clang-format-diff.py",
             "clang-format-mp-diff.py",
             "clang-format-14-diff.py",
+            "clang-format-diff",
+            "clang-format-mp-diff",
+            "clang-format-14-diff",
         ]:
             Path(bin_dir, name).touch()
         for name in ["clang-format", "clang-format-13", "clang-format-mp-13"]:
@@ -32,13 +35,21 @@ def test_where():
             "clang-format-diff.py",
             "clang-format-mp-diff.py",
             "clang-format-14-diff.py",
+            "clang-format-diff",
+            "clang-format-mp-diff",
+            "clang-format-14-diff",
         ]:
             executable = Path(bin_dir, name)
             executable.chmod(executable.stat().st_mode | stat.S_IEXEC)
-        names_regex = cpp.lib.BBPProject.TOOLS_DESCRIPTION["ClangFormat"]["names_regex"]
+        TOOLS = cpp.lib.BBPProject.TOOLS_DESCRIPTION
+        names_regex = TOOLS["ClangFormat"]["names_regex"]
+        names_exclude_regex = TOOLS["ClangFormat"]["names_exclude_regex"]
         paths = set(
             cpp.lib.where(
-                "clang-format", regex=re.compile(names_regex), paths=[bin_dir]
+                "clang-format",
+                regex=re.compile(names_regex),
+                exclude_regex=re.compile(names_exclude_regex),
+                paths=[bin_dir],
             )
         )
         assert paths == expected_paths

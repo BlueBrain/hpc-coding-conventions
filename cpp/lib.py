@@ -200,14 +200,16 @@ def which(program: str, paths=None):
             return str(abs_path)
 
 
-def where(program: str, regex=None, paths=None):
+def where(program: str, regex=None, exclude_regex=None, paths=None):
     """
     Find all the locations of a program in PATH environment variable.
 
     Args:
         program: program to look for i.e "clang-format"
         regex: optional regular expression for alternative program names
-             i.e re.compile("clang-format-.*"])
+               i.e re.compile("clang-format-.*"])
+        exclude_regex: optional regular expression to exclude alternate
+                       program names matching `regex`.
         paths: optional list of paths where to look for the program.
                default is the PATH environment variable.
     """
@@ -227,7 +229,8 @@ def where(program: str, regex=None, paths=None):
             for file_name in os.listdir(path):
                 file_path = os.path.join(path, file_name)
                 if regex.match(file_name) and os.access(file_path, os.X_OK):
-                    yield file_path
+                    if not exclude_regex or not exclude_regex.match(file_name):
+                        yield file_path
 
 
 class BBPVEnv:
@@ -710,7 +713,9 @@ class ExecutableTool(Tool):
             BBPProject.virtualenv().ensure_requirement(req, restart=False)
 
     def find_tool_in_path(self, search_paths=None):
-        paths = list(where(self.name, self.names_regex, search_paths))
+        paths = list(
+            where(self.name, self.names_regex, self.names_exclude_regex, search_paths)
+        )
         if not paths:
             raise FileNotFoundError(f"Could not find tool {self}")
         all_paths = [(p, self.find_version(p)) for p in paths]
@@ -728,10 +733,20 @@ class ExecutableTool(Tool):
     def names_regex(self):
         """
         Return:
-            Optional additional regular expression to look for
-            the tool in PATH environment variables.
+            Optional regular expression to look for
+            the tool in PATH environment variable.
         """
         pattern = self.config.get("names_regex")
+        return re.compile(pattern) if pattern else None
+
+    @cached_property
+    def names_exclude_regex(self):
+        """
+        Return:
+            Optional regular expression to exclude executables
+            for the tool in PATH.
+        """
+        pattern = self.config.get("names_exclude_regex")
         return re.compile(pattern) if pattern else None
 
     def find_version(self, path: str) -> str:
@@ -894,6 +909,7 @@ class BBPProject:
             cls=ExecutableTool,
             name="clang-format",
             names_regex="clang-format-[-a-z0-9]+$",
+            names_exclude_regex="clang-format-.*diff.*$",
             version_opt=["--version"],
             version_re=DEFAULT_RE_EXTRACT_VERSION,
             capabilities=ToolCapabilities(
