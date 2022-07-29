@@ -642,21 +642,16 @@ class Tool(metaclass=abc.ABCMeta):
         call_kwargs = dict(cwd=cwd)
         if logging.getLogger().level > logging.INFO:
             call_kwargs.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        if dry_run:
-            cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
-            log_command(cmd, logger=self.job_logger, level=logging.INFO)
-            status = subprocess.call(cmd, **call_kwargs)
-            if status != 0:
-                lang_str = "/".join(task_config["languages"])
-                logging.error(
-                    "%s | Incorrect formatting (one or more): %s",
-                    lang_str,
-                    " ".join(files),
-                )
-        else:
-            cmd = cmd + self.cmd_opts(task, **kwargs) + list(files)
-            log_command(cmd, logger=self.job_logger, level=logging.INFO)
-            status = subprocess.call(cmd, **call_kwargs)
+        cmd += self.cmd_opts(task, **kwargs) + list(files)
+        log_command(cmd, logger=self.job_logger, level=logging.INFO)
+        status = subprocess.call(cmd, **call_kwargs)
+        if dry_run and status != 0:
+            lang_str = "/".join(task_config["languages"])
+            logging.error(
+                "%s | failed checks (one or more): %s",
+                lang_str,
+                " ".join(files),
+            )
         return 1 if status != 0 else 0
 
     def accepts_file(self, file: str) -> bool:
