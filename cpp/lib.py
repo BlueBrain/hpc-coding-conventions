@@ -1204,7 +1204,11 @@ class BBPProject:
             cmd += src_dirs
             log_command(cmd)
             if not sources or src_dirs:
-                git_ls_tree = subprocess.check_output(cmd).decode("utf-8").split("\0")
+                cwd = source_dir()
+                logging.debug("Executing in {}".format(cwd))
+                git_ls_tree = (
+                    subprocess.check_output(cmd, cwd=cwd).decode("utf-8").split("\0")
+                )
         else:
             git_ls_tree = []
 
