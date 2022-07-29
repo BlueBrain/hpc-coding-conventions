@@ -64,11 +64,17 @@ function(cpp_cc_setup_tool_config name path)
 endfunction()
 
 function(cpp_cc_add_tool_target name)
-  add_custom_target(${name}-${PROJECT_NAME} ${ARGN})
+  add_custom_target(
+    ${name}-${PROJECT_NAME}
+    ${ARGN}
+    JOB_POOL console)
   if(TARGET ${name})
     add_dependencies(${name} ${name}-${PROJECT_NAME})
   else()
-    add_custom_target(${name} DEPENDS ${name}-${PROJECT_NAME})
+    add_custom_target(
+      ${name}
+      DEPENDS ${name}-${PROJECT_NAME}
+      JOB_POOL console)
   endif()
 endfunction()
 
