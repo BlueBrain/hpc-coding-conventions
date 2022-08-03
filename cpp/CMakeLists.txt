@@ -67,7 +67,8 @@ function(cpp_cc_add_tool_target name)
   add_custom_target(
     ${name}-${PROJECT_NAME}
     ${ARGN}
-    JOB_POOL console)
+    JOB_POOL console
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
   if(TARGET ${name})
     add_dependencies(${name} ${name}-${PROJECT_NAME})
   else()
