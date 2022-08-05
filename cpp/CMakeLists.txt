@@ -64,11 +64,18 @@ function(cpp_cc_setup_tool_config name path)
 endfunction()
 
 function(cpp_cc_add_tool_target name)
-  add_custom_target(${name}-${PROJECT_NAME} ${ARGN})
+  add_custom_target(
+    ${name}-${PROJECT_NAME}
+    ${ARGN}
+    JOB_POOL console
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
   if(TARGET ${name})
     add_dependencies(${name} ${name}-${PROJECT_NAME})
   else()
-    add_custom_target(${name} DEPENDS ${name}-${PROJECT_NAME})
+    add_custom_target(
+      ${name}
+      DEPENDS ${name}-${PROJECT_NAME}
+      JOB_POOL console)
   endif()
 endfunction()
 
@@ -78,8 +85,8 @@ function(cpp_cc_enable_static_analysis)
       ""
       CACHE STRING "list of CMake targets to build before checking C/C++ code")
   mark_as_advanced(${CODING_CONV_PREFIX}_ClangTidy_DEPENDENCIES)
-  set(clang_tidy_command ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../bin/clang-tidy" -p
-                         ${PROJECT_BINARY_DIR}/compile_commands.json check)
+  set(clang_tidy_command ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../bin/clang-tidy" -v -p
+                         ${PROJECT_BINARY_DIR}/compile_commands.json)
   cpp_cc_add_tool_target(clang-tidy ${clang_tidy_command})
   if(${CODING_CONV_PREFIX}_TEST_STATIC_ANALYSIS)
     add_test(NAME ClangTidy_${PROJECT_NAME} COMMAND ${clang_tidy_command})
