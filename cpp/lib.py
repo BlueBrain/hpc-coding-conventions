@@ -871,29 +871,18 @@ class ClangTidy(ExecutableTool):
         new_checks = [check.strip() for check in new_checks.split(",")]
 
         for new_check in new_checks:
-            if new_check.startswith("-"):
-                name = new_check[1:]
-                # remove check when check=google-runtime-references to_=-google-*
-                orig_checks = list(
-                    check for check in orig_checks if not fnmatch(check, name)
-                )
-                # remove check when check=-google-runtime-references
-                # to_=-google-* (simplification)
-                orig_checks = list(
-                    check for check in orig_checks if not fnmatch(check, new_check)
-                )
-            else:
-                # remove check when check=-google-runtime-references to_=google-*
-                orig_checks = list(
-                    check
-                    for check in orig_checks
-                    if not fnmatch(check, "-" + new_check)
-                )
-                # remove check when check=google-runtime-references
-                # to_=google-* (simplification)
-                orig_checks = list(
-                    check for check in orig_checks if not fnmatch(check, new_check)
-                )
+            name_without_prefix = (
+                new_check[1:] if new_check.startswith("-") else new_check
+            )
+            name_with_prefix = "-" + name_without_prefix
+            orig_checks = list(
+                check for check in orig_checks if not fnmatch(check, name_with_prefix)
+            )
+            orig_checks = list(
+                check
+                for check in orig_checks
+                if not fnmatch(check, name_without_prefix)
+            )
             orig_checks.append(new_check)
         return ",".join(orig_checks)
 
