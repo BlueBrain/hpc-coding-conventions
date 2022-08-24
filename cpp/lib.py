@@ -1223,7 +1223,7 @@ class BBPProject:
 
     def tools_for_task(self, task: str, languages):
         """
-        Get the toolS able to process a task on given languages
+        Get the tools able to process a task on given languages
 
             >>> list(BBPProject.tools_for_task("format", ["C++"]))
             [ClangFormat]
@@ -1289,7 +1289,7 @@ class BBPProject:
     @classmethod
     def user_config_file(cls):
         """
-        Locate the user configuration file in parent directories
+        Locate the user configuration file in project root
 
         Return:
             Path to the file if found, `None` otherwise
@@ -1297,13 +1297,6 @@ class BBPProject:
         expected_location = source_dir().joinpath(cls.USER_CONFIG_FILE)
         if expected_location.exists():
             return expected_location
-        dir = THIS_SCRIPT_DIR
-        while dir != "/":
-            file = dir.joinpath(cls.USER_CONFIG_FILE)
-            if file.exists():
-                return file
-            dir = dir.parent
-        return None
 
     @classmethod
     def merge_user_config(cls, conf: dict, user_conf: dict):
