@@ -128,10 +128,8 @@ function(cpp_cc_enable_sanitizers)
     list(APPEND compiler_flags -fsanitize=address -fsanitize-address-use-after-scope)
     # Figure out where the runtime library lives
     cpp_cc_find_sanitizer_runtime(NAME asan OUTPUT runtime_library)
-    # TODO only on macOS
-    set(extra_env "MallocNanoZone=1")
     if(LLVM_SYMBOLIZER_PATH)
-      list(APPEND extra_env "ASAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
+      set(extra_env "ASAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
       if("leak" IN_LIST sanitizers)
         list(APPEND extra_env "LSAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
       endif()
@@ -225,7 +223,9 @@ function(cpp_cc_configure_sanitizers)
 endfunction(cpp_cc_configure_sanitizers)
 
 # Helper function strips away Python shims on macOS, so we can launch tests using the actual Python
-# binary. Without this, preloading the sanitizer runtimes does not work on macOS.
+# binary. Without this, preloading the sanitizer runtimes does not work on macOS. See
+# https://jonasdevlieghere.com/sanitizing-python-modules/ and
+# https://tobywf.com/2021/02/python-ext-asan/ for more information.
 #
 # cpp_cc_strip_python_shims(EXECUTABLE <executable> OUTPUT <output_variable>)
 #
@@ -236,7 +236,6 @@ endfunction(cpp_cc_configure_sanitizers)
 function(cpp_cc_strip_python_shims)
   cmake_parse_arguments("" "" "EXECUTABLE;OUTPUT" "" ${ARGN})
   if(APPLE AND ${CODING_CONV_PREFIX}_SANITIZERS)
-    # https://jonasdevlieghere.com/sanitizing-python-modules/
     set(python_script
         "import ctypes"
         "dyld = ctypes.cdll.LoadLibrary('/usr/lib/system/libdyld.dylib')"
