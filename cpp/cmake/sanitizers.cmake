@@ -16,10 +16,15 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 # cpp_cc_find_sanitizer_runtime(NAME [<name>] OUTPUT [<output variable>])
 function(cpp_cc_find_sanitizer_runtime)
   cmake_parse_arguments("" "" "NAME;OUTPUT" "" ${ARGN})
+  set(name_template ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.)
+  if(APPLE)
+    string(APPEND name_template ${_NAME}_osx_dynamic)
+  else()
+    string(APPEND name_template ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+  endif()
+  string(APPEND name_template ${CMAKE_SHARED_LIBRARY_SUFFIX})
   execute_process(
-    COMMAND
-      ${CMAKE_CXX_COMPILER}
-      -print-file-name=${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.${_NAME}-${CMAKE_SYSTEM_PROCESSOR}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
     RESULT_VARIABLE clang_status
     OUTPUT_VARIABLE runtime_library
     ERROR_VARIABLE clang_stderr
@@ -51,8 +56,10 @@ endfunction()
 #   **disable** sanitizers at runtime. This might be useful if, for example, some part of the
 #   instrumented application is used during the build and you don't want memory leaks to cause build
 #   failures.
+# * ${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR: the environment variable used
+#   to load the sanitizer runtime library. This is typically LD_PRELOAD or DYLD_INSERT_LIBRARIES.
 # * ${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH: the sanitizer runtime library. This sometimes
-#   needs to be added to LD_PRELOAD.
+#   needs to be added to ${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR.
 # * ${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_DIR: the directory where the sanitizer runtime library
 #   sits. This is provided separately from the ENVIRONMENT variables to avoid assumptions about the
 #   sanitizers being the only thing modifying LD_LIBRARY_PATH
@@ -121,8 +128,10 @@ function(cpp_cc_enable_sanitizers)
     list(APPEND compiler_flags -fsanitize=address -fsanitize-address-use-after-scope)
     # Figure out where the runtime library lives
     cpp_cc_find_sanitizer_runtime(NAME asan OUTPUT runtime_library)
+    # TODO only on macOS
+    set(extra_env "MallocNanoZone=1")
     if(LLVM_SYMBOLIZER_PATH)
-      set(extra_env "ASAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
+      list(APPEND extra_env "ASAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
       if("leak" IN_LIST sanitizers)
         list(APPEND extra_env "LSAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
       endif()
@@ -145,6 +154,11 @@ function(cpp_cc_enable_sanitizers)
   else()
     message(FATAL_ERROR "${sanitizers} sanitizers not yet supported")
   endif()
+  if(APPLE)
+    set(preload_var DYLD_INSERT_LIBRARIES)
+  else()
+    set(preload_var LD_PRELOAD)
+  endif()
   get_filename_component(runtime_library_directory "${runtime_library}" DIRECTORY)
   set(${CODING_CONV_PREFIX}_SANITIZER_COMPILER_FLAGS
       "${compiler_flags}"
@@ -161,6 +175,9 @@ function(cpp_cc_enable_sanitizers)
   set(${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH
       "${runtime_library}"
       PARENT_SCOPE)
+  set(${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR
+      "${preload_var}"
+      PARENT_SCOPE)
 endfunction(cpp_cc_enable_sanitizers)
 
 # Helper function that modifies targets (executables, libraries, ...) and tests (created by
@@ -172,7 +189,7 @@ endfunction(cpp_cc_enable_sanitizers)
 #
 # * TARGET: list of targets to modify
 # * TEST: list of tests to modify
-# * PRELOAD: if passed, LD_PRELOAD will be set to the sanitizer runtime library and LD_LIBRARY_PATH
+# * PRELOAD: if passed, ${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR will be set to the sanitizer runtime library and LD_LIBRARY_PATH
 #   will not be modified
 function(cpp_cc_configure_sanitizers)
   cmake_parse_arguments("" "PRELOAD" "" "TARGET;TEST" ${ARGN})
@@ -193,7 +210,7 @@ function(cpp_cc_configure_sanitizers)
       set_property(
         TEST ${test}
         APPEND
-        PROPERTY ENVIRONMENT LD_PRELOAD=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH})
+        PROPERTY ENVIRONMENT ${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH})
     endif()
     # This should be sanitizer-specific stuff like UBSAN_OPTIONS, so we don't need to worry about
     # merging it with an existing value.
@@ -203,6 +220,44 @@ function(cpp_cc_configure_sanitizers)
       PROPERTY ENVIRONMENT ${${CODING_CONV_PREFIX}_SANITIZER_ENABLE_ENVIRONMENT})
   endforeach()
 endfunction(cpp_cc_configure_sanitizers)
+
+# Helper function strips away Python shims on macOS, so we can launch tests
+# using the actual Python binary. Without this, preloading the sanitizer
+# runtimes does not work on macOS.
+#
+# cpp_cc_strip_python_shims(EXECUTABLE <executable> OUTPUT <output_variable>)
+#
+# Arguments:
+#
+# * EXECUTABLE: the Python executable/shim to try and resolve
+# * OUTPUT: output variable for the actual Python executable
+function(cpp_cc_strip_python_shims)
+  cmake_parse_arguments("" "" "EXECUTABLE;OUTPUT" "" ${ARGN})
+  if(APPLE AND ${CODING_CONV_PREFIX}_SANITIZERS)
+    # https://jonasdevlieghere.com/sanitizing-python-modules/
+    # "import ctypes; dyld = ctypes.cdll.LoadLibrary('/usr/lib/system/libdyld.dylib'); namelen = ctypes.c_ulong(1024); name = ctypes.create_string_buffer(b'\\000', namelen.value); dyld._NSGetExecutablePath(ctypes.byref(name), ctypes.byref(namelen)); print(name.value.decode())"
+    set(python_script "import ctypes" "dyld = ctypes.cdll.LoadLibrary('/usr/lib/system/libdyld.dylib')"
+    "namelen = ctypes.c_ulong(1024)" "name = ctypes.create_string_buffer(b'\\000', namelen.value)"
+    "dyld._NSGetExecutablePath(ctypes.byref(name), ctypes.byref(namelen))"
+    "print(name.value.decode())")
+    string(JOIN "; " python_command ${python_script})
+    execute_process(
+    COMMAND ${_EXECUTABLE} -c "${python_command}"
+    RESULT_VARIABLE python_status
+    OUTPUT_VARIABLE actual_executable
+    ERROR_VARIABLE python_stderr
+    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
+    if(NOT python_status EQUAL 0)
+      message(FATAL_ERROR "python_status=${python_status} python_stderr=${python_stderr} actual_executable=${actual_executable}")
+    endif()
+    if(NOT _EXECUTABLE STREQUAL actual_executable)
+      message(STATUS "Resolved shim ${_EXECUTABLE} to ${actual_executable}")
+    endif()
+  else()
+    set(actual_executable "${_EXECUTABLE}")
+  endif()
+  set(${_OUTPUT} "${actual_executable}" PARENT_SCOPE)
+endfunction()
 
 if(${CODING_CONV_PREFIX}_SANITIZERS)
   cpp_cc_enable_sanitizers()
