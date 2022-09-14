@@ -17,7 +17,7 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 function(cpp_cc_find_sanitizer_runtime)
   cmake_parse_arguments("" "" "NAME;OUTPUT" "" ${ARGN})
   set(name_template ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.)
-  if(APPLE)
+  if(CMAKE_CXX_COMPILER STREQUAL "AppleClang")
     string(APPEND name_template ${_NAME}_osx_dynamic)
   else()
     string(APPEND name_template ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
