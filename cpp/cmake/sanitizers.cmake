@@ -49,7 +49,6 @@ function(cpp_cc_find_sanitizer_runtime)
       break()
     endif()
   endforeach()
-  file(REAL_PATH "${runtime_library}" runtime_library)
   message(STATUS "Sanitizer runtime library: ${runtime_library}")
   if(NOT IS_ABSOLUTE "${runtime_library}" OR NOT EXISTS "${runtime_library}")
     message(
