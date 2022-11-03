@@ -10,6 +10,7 @@ from fnmatch import fnmatch
 import functools
 import logging
 import operator
+import os
 import os.path
 from pathlib import Path
 import re
@@ -22,7 +23,17 @@ from typing import List
 import urllib.request
 import venv
 
-import pkg_resources
+try:
+    import pkg_resources
+except ImportError:
+    home = os.environ["HOME"]
+    bb5_home = f"/gpfs/bbp.cscs.ch/home/{os.environ['USER']}"
+    if home == bb5_home:
+        print("Error: could not find setuptools Python package.", file=sys.stderr)
+        print("Consider loading module 'python-dev'\n", file=sys.stderr)
+        print("    module load python-dev\n", file=sys.stderr)
+        sys.exit(1)
+    raise
 
 THIS_SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_RE_EXTRACT_VERSION = "([0-9]+\\.[0-9]+(\\.[0-9]+)?[ab]?)"
