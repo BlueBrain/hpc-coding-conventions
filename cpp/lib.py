@@ -998,7 +998,7 @@ class BBPProject:
                 format=dict(
                     languages=["Python"],
                     cmd_opts=[],
-                    dry_run_cmd_opts=["--check"],
+                    dry_run_cmd_opts=["--check", "--diff", "--color"],
                 )
             ),
             capabilities=ToolCapabilities(
