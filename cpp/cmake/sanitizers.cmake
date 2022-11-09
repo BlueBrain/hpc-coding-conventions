@@ -133,8 +133,13 @@ function(cpp_cc_enable_sanitizers)
     list(APPEND compiler_flags -fsanitize=address -fsanitize-address-use-after-scope)
     # Figure out where the runtime library lives
     cpp_cc_find_sanitizer_runtime(NAME asan OUTPUT runtime_library)
+    if(APPLE)
+      # Suppress and annoying "malloc: nano zone abandoned due to inability to preallocate reserved
+      # vm space" message. See https://stackoverflow.com/a/70209891
+      list(APPEND extra_env MallocNanoZone=0)
+    endif()
     if(LLVM_SYMBOLIZER_PATH)
-      set(extra_env "ASAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
+      list(APPEND extra_env "ASAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
       if("leak" IN_LIST sanitizers)
         list(APPEND extra_env "LSAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
       endif()
