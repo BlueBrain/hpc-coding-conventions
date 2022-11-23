@@ -23,17 +23,6 @@ from typing import List
 import urllib.request
 import venv
 
-try:
-    import pkg_resources
-except ImportError:
-    home = os.environ["HOME"]
-    bb5_home = f"/gpfs/bbp.cscs.ch/home/{os.environ['USER']}"
-    if home == bb5_home:
-        print("Error: could not find setuptools Python package.", file=sys.stderr)
-        print("Consider loading module 'python-dev'\n", file=sys.stderr)
-        print("    module load python-dev\n", file=sys.stderr)
-        sys.exit(1)
-    raise
 
 THIS_SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_RE_EXTRACT_VERSION = "([0-9]+\\.[0-9]+(\\.[0-9]+)?[ab]?)"
@@ -256,6 +245,7 @@ class BBPVEnv:
         """
         assert isinstance(path, Path)
         self._path = path
+        self.ensure_requirement("setuptools", restart=True)
 
     @property
     def path(self) -> str:
@@ -364,8 +354,7 @@ class BBPVEnv:
         logging.debug("Restarting process within own Python virtualenv %s", reason)
         os.execv(self.interpreter, [self.interpreter] + sys.argv)
 
-    @classmethod
-    def is_requirement_met(cls, requirement) -> bool:
+    def is_requirement_met(self, requirement) -> bool:
         """
         Args:
             requirement: str of pkg_resources.Requirement
@@ -375,8 +364,12 @@ class BBPVEnv:
             False otherwise
         """
         try:
+            import pkg_resources
+
             pkg_resources.require(str(requirement))
             return True
+        except ImportError:
+            self._install_requirement("setuptools", restart=True)
         except (pkg_resources.VersionConflict, pkg_resources.DistributionNotFound):
             return False
 
@@ -400,16 +393,29 @@ class BBPVEnv:
 
         Args:
             requirement: str of pkg_resources.Requirement
+            restart: whether this process may restart after the requirement
+                is installed.
         """
-        if not BBPVEnv.is_requirement_met(requirement):
-            if self.in_venv:
-                self.pip_install(requirement)
-                if restart:
-                    self.restart_in_venv(
-                        f"to take into account installed requirement {requirement}"
-                    )
-            else:
-                self.restart_in_venv(f"because requirement {requirement} is not met")
+        if not self.is_requirement_met(requirement):
+            self._install_requirement(requirement, restart)
+
+    def _install_requirement(self, requirement, restart=False):
+        """
+        Force installation of the requirement in the virtual environment
+
+        Args:
+            requirement: str of pkg_resources.Requirement
+            restart: whether this process may restart after the requirement
+                is installed.
+        """
+        if self.in_venv:
+            self.pip_install(requirement)
+            if restart:
+                self.restart_in_venv(
+                    f"to take into account installed requirement {requirement}"
+                )
+        else:
+            self.restart_in_venv(f"because requirement {requirement} is not met")
 
 
 class Tool(metaclass=abc.ABCMeta):
@@ -503,6 +509,8 @@ class Tool(metaclass=abc.ABCMeta):
             name = pip_pkg
         else:
             name = self.name
+        import pkg_resources
+
         return pkg_resources.Requirement.parse(f"{name} {self.user_config['version']}")
 
     @abc.abstractmethod
@@ -771,6 +779,8 @@ class ExecutableTool(Tool):
                 pkg_name = self.name
                 if isinstance(self.config["capabilities"].pip_pkg, str):
                     pkg_name = self.config["capabilities"].pip_pkg
+                import pkg_resources
+
                 return pkg_resources.get_distribution(pkg_name).version
 
         cmd = [path] + self._config["version_opt"]
