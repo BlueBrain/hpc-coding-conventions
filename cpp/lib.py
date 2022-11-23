@@ -28,6 +28,34 @@ THIS_SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_RE_EXTRACT_VERSION = "([0-9]+\\.[0-9]+(\\.[0-9]+)?[ab]?)"
 
 
+def forget_python_pkg(package):
+    """
+    exclude from PYTHONPATH environment variable
+    and sys.path trace of the specified package
+
+    Args:
+        package: name of the Python package to exclude
+    """
+    import pkg_resources
+
+    try:
+        dist = pkg_resources.get_distribution(package)
+    except pkg_resources.DistributionNotFound:
+        return
+    PYTHONPATH = os.environ.get("PYTHONPATH")
+    if PYTHONPATH is not None and dist.location in PYTHONPATH:
+        logging.debug(
+            "Remove incompatible version of %s in PYTHONPATH: %s",
+            package,
+            dist.location,
+        )
+        os.environ["PYTHONPATH"] = PYTHONPATH.replace(dist.location, "")
+        try:
+            sys.path.remove(dist.location)
+        except ValueError:
+            pass
+
+
 @functools.lru_cache()
 def source_dir():
     """
@@ -370,6 +398,9 @@ class BBPVEnv:
             return True
         except ImportError:
             self._install_requirement("setuptools", restart=True)
+        except pkg_resources.ContextualVersionConflict as conflict:
+            forget_python_pkg(conflict.req.name)
+            return False
         except (pkg_resources.VersionConflict, pkg_resources.DistributionNotFound):
             return False
 
@@ -708,6 +739,7 @@ class ExecutableTool(Tool):
                 self._path, self._version = self.find_tool_in_path()
             except FileNotFoundError as e:
                 if self.requirement:
+                    forget_python_pkg(self.requirement.name)
                     BBPProject.virtualenv().ensure_requirement(self.requirement)
                     self._path, self._version = self.find_tool_in_path(
                         [BBPProject.virtualenv().bin_dir]
