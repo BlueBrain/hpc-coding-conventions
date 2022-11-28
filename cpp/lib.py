@@ -273,6 +273,7 @@ class BBPVEnv:
         """
         assert isinstance(path, Path)
         self._path = path
+        os.environ["PIP_DISABLE_PIP_VERSION_CHECK"] = "1"
         self.ensure_requirement("setuptools", restart=True)
 
     @property
