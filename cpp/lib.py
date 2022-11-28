@@ -465,8 +465,9 @@ class Tool(metaclass=abc.ABCMeta):
         self._config = config
         self._user_config = user_config
 
-    @cached_property
-    def job_logger(self) -> logging.Logger:
+    @staticmethod
+    @functools.lru_cache()
+    def job_logger() -> logging.Logger:
         """
         Return:
             `logging.getLogger` instance use to report
@@ -693,7 +694,7 @@ class Tool(metaclass=abc.ABCMeta):
         if logging.getLogger().level > logging.INFO:
             call_kwargs.update(stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         cmd += self.cmd_opts(task, **kwargs) + list(files)
-        log_command(cmd, logger=self.job_logger, level=logging.INFO)
+        log_command(cmd, logger=self.job_logger(), level=logging.INFO)
         status = subprocess.call(cmd, **call_kwargs)
         if dry_run and status != 0:
             lang_str = "/".join(task_config["languages"])
