@@ -867,6 +867,8 @@ class ClangTidy(ExecutableTool):
         """Merge 2 'Checks' ClangTidy configuration key values"""
         if orig_checks is None:
             return new_checks
+        if new_checks is None:
+            return orig_checks
         orig_checks = [check.strip() for check in orig_checks.split(",")]
         new_checks = [check.strip() for check in new_checks.split(",")]
 
@@ -884,7 +886,7 @@ class ClangTidy(ExecutableTool):
                 if not fnmatch(check, name_without_prefix)
             )
             orig_checks.append(new_check)
-        return ",".join(orig_checks)
+        return ",".join(c for c in orig_checks if c)
 
 
 class TaskDescription(
