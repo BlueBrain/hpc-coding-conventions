@@ -9,6 +9,27 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import cpp.lib  # noqa: E402
 
 
+def test_clang_tidy_conf_merger():
+    orig_checks = "foo-*,bar-pika,-bar-foo"
+    test_func = cpp.lib.ClangTidy.merge_clang_tidy_checks
+
+    assert test_func(orig_checks, None) == orig_checks
+    assert test_func(orig_checks, "") == orig_checks
+    assert test_func(orig_checks, "-bar-pika") == "foo-*,-bar-foo,-bar-pika"
+    assert test_func(orig_checks, "bar-pika") == "foo-*,-bar-foo,bar-pika"
+    assert test_func(orig_checks, "-bar-*") == "foo-*,-bar-*"
+    assert test_func(orig_checks, "bar-*") == "foo-*,bar-*"
+    assert test_func(orig_checks, "-bar-*") == "foo-*,-bar-*"
+    assert test_func(orig_checks, "-bar-foo") == "foo-*,bar-pika,-bar-foo"
+    assert test_func(orig_checks, "bar-foo") == "foo-*,bar-pika,bar-foo"
+
+    assert test_func("bar-foo", "-bar-*") == "-bar-*"
+
+    assert test_func("", "-bar-pika") == "-bar-pika"
+    assert test_func("", "bar-foo") == "bar-foo"
+    assert test_func(None, None) is None
+
+
 def test_where():
     """Test cpp.lib.where function"""
     with tempfile.TemporaryDirectory() as bin_dir:
