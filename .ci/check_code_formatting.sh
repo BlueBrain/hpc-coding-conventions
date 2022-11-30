@@ -3,12 +3,10 @@
 set -euo pipefail
 
 VENV=build/venv-code-formatting
-CLANG_FORMAT_VERSION=13.0.0
 
 if [[ ! -d $VENV ]]; then
     python3 -mvenv "$VENV"
     "$VENV/bin/pip" install               \
-      clang-format==$CLANG_FORMAT_VERSION \
       jinja2                              \
       pyyaml 
 fi
