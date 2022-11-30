@@ -2,5 +2,6 @@
 
 try {
     foo();
+
 } catch () {
 }

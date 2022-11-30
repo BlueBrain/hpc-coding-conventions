@@ -324,6 +324,7 @@ union foo {
 ```cpp
 try {
     foo();
+
 } catch () {
 }
 
@@ -452,6 +453,7 @@ void sort(It begin, It end) {
     //....
 }
 
+
 ```
 ### Clang-Format configuration
 * `IndentRequires: False`
@@ -490,6 +492,7 @@ callingSomeLongLongLongLongLongLongLongLongLongLongMethod(
 ```cpp
 namespace out {
 int i;
+
 namespace in {
 int i;
 }
@@ -498,6 +501,19 @@ int i;
 ```
 ### Clang-Format configuration
 * `NamespaceIndentation: None`
+
+## The pack constructor initializers style to use.
+
+### Example
+```cpp
+Constructor()
+    : aaaaaaaaaaaaaaaaaaaa()
+    , bbbbbbbbbbbbbbbbbbbb()
+    , ddddddddddddd()
+
+```
+### Clang-Format configuration
+* `PackConstructorInitializers: Never`
 
 ## pointer and reference are part of the type
 
@@ -509,6 +525,63 @@ int& b = getB();
 ```
 ### Clang-Format configuration
 * `PointerAlignment: Left`
+
+## Different ways to arrange specifiers and qualifiers (e.g. const/volatile).
+
+### Example
+```cpp
+const int a;
+const int* a;
+
+```
+### Clang-Format configuration
+* `QualifierAlignment: Left`
+
+## Specifies the use of empty lines to separate definition blocks, including classes, structs,
+enums, and functions.
+
+### Example
+```cpp
+#include <cstring>
+
+struct Foo {
+    int a, b, c;
+};
+
+namespace Ns {
+class Bar {
+  public:
+    struct Foobar {
+        int a;
+        int b;
+    };
+  private:
+    int t;
+
+    int method1() {
+        // ...
+    }
+
+    enum List { ITEM1, ITEM2 };
+
+    template <typename T>
+    int method2(T x) {
+        // ...
+    }
+
+    int i, j, k;
+
+    int method3(int par) {
+        // ...
+    }
+};
+
+class C {};
+}  // namespace Ns
+
+```
+### Clang-Format configuration
+* `SeparateDefinitionBlocks: Always`
 
 ## Sort includes in different sections
 * System headers
