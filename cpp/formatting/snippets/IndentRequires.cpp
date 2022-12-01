@@ -2,7 +2,7 @@
 
 template <typename It>
 requires Iterator<It>
-    // clang-format off
+// clang-format off
 void sort(It begin, It end) {
     //....
 }
