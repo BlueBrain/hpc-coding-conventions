@@ -1,4 +1,7 @@
 tools:
+  ClangFormat:
+    enable: True
+    version: ~=14.0
   CMakeFormat:
     enable: True
   Flake8:

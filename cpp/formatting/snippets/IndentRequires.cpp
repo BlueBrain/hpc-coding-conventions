@@ -6,4 +6,5 @@ requires Iterator<It>
 void sort(It begin, It end) {
     //....
 }
+
 // clang-format on
