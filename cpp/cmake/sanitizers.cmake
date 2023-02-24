@@ -220,7 +220,7 @@ function(cpp_cc_configure_sanitizers)
         APPEND
         PROPERTY
           ENVIRONMENT
-          ${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH}
+          ${${CODING_CONV_PREFIX}_SANITIZER_PRELOAD_VAR}=${${CODING_CONV_PREFIX}_SANITIZER_LIBRARY_PATH}
       )
     endif()
     # This should be sanitizer-specific stuff like UBSAN_OPTIONS, so we don't need to worry about
