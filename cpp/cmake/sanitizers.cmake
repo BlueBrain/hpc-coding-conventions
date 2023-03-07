@@ -16,26 +16,44 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 # cpp_cc_find_sanitizer_runtime(NAME [<name>] OUTPUT [<output variable>])
 function(cpp_cc_find_sanitizer_runtime)
   cmake_parse_arguments("" "" "NAME;OUTPUT" "" ${ARGN})
-  set(name_template ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.)
   if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    string(APPEND name_template ${_NAME}_osx_dynamic)
+    list(APPEND name_templates ${_NAME}_osx_dynamic)
   else()
-    string(APPEND name_template ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    # Different flavours of Linux / Clang disagree about whether we want the
+    # -${CMAKE_SYSTEM_PROCESSOR} suffix
+    list(APPEND name_templates ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    list(APPEND name_templates ${_NAME})
   endif()
-  string(APPEND name_template ${CMAKE_SHARED_LIBRARY_SUFFIX})
-  execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
-    RESULT_VARIABLE clang_status
-    OUTPUT_VARIABLE runtime_library
-    ERROR_VARIABLE clang_stderr
-    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
-  if(${clang_status})
-    message(
-      FATAL_ERROR
-        "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
-    )
-  endif()
+  foreach(name_template ${name_templates})
+    set(name_template
+        ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    execute_process(
+      COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
+      RESULT_VARIABLE clang_status
+      OUTPUT_VARIABLE runtime_library
+      ERROR_VARIABLE clang_stderr
+      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
+    if(${clang_status})
+      # This is rarely triggered, because -print-file-name=garbage just returns "garbage" and status
+      # code zero, but it's good to check
+      message(
+        FATAL_ERROR
+          "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
+      )
+    endif()
+    if(NOT "${runtime_library}" STREQUAL "${name_template}")
+      # See above; clang -print-file-name=NAME returns NAME if it isn't found. It it returns
+      # something else, we can break() and be happy.
+      break()
+    endif()
+  endforeach()
   message(STATUS "Sanitizer runtime library: ${runtime_library}")
+  if(NOT IS_ABSOLUTE "${runtime_library}" OR NOT EXISTS "${runtime_library}")
+    message(
+      WARNING
+        "Could not find an absolute path to the ${_NAME} runtime library, trying ${runtime_library}. "
+        "This may require you to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH appropriately.")
+  endif()
   set(${_OUTPUT}
       "${runtime_library}"
       PARENT_SCOPE)
