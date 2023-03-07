@@ -16,25 +16,33 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 # cpp_cc_find_sanitizer_runtime(NAME [<name>] OUTPUT [<output variable>])
 function(cpp_cc_find_sanitizer_runtime)
   cmake_parse_arguments("" "" "NAME;OUTPUT" "" ${ARGN})
-  set(name_template ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.)
   if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    string(APPEND name_template ${_NAME}_osx_dynamic)
+    list(APPEND name_templates ${_NAME}_osx_dynamic)
   else()
-    string(APPEND name_template ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    # Different flavours of Linux / Clang disagree about whether we want the
+    # -${CMAKE_SYSTEM_PROCESSOR} suffix
+    list(APPEND name_templates ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    list(APPEND name_templates ${_NAME})
   endif()
-  string(APPEND name_template ${CMAKE_SHARED_LIBRARY_SUFFIX})
-  execute_process(
-    COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
-    RESULT_VARIABLE clang_status
-    OUTPUT_VARIABLE runtime_library
-    ERROR_VARIABLE clang_stderr
-    OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
-  if(${clang_status})
-    message(
-      FATAL_ERROR
-        "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
-    )
-  endif()
+  foreach(name_template ${name_templates})
+    set(name_template
+        ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    execute_process(
+      COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
+      RESULT_VARIABLE clang_status
+      OUTPUT_VARIABLE runtime_library
+      ERROR_VARIABLE clang_stderr
+      OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
+    if(${clang_status})
+      message(
+        FATAL_ERROR
+          "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
+      )
+    endif()
+    if(NOT "${runtime_library}" STREQUAL "${name_template}")
+      break()
+    endif()
+  endforeach()
   message(STATUS "Sanitizer runtime library: ${runtime_library}")
   set(${_OUTPUT}
       "${runtime_library}"
