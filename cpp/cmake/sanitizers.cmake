@@ -34,16 +34,26 @@ function(cpp_cc_find_sanitizer_runtime)
       ERROR_VARIABLE clang_stderr
       OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
     if(${clang_status})
+      # This is rarely triggered, because -print-file-name=garbage just returns "garbage" and status
+      # code zero, but it's good to check
       message(
         FATAL_ERROR
           "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
       )
     endif()
     if(NOT "${runtime_library}" STREQUAL "${name_template}")
+      # See above; clang -print-file-name=NAME returns NAME if it isn't found. It it returns
+      # something else, we can break() and be happy.
       break()
     endif()
   endforeach()
   message(STATUS "Sanitizer runtime library: ${runtime_library}")
+  if(NOT IS_ABSOLUTE "${runtime_library}" OR NOT EXISTS "${runtime_library}")
+    message(
+      WARNING
+        "Could not find an absolute path to the ${_NAME} runtime library, trying ${runtime_library}. "
+        "This may require you to set LD_LIBRARY_PATH or DYLD_LIBRARY_PATH appropriately.")
+  endif()
   set(${_OUTPUT}
       "${runtime_library}"
       PARENT_SCOPE)
