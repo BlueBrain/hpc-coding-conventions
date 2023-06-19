@@ -17,18 +17,18 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 function(cpp_cc_find_sanitizer_runtime)
   cmake_parse_arguments("" "" "NAME;OUTPUT" "" ${ARGN})
   if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    list(APPEND name_templates ${_NAME}_osx_dynamic)
+    list(APPEND name_templates clang_rt.${_NAME}_osx_dynamic)
   elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
     list(APPEND name_templates ${_NAME})
   else()
     # Different flavours of Linux / Clang disagree about whether we want the
     # -${CMAKE_SYSTEM_PROCESSOR} suffix
-    list(APPEND name_templates ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-    list(APPEND name_templates ${_NAME})
+    list(APPEND name_templates clang_rt.${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    list(APPEND name_templates clang_rt.${_NAME})
   endif()
   foreach(name_template ${name_templates})
     set(name_template
-        ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
+        ${CMAKE_SHARED_LIBRARY_PREFIX}${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
     execute_process(
       COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
       RESULT_VARIABLE compiler_status
