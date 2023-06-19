@@ -27,8 +27,7 @@ function(cpp_cc_find_sanitizer_runtime)
     list(APPEND name_templates clang_rt.${_NAME})
   endif()
   foreach(name_template ${name_templates})
-    set(name_template
-        ${CMAKE_SHARED_LIBRARY_PREFIX}${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(name_template ${CMAKE_SHARED_LIBRARY_PREFIX}${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
     execute_process(
       COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
       RESULT_VARIABLE compiler_status
