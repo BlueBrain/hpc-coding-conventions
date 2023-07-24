@@ -103,9 +103,12 @@ function(cpp_cc_enable_sanitizers)
         nullability-assign
         nullability-return)
   endif()
-  # Use the shared library version of the sanitizer runtime so that we can LD_PRELOAD it when
-  # launching via Python and so on
-  set(compiler_flags -fno-omit-frame-pointer -shared-libsan)
+  set(compiler_flags -fno-omit-frame-pointer)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Clang uses static sanitizer runtimes by default, but we want the shared library versions so
+    # that we can LD_PRELOAD them when launching via Python and so on.
+    list(APPEND compiler_flags -shared-libsan)
+  endif()
   if("undefined" IN_LIST sanitizers)
     if(NOT sanitizers STREQUAL "undefined")
       message(
