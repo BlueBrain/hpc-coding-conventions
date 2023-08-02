@@ -17,28 +17,29 @@ set(${CODING_CONV_PREFIX}_SANITIZERS_UNDEFINED_EXCLUSIONS
 function(cpp_cc_find_sanitizer_runtime)
   cmake_parse_arguments("" "" "NAME;OUTPUT" "" ${ARGN})
   if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    list(APPEND name_templates ${_NAME}_osx_dynamic)
+    list(APPEND name_templates clang_rt.${_NAME}_osx_dynamic)
+  elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+    list(APPEND name_templates ${_NAME})
   else()
     # Different flavours of Linux / Clang disagree about whether we want the
     # -${CMAKE_SYSTEM_PROCESSOR} suffix
-    list(APPEND name_templates ${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
-    list(APPEND name_templates ${_NAME})
+    list(APPEND name_templates clang_rt.${_NAME}-${CMAKE_SYSTEM_PROCESSOR})
+    list(APPEND name_templates clang_rt.${_NAME})
   endif()
   foreach(name_template ${name_templates})
-    set(name_template
-        ${CMAKE_SHARED_LIBRARY_PREFIX}clang_rt.${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
+    set(name_template ${CMAKE_SHARED_LIBRARY_PREFIX}${name_template}${CMAKE_SHARED_LIBRARY_SUFFIX})
     execute_process(
       COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=${name_template}
-      RESULT_VARIABLE clang_status
+      RESULT_VARIABLE compiler_status
       OUTPUT_VARIABLE runtime_library
-      ERROR_VARIABLE clang_stderr
+      ERROR_VARIABLE compiler_stderr
       OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_STRIP_TRAILING_WHITESPACE)
-    if(${clang_status})
+    if(${compiler_status})
       # This is rarely triggered, because -print-file-name=garbage just returns "garbage" and status
       # code zero, but it's good to check
       message(
         FATAL_ERROR
-          "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${clang_stderr})"
+          "Failed to find ${_NAME} runtime library (stdout: ${runtime_library}, stderr: ${compiler_stderr})"
       )
     endif()
     if(NOT "${runtime_library}" STREQUAL "${name_template}")
@@ -102,9 +103,12 @@ function(cpp_cc_enable_sanitizers)
         nullability-assign
         nullability-return)
   endif()
-  # Use the shared library version of the sanitizer runtime so that we can LD_PRELOAD it when
-  # launching via Python and so on
-  set(compiler_flags -fno-omit-frame-pointer -shared-libsan)
+  set(compiler_flags -fno-omit-frame-pointer)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Clang uses static sanitizer runtimes by default, but we want the shared library versions so
+    # that we can LD_PRELOAD them when launching via Python and so on.
+    list(APPEND compiler_flags -shared-libsan)
+  endif()
   if("undefined" IN_LIST sanitizers)
     if(NOT sanitizers STREQUAL "undefined")
       message(
@@ -177,6 +181,23 @@ function(cpp_cc_enable_sanitizers)
     set(disable_env ${extra_env} ASAN_OPTIONS=detect_leaks=0)
   elseif("leak" IN_LIST sanitizers)
     message(FATAL_ERROR "LSan not yet supported in standalone mode")
+  elseif("thread" IN_LIST sanitizers)
+    if(NOT sanitizers STREQUAL "thread")
+      message(
+        FATAL_ERROR
+          "Enabling the thread sanitizer at the same time as other sanitizers is not currently supported (got: ${${CODING_CONV_PREFIX}_SANITIZERS})"
+      )
+    endif()
+    list(APPEND compiler_flags -fsanitize=thread)
+    cpp_cc_find_sanitizer_runtime(NAME tsan OUTPUT runtime_library)
+    if(LLVM_SYMBOLIZER_PATH)
+      set(extra_env "TSAN_SYMBOLIZER_PATH=${LLVM_SYMBOLIZER_PATH}")
+    endif()
+    if(EXISTS "${PROJECT_SOURCE_DIR}/.sanitizers/thread.supp")
+      set(tsan_opts "suppressions=${PROJECT_SOURCE_DIR}/.sanitizers/thread.supp:")
+    endif()
+    set(enable_env ${extra_env} TSAN_OPTIONS=${tsan_opts}halt_on_error=1)
+    set(disable_env ${extra_env} TSAN_OPTIONS=${tsan_opts}report_bugs=0)
   else()
     message(FATAL_ERROR "${sanitizers} sanitizers not yet supported")
   endif()
