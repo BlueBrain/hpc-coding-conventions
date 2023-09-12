@@ -23,7 +23,7 @@ function(cpp_cc_build_time_copy)
   add_custom_command(
     OUTPUT "${opt_OUTPUT}"
     DEPENDS "${opt_INPUT}"
-    COMMAND ${CMAKE_COMMAND} -E copy "${opt_INPUT}" "${opt_OUTPUT}")
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${opt_INPUT}" "${opt_OUTPUT}")
   if(NOT opt_NO_TARGET)
     string(SHA256 target_name "${opt_INPUT};${opt_OUTPUT}")
     set(target_name "build-time-copy-${target_name}")
