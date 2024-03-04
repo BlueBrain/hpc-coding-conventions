@@ -367,8 +367,8 @@ bool value =
 ```cpp
 template <typename T>
 concept Hashable = requires(T a) {
-    { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
-};
+                       { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+                   };
 
 ```
 ### Clang-Format configuration
@@ -455,8 +455,6 @@ void sort(It begin, It end) {
 
 
 ```
-### Clang-Format configuration
-* `IndentRequires: False`
 
 ## Use 4 columns for indentation
 
@@ -536,6 +534,36 @@ const int* a;
 ```
 ### Clang-Format configuration
 * `QualifierAlignment: Left`
+
+## The C++20 `requires` clause is put in its own line
+
+### Example
+```cpp
+template <typename T>
+concept Addable = requires(T t) { ++t; };
+
+template <typename T>
+requires Addable<T>
+struct Foo {
+    // ...
+};
+
+template <typename T>
+requires Addable<T>
+void bar(T t){
+    // ...
+};
+
+template <typename T>
+void baz(T t)
+requires Addable<T>
+{
+    //...
+};
+
+```
+### Clang-Format configuration
+* `RequiresClausePosition: OwnLine`
 
 ## Specifies the use of empty lines to separate definition blocks, including classes, structs,
 enums, and functions.

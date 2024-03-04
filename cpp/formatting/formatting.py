@@ -46,7 +46,7 @@ class Convention(namedtuple("Convention", CONVENTION_ATTRS)):
         with open(file) as istr:
             content = [line.rstrip() for line in istr.readlines()]
         # retrieve title
-        assert is_comment(content[0])
+        assert is_comment(content[0]), f"{file}: first line may be '// TITLE'"
         attrs["title"] = content[0].lstrip("//").lstrip()
         i = 1
         # eat empty lines

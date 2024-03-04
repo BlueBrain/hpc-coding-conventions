@@ -60,9 +60,10 @@ IncludeIsMainRegex: '$'
 IndentAccessModifiers: false
 IndentCaseLabels: false
 IndentPPDirectives: None
-IndentRequires: false
+IndentRequiresClause: false
 IndentWidth:     4
 IndentWrappedFunctionNames: false
+InsertBraces: False
 KeepEmptyLinesAtTheStartOfBlocks: false
 LambdaBodyIndentation: Signature
 Language: Cpp
@@ -82,6 +83,7 @@ PackConstructorInitializers: Never
 QualifierAlignment: Left
 ReflowComments:  true
 RemoveBracesLLVM: false
+RequiresClausePosition: OwnLine
 SeparateDefinitionBlocks: Always
 SortIncludes: true
 SpaceAfterCStyleCast: true
@@ -100,7 +102,7 @@ SpacesInContainerLiterals: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false # '(' style
 SpacesInSquareBrackets: false
-Standard: c++17
+Standard: c++20
 TabWidth: 4
 UseTab: Never
 ...
