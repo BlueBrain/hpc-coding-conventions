@@ -253,7 +253,7 @@ def where(program: str, regex=None, exclude_regex=None, paths=None):
         abs_path = os.path.join(path, program)
         if os.path.exists(abs_path) and os.access(abs_path, os.X_OK):
             yield abs_path
-        if regex:
+        if regex and os.path.exists(path):
             for file_name in os.listdir(path):
                 file_path = os.path.join(path, file_name)
                 if regex.match(file_name) and os.access(file_path, os.X_OK):
