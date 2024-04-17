@@ -8,11 +8,12 @@
 # the build tree) automatically and without re-running CMake. The existence of a custom command that
 # produces `output_path` makes it trivial for other targets to declare that they depend on this
 # file, provided that they are working in the same directory (CMakeLists.txt -- see documentation of
-# DEPENDS arguments to add_custom_command and add_custom_target). If the NO_TARGET flag is passed
-# then no target is added, and the caller takes responsibility for declaring a dependency on the
-# output file and causing it to be built. This can be a good idea to avoid the number of top level
-# targets growing too large, which causes the Make build system to be very slow.
-# If TARGET is passed, then a target with that name is generated.
+# DEPENDS arguments to add_custom_command and add_custom_target). The name of
+# the target is `${cpp_cc_target_name}`. If the NO_TARGET flag is passed then
+# no target is added, and the caller takes responsibility for declaring a
+# dependency on the output file and causing it to be built. This can be a good
+# idea to avoid the number of top level targets growing too large, which causes
+# the Make build system to be very slow.
 function(cpp_cc_build_time_copy)
   cmake_parse_arguments(opt "NO_TARGET" "INPUT;OUTPUT;TARGET" "" ${ARGN})
   if(NOT DEFINED opt_INPUT)
@@ -27,11 +28,11 @@ function(cpp_cc_build_time_copy)
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${opt_INPUT}" "${opt_OUTPUT}"
     COMMENT "Copy ${opt_INPUT} to ${opt_OUTPUT}")
   if(NOT opt_NO_TARGET AND NOT DEFINED opt_TARGET)
-    string(SHA256 target_name "${opt_INPUT};${opt_OUTPUT}")
-    string(SUBSTRING ${target_name} 0 10 target_name)
-    set(target_name "build-time-copy-${target_name}")
-    if(NOT TARGET "${target_name}")
-      add_custom_target(${target_name} ALL DEPENDS "${opt_OUTPUT}")
+    string(SHA256 target_sha "${opt_INPUT};${opt_OUTPUT}")
+    string(SUBSTRING ${target_sha} 0 10 target_sha)
+    set(cpp_cc_target_name "build-time-copy-${target_sha}" PARENT_SCOPE)
+    if(NOT TARGET "${cpp_cc_target_name}")
+      add_custom_target(${cpp_cc_target_name} ALL DEPENDS "${opt_OUTPUT}")
     endif()
   elseif(NOT opt_NO_TARGET AND DEFINED opt_TARGET)
     if(TARGET "${opt_TARGET}")
