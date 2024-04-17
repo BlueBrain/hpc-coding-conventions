@@ -1,6 +1,6 @@
 # Create a build rule that copies a file.
 #
-# cpp_cc_build_time_copy(INPUT <input_path> OUTPUT <output_path> [NO_TARGET])
+# cpp_cc_build_time_copy(INPUT <input_path> OUTPUT <output_path> [NO_TARGET] [TARGET <target>])
 #
 # This creates a custom target that is always built and depends on `output_path` and a rule to
 # create `output_path` by copying `input_path`. This means that changes to the input file
@@ -12,8 +12,9 @@
 # then no target is added, and the caller takes responsibility for declaring a dependency on the
 # output file and causing it to be built. This can be a good idea to avoid the number of top level
 # targets growing too large, which causes the Make build system to be very slow.
+# If TARGET is passed, then a target with that name is generated.
 function(cpp_cc_build_time_copy)
-  cmake_parse_arguments(opt "NO_TARGET" "INPUT;OUTPUT" "" ${ARGN})
+  cmake_parse_arguments(opt "NO_TARGET" "INPUT;OUTPUT;TARGET" "" ${ARGN})
   if(NOT DEFINED opt_INPUT)
     message(ERROR "build_time_copy missing required keyword argument INPUT.")
   endif()
@@ -25,12 +26,19 @@ function(cpp_cc_build_time_copy)
     DEPENDS "${opt_INPUT}"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${opt_INPUT}" "${opt_OUTPUT}"
     COMMENT "Copy ${opt_INPUT} to ${opt_OUTPUT}")
-  if(NOT opt_NO_TARGET)
+  if(NOT opt_NO_TARGET AND NOT DEFINED opt_TARGET)
     string(SHA256 target_name "${opt_INPUT};${opt_OUTPUT}")
     string(SUBSTRING ${target_name} 0 10 target_name)
     set(target_name "build-time-copy-${target_name}")
     if(NOT TARGET "${target_name}")
       add_custom_target(${target_name} ALL DEPENDS "${opt_OUTPUT}")
     endif()
+  elseif(NOT opt_NO_TARGET AND DEFINED opt_TARGET)
+    if(TARGET "${opt_TARGET}")
+      message(ERROR "build_time_copy TARGET already exists.")
+    endif()
+
+    add_custom_target(${opt_TARGET} DEPENDS "${opt_OUTPUT}")
   endif()
+
 endfunction()
